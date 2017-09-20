@@ -1,5 +1,5 @@
 # text-detection-ctpn
-text detection mainly based on ctpn(connectionist text proposal network) model,[arxiv1609.03605](https://arxiv.org/abs/1609.03605),[caffe github](https://github.com/tianzhi0549/CTPN)
+text detection mainly based on ctpn (connectionist text proposal network) model in tensorflow, id card detect,[arxiv1609.03605](https://arxiv.org/abs/1609.03605),[caffe github](https://github.com/tianzhi0549/CTPN)
 ***
 # introduce
 - this repo is mainly based on faster rcnn framework, so there remains tons of useless code. I'm still working on it.
@@ -11,7 +11,7 @@ text detection mainly based on ctpn(connectionist text proposal network) model,[
 - run python ctpn/demo.py in the root directory.
 ***
 # some results
-*NOTICE* all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
+`NOTICE:` all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
 <img src="/data/results/001.jpg" width=320 height=240 /><img src="/data/results/002.jpg" width=320 height=240 />
 <img src="/data/results/006.jpg" width=320 height=240 /><img src="/data/results/008.jpg" width=320 height=240 />
 ***
