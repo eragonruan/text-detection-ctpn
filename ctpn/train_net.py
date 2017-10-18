@@ -34,6 +34,6 @@ if __name__ == '__main__':
     train_net(network, imdb, roidb,
               output_dir=output_dir,
               log_dir=log_dir,
-              pretrained_model='/media/D/code/OCR/CTPN_LSTM/data/pretrain/VGG_imagenet.npy',
+              pretrained_model='data/pretrain/VGG_imagenet.npy',
               max_iters=180000,
               restore=bool(int(0)))
