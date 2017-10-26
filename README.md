@@ -48,7 +48,10 @@ you can modify some hyper parameters in ctpn/text.yml, or just used the paramete
 # roadmap
 - [x] cython nms
 - [x] python2/python3 compatblity
-- [ ] tensorflow1.3(current 1.1)
+- [x] tensorflow1.3(current 1.1)
+- [ ] delete useless code
+- [ ] side refinement
+- [ ] model optimization
 
 ------
 
