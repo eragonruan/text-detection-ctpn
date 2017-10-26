@@ -1,6 +1,6 @@
 # text-detection-ctpn
 
-text detection mainly based on ctpn (connectionist text proposal network). It is implemented in tensorflow. I use id card detect as an example. the origin paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the origin repo can be found in [here](https://github.com/tianzhi0549/CTPN). This repo is mainly based on faster rcnn framework, so there remains tons of useless code. I'm still working on it.
+text detection mainly based on ctpn (connectionist text proposal network). It is implemented in tensorflow. I use id card detect as an example. the origin paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the origin repo can be found in [here](https://github.com/tianzhi0549/CTPN). This repo is mainly based on faster rcnn framework, so there remains tons of useless code. I'm still working on it. For more detail about the paper and code, see this [blog](http://slade-ruan.me/2017/10/22/text-detection-ctpn/)
 ***
 
 # prepare
