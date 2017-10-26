@@ -80,7 +80,7 @@ def proposal_target_layer(rpn_rois, rpn_targets,gt_boxes, gt_ishard, dontcare_ar
     # Sanity check: single batch only
 
     num_images = 1
-    rois_per_image = cfg.TRAIN.BATCH_SIZE / num_images#每张图像保留128个ROI
+    rois_per_image = cfg.TRAIN.BATCH_SIZE // num_images#每张图像保留128个ROI
     fg_rois_per_image = int(np.round(cfg.TRAIN.FG_FRACTION * rois_per_image))#正样本ROI的数目，也即前景
 
     # Sample rois with classification labels and bounding box regression targets

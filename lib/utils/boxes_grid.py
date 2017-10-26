@@ -56,7 +56,7 @@ def get_boxes_grid(image_height, image_width):
     num_aspect = len(aspect)
     widths = np.zeros((1, num_aspect), dtype=np.float32)
     heights = np.zeros((1, num_aspect), dtype=np.float32)
-    for i in xrange(num_aspect):
+    for i in range(num_aspect):
         widths[0,i] = math.sqrt(area / aspect[i])
         heights[0,i] = widths[0,i] * aspect[i]
 

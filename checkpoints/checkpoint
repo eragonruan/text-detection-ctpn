@@ -1,0 +1,2 @@
+model_checkpoint_path: "/media/D/code/OCR/text-detection-ctpn/checkpoints/model_final_tf1.3.ckpt"
+all_model_checkpoint_paths: "/media/D/code/OCR/text-detection-ctpn/checkpoints/model_final_tf1.3.ckpt"

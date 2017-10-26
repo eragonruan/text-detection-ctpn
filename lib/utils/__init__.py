@@ -1,5 +1,5 @@
-import boxes_grid
-import blob
-import timer
+from . import boxes_grid
+from . import blob
+from . import timer
 from . import bbox
 from . import nms

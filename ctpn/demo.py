@@ -57,8 +57,8 @@ def ctpn(sess, net, image_name):
     timer.tic()
     scores, boxes = test_ctpn(sess, net, im)
     timer.toc()
-    print ('Detection took {:.3f}s for '
-           '{:d} object proposals').format(timer.total_time, boxes.shape[0])
+    print(('Detection took {:.3f}s for '
+           '{:d} object proposals').format(timer.total_time, boxes.shape[0]))
 
     # Visualize detections for each class
     CONF_THRESH = 0.9
@@ -85,14 +85,14 @@ if __name__ == '__main__':
     # load network
     net = get_network("VGGnet_test")
     # load model
-    print ('Loading network {:s}... '.format("VGGnet_test")),
+    print(('Loading network {:s}... '.format("VGGnet_test")), end=' ')
     saver = tf.train.Saver()
-    saver.restore(sess, os.path.join(os.getcwd(),"checkpoints/model_final.ckpt"))
+    saver.restore(sess, os.path.join(os.getcwd(),"checkpoints/model_final_tf13.ckpt"))
     print (' done.')
 
     # Warmup on a dummy image
     im = 128 * np.ones((300, 300, 3), dtype=np.uint8)
-    for i in xrange(2):
+    for i in range(2):
         _, _ = test_ctpn(sess, net, im)
 
     im_names = glob.glob(os.path.join(cfg.DATA_DIR, 'demo', '*.png')) + \
@@ -100,5 +100,5 @@ if __name__ == '__main__':
 
     for im_name in im_names:
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('Demo for {:s}'.format(im_name))
+        print(('Demo for {:s}'.format(im_name)))
         ctpn(sess, net, im_name)
