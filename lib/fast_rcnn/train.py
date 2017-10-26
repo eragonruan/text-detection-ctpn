@@ -1,4 +1,5 @@
 """Train a Fast R-CNN network."""
+from __future__ import print_function
 import numpy as np
 import os
 import tensorflow as tf
