@@ -29,6 +29,7 @@ cd lib/utils
 chmod +x make.sh
 ./make.sh
 ```
+- I upload two model， model_final for tensorflow1.1 and model_final_tf13 for tensorflow1.3. remerber to modify the model name in ctpn/demo.py according to your environment.
 - then put your images in data/demo, the results will be saved in data/results, and run demo in the root
 ```shell
 python ./ctpn/demo.py
@@ -46,7 +47,7 @@ you can modify some hyper parameters in ctpn/text.yml, or just used the paramete
 
 # roadmap
 - [x] cython nms
-- [ ] python2/python3
+- [x] python2/python3 compatblity
 - [ ] tensorflow1.3(current 1.1)
 
 ------
