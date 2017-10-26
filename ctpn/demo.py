@@ -8,8 +8,9 @@ sys.path.append(os.getcwd())
 
 from lib.networks.factory import get_network
 from lib.fast_rcnn.config import cfg
-from lib.fast_rcnn.test import  test_ctpn
-from lib.fast_rcnn.nms_wrapper import nms
+from lib.fast_rcnn.test import test_ctpn
+#from lib.fast_rcnn.nms_wrapper import nms
+from lib.utils.nms import nms
 from lib.utils.timer import Timer
 from text_proposal_connector import TextProposalConnector
 

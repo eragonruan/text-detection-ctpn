@@ -1,7 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ce69bde4-1799-4078-9c5a-3e278c846213" name="Default" comment="" />
+    <list default="true" id="ce69bde4-1799-4078-9c5a-3e278c846213" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/004.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/005.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/006.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/007.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/008.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/009.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/010.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/012.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/013.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/014.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/Makefile" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/datasets/voc_eval.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/networks/.VGGnet.py.swo" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/setup.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/utils/.gitignore" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/utils/bbox.pyx" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/utils/nms.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/lib/utils/nms.pyx" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/demo.py" afterPath="$PROJECT_DIR$/ctpn/demo.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/datasets/imdb.py" afterPath="$PROJECT_DIR$/lib/datasets/imdb.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/datasets/pascal_voc.py" afterPath="$PROJECT_DIR$/lib/datasets/pascal_voc.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/fast_rcnn/test.py" afterPath="$PROJECT_DIR$/lib/fast_rcnn/test.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/gt_data_layer/roidb.py" afterPath="$PROJECT_DIR$/lib/gt_data_layer/roidb.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/roi_data_layer/roidb.py" afterPath="$PROJECT_DIR$/lib/roi_data_layer/roidb.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/rpn_msr/anchor_target_layer_tf.py" afterPath="$PROJECT_DIR$/lib/rpn_msr/anchor_target_layer_tf.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py" afterPath="$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/utils/__init__.py" afterPath="$PROJECT_DIR$/lib/utils/__init__.py" />
+    </list>
     <ignored path="untitled.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -19,32 +49,7 @@
     <favorites_list name="untitled" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="train_net.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="138">
-              <caret line="9" column="37" lean-forward="false" selection-start-line="9" selection-start-column="37" selection-end-line="9" selection-end-column="37" />
-              <folding>
-                <element signature="e#0#13#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="demo.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="230">
-              <caret line="10" column="31" lean-forward="false" selection-start-line="10" selection-start-column="31" selection-end-line="10" selection-end-column="31" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -55,10 +60,24 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>RoIDataLayer</find>
       <find>get_data_layer</find>
       <find>data_layer</find>
+      <find>find_in_path</find>
+      <find>customize_compiler_for_nvcc</find>
+      <find>bbox_overlaps</find>
+      <find>RoIDataLayer</find>
+      <find>nms_new</find>
+      <find>nms</find>
+      <find>apply_nms</find>
+      <find>voc_eval</find>
+      <find>_do_python_eval</find>
+      <find>evaluate_detections</find>
+      <find>selective_search_roidb</find>
+      <find>pascal_voc</find>
     </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -68,10 +87,8 @@
         <option value="$PROJECT_DIR$/lib/fast_rcnn/bbox_transform.py" />
         <option value="$PROJECT_DIR$/lib/rpn_msr/proposal_layer_tf.py" />
         <option value="$PROJECT_DIR$/lib/networks/VGGnet_test.py" />
-        <option value="$PROJECT_DIR$/lib/fast_rcnn/test.py" />
         <option value="$PROJECT_DIR$/faster_rcnn/text_proposal_graph_builder.py" />
         <option value="$PROJECT_DIR$/lib/networks/network.py" />
-        <option value="$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py" />
         <option value="$PROJECT_DIR$/faster_rcnn/test_train_net.py" />
         <option value="$PROJECT_DIR$/faster_rcnn/test_rnn.py" />
         <option value="$PROJECT_DIR$/faster_rcnn/test_rpn.py" />
@@ -84,7 +101,18 @@
         <option value="$PROJECT_DIR$/lib/fast_rcnn/nms_wrapper.py" />
         <option value="$PROJECT_DIR$/lib/fast_rcnn/train.py" />
         <option value="$PROJECT_DIR$/lib/networks/VGGnet_train.py" />
+        <option value="$PROJECT_DIR$/lib/setup.py" />
+        <option value="$PROJECT_DIR$/lib/utils/setup.py" />
+        <option value="$PROJECT_DIR$/lib/roi_data_layer/roidb.py" />
+        <option value="$PROJECT_DIR$/lib/utils/__init__.py" />
+        <option value="$PROJECT_DIR$/lib/gt_data_layer/roidb.py" />
+        <option value="$PROJECT_DIR$/lib/rpn_msr/anchor_target_layer_tf.py" />
+        <option value="$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py" />
+        <option value="$PROJECT_DIR$/lib/fast_rcnn/test.py" />
         <option value="$PROJECT_DIR$/ctpn/demo.py" />
+        <option value="$PROJECT_DIR$/lib/datasets/pascal_voc.py" />
+        <option value="$PROJECT_DIR$/lib/datasets/imdb.py" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
@@ -92,7 +120,7 @@
     <option name="x" value="1505" />
     <option name="y" value="-4" />
     <option name="width" value="1855" />
-    <option name="height" value="1084" />
+    <option name="height" value="1204" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -109,16 +137,25 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -128,11 +165,47 @@
           </PATH>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lib" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="utils" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lib" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="rpn_msr" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -146,11 +219,11 @@
           </PATH>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -164,11 +237,11 @@
           </PATH>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -176,27 +249,35 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="fast_rcnn" />
+              <option name="myItemId" value="gt_data_layer" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="lib" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="datasets" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test_c" />
+              <option name="myItemId" value="text-detection-ctpn" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -206,12 +287,22 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/ctpn/demo.py" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib/utils" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/lib" />
+      <recent name="$PROJECT_DIR$/lib/utils" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -230,8 +321,8 @@
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
-        <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" />
         <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" />
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/" />
@@ -346,8 +437,8 @@
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
-        <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" />
         <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="LD_LIBRARY_PATH" value="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" />
       </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/" />
@@ -404,13 +495,14 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1505" y="-4" width="1855" height="1084" extended-state="6" />
+    <frame x="1505" y="-4" width="1855" height="1204" extended-state="6" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13628809" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13795014" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4528302" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32990655" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.45233646" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32984293" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -422,9 +514,11 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.gitignore" />
   </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USER_GROUPS">
@@ -478,95 +572,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4752">
-          <caret line="220" column="29" lean-forward="false" selection-start-line="220" selection-start-column="18" selection-end-line="220" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/faster_rcnn/test_rpn.py" />
-    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5038">
-          <caret line="238" column="40" lean-forward="false" selection-start-line="238" selection-start-column="40" selection-end-line="238" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2068">
-          <caret line="104" column="15" lean-forward="false" selection-start-line="104" selection-start-column="11" selection-end-line="104" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/proposal_layer_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3542">
-          <caret line="170" column="15" lean-forward="false" selection-start-line="170" selection-start-column="11" selection-end-line="170" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/faster_rcnn/test_train_net.py" />
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1452">
-          <caret line="68" column="21" lean-forward="false" selection-start-line="68" selection-start-column="21" selection-end-line="68" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2068">
-          <caret line="97" column="62" lean-forward="false" selection-start-line="97" selection-start-column="54" selection-end-line="97" selection-end-column="62" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3454">
-          <caret line="174" column="0" lean-forward="false" selection-start-line="174" selection-start-column="0" selection-end-line="174" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/faster_rcnn/test_rpn.py" />
-    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5038">
-          <caret line="238" column="46" lean-forward="false" selection-start-line="238" selection-start-column="46" selection-end-line="238" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/proposal_layer_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3388">
-          <caret line="163" column="22" lean-forward="false" selection-start-line="163" selection-start-column="22" selection-end-line="163" selection-end-column="22" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/faster_rcnn/test_train_net.py" />
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1298">
-          <caret line="62" column="19" lean-forward="false" selection-start-line="62" selection-start-column="19" selection-end-line="62" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2068">
-          <caret line="103" column="75" lean-forward="false" selection-start-line="103" selection-start-column="75" selection-end-line="103" selection-end-column="75" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/faster_rcnn/test_train_net.py" />
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1298">
-          <caret line="62" column="19" lean-forward="false" selection-start-line="62" selection-start-column="19" selection-end-line="62" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -595,13 +600,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3366">
-          <caret line="170" column="45" lean-forward="false" selection-start-line="170" selection-start-column="45" selection-end-line="170" selection-end-column="45" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/lib/rpn_msr/proposal_layer_tf.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4004">
@@ -611,13 +609,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/faster_rcnn/text_proposal_connector.py" />
     <entry file="file://$PROJECT_DIR$/faster_rcnn/text_proposal_graph_builder.py" />
-    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="242">
-          <caret line="95" column="46" lean-forward="false" selection-start-line="95" selection-start-column="46" selection-end-line="95" selection-end-column="46" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/faster_rcnn/test_rnn.py" />
     <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/bbox_transform.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -629,56 +620,13 @@
     <entry file="file://$PROJECT_DIR$/faster_rcnn/test_train_net.py" />
     <entry file="file://$PROJECT_DIR$/faster_rcnn/test_rpn.py" />
     <entry file="file://$PROJECT_DIR$/id/choose.py" />
-    <entry file="file://$PROJECT_DIR$/lib/utils/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/faster_rcnn/__init__.py" />
-    <entry file="file://$PROJECT_DIR$/lib/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/id/split.py" />
     <entry file="file://$PROJECT_DIR$/id/id_main.py" />
-    <entry file="file://$PROJECT_DIR$/lib/datasets/pascal_voc.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#249#282#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/datasets/factory.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="429">
-          <caret line="19" column="26" lean-forward="false" selection-start-line="19" selection-start-column="16" selection-end-line="19" selection-end-column="26" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="138">
-          <caret line="9" column="37" lean-forward="false" selection-start-line="9" selection-start-column="37" selection-end-line="9" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/nms_wrapper.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -698,31 +646,237 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
+    <entry file="file://$PROJECT_DIR$/ctpn/other.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1155">
-          <caret line="509" column="0" lean-forward="true" selection-start-line="509" selection-start-column="0" selection-end-line="509" selection-end-column="0" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#10#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/text_proposal_connector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/text_proposal_graph_builder.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#29#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/cfg.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="17" lean-forward="false" selection-start-line="0" selection-start-column="17" selection-end-line="0" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/utils/nms.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/utils/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="181">
+          <caret line="9" column="37" lean-forward="false" selection-start-line="9" selection-start-column="37" selection-end-line="9" selection-end-column="37" />
+          <folding>
+            <element signature="e#0#13#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-345">
+        <state relative-caret-position="115">
+          <caret line="5" column="47" lean-forward="false" selection-start-line="5" selection-start-column="35" selection-end-line="5" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/roi_data_layer/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="138">
+          <caret line="6" column="0" lean-forward="false" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/utils/bbox.pyx">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/utils/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="345">
+          <caret line="30" column="7" lean-forward="true" selection-start-line="30" selection-start-column="7" selection-end-line="30" selection-end-column="7" />
           <folding>
-            <element signature="e#34#52#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/roi_data_layer/roidb.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="20" column="24" lean-forward="false" selection-start-line="20" selection-start-column="24" selection-end-line="20" selection-end-column="24" />
+          <folding>
+            <element signature="e#328#346#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/utils/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="92">
+          <caret line="4" column="17" lean-forward="false" selection-start-line="4" selection-start-column="17" selection-end-line="4" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#17#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/gt_data_layer/roidb.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="17" column="13" lean-forward="false" selection-start-line="17" selection-start-column="13" selection-end-line="17" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/anchor_target_layer_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="14" column="13" lean-forward="false" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="13" column="13" lean-forward="false" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="161">
+          <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="299">
+          <caret line="13" column="0" lean-forward="false" selection-start-line="13" selection-start-column="0" selection-end-line="13" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/datasets/voc_eval.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="253">
+          <caret line="72" column="45" lean-forward="false" selection-start-line="72" selection-start-column="45" selection-end-line="72" selection-end-column="45" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/datasets/imdb.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2644">
+          <caret line="13" column="13" lean-forward="false" selection-start-line="13" selection-start-column="13" selection-end-line="13" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/datasets/pascal_voc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="924">
+          <caret line="275" column="0" lean-forward="false" selection-start-line="275" selection-start-column="0" selection-end-line="275" selection-end-column="0" />
+          <folding>
+            <element signature="e#249#282#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="10" column="31" lean-forward="false" selection-start-line="10" selection-start-column="31" selection-end-line="10" selection-end-column="31" />
+        <state relative-caret-position="69">
+          <caret line="12" column="29" lean-forward="false" selection-start-line="12" selection-start-column="29" selection-end-line="12" selection-end-column="29" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/datasets/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="229">
+          <caret line="10" column="6" lean-forward="false" selection-start-line="10" selection-start-column="6" selection-end-line="10" selection-end-column="6" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/datasets/factory.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="19" column="26" lean-forward="false" selection-start-line="19" selection-start-column="16" selection-end-line="19" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="46">
+          <caret line="2" column="7" lean-forward="false" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="7" />
+          <folding />
         </state>
       </provider>
     </entry>

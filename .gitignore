@@ -1,2 +1,10 @@
-*.pyc
+__pycache__/
+logs/
+output/
+build/
+dist/
+*.py[cod]
+*.c[cod]
+*.so
+*.swp
 
