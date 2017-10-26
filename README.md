@@ -22,6 +22,19 @@ ln -s TEXTVOC VOCdevkit2007
 ```
 ***
 
+# demo
+- to run the demo, you have to build nms implement in cython first
+```shell
+cd lib/utils
+chmod +x make.sh
+./make.sh
+```
+- then put your images in data/demo, the results will be saved in data/results, and run demo in the root
+```shell
+python ./ctpn/demo.py
+```
+***
+
 # train
 Simplely run
 ```shell
@@ -30,16 +43,17 @@ python ./ctpn/train_net.py
 you can modify some hyper parameters in ctpn/text.yml, or just used the parameters I set.
 ***
 
-# demo
 
-put your images in data/demo, the results will be saved in data/results, and run
-```shell
-python ./ctpn/demo.py
-```
-***
+# roadmap
+- [x] cython nms
+- [ ] python2/python3
+- [ ] tensorflow1.3(current 1.1)
+
+------
 
 # some results
 `NOTICE:` all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
 <img src="/data/results/001.jpg" width=320 height=240 /><img src="/data/results/002.jpg" width=320 height=240 />
 <img src="/data/results/006.jpg" width=320 height=240 /><img src="/data/results/008.jpg" width=320 height=240 />
+<img src="/data/results/015.jpg" width=480 height=640 />
 ***
