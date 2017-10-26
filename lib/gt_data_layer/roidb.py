@@ -12,7 +12,7 @@ import scipy.sparse
 import PIL
 import math
 import os
-import cPickle
+import pickle
 import pdb
 
 from ..utils.bbox import bbox_overlaps
@@ -33,12 +33,12 @@ def prepare_roidb(imdb):
     cache_file = os.path.join(imdb.cache_path, imdb.name + '_gt_roidb_prepared.pkl')
     if os.path.exists(cache_file):
         with open(cache_file, 'rb') as fid:
-            imdb._roidb = cPickle.load(fid)
-        print '{} gt roidb prepared loaded from {}'.format(imdb.name, cache_file)
+            imdb._roidb = pickle.load(fid)
+        print('{} gt roidb prepared loaded from {}'.format(imdb.name, cache_file))
         return
 
     roidb = imdb.roidb
-    for i in xrange(len(imdb.image_index)):
+    for i in range(len(imdb.image_index)):
         roidb[i]['image'] = imdb.image_path_at(i)
         boxes = roidb[i]['boxes']
         labels = roidb[i]['gt_classes']
@@ -66,7 +66,7 @@ def prepare_roidb(imdb):
 
             # select positive boxes
             fg_inds = []
-            for k in xrange(1, imdb.num_classes):
+            for k in range(1, imdb.num_classes):
                 fg_inds.extend(np.where((max_classes == k) & (max_overlaps >= cfg.TRAIN.FG_THRESH))[0])
 
             if len(fg_inds) > 0:
@@ -92,8 +92,8 @@ def prepare_roidb(imdb):
         roidb[i]['info_boxes'] = info_boxes
 
     with open(cache_file, 'wb') as fid:
-        cPickle.dump(roidb, fid, cPickle.HIGHEST_PROTOCOL)
-    print 'wrote gt roidb prepared to {}'.format(cache_file)
+        pickle.dump(roidb, fid, pickle.HIGHEST_PROTOCOL)
+    print('wrote gt roidb prepared to {}'.format(cache_file))
 
 def add_bbox_regression_targets(roidb):
     """Add information needed to train bounding-box regressors."""
@@ -109,9 +109,9 @@ def add_bbox_regression_targets(roidb):
     class_counts = np.zeros((num_classes, 1)) + cfg.EPS
     sums = np.zeros((num_classes, 4))
     squared_sums = np.zeros((num_classes, 4))
-    for im_i in xrange(num_images):
+    for im_i in range(num_images):
         targets = roidb[im_i]['info_boxes']
-        for cls in xrange(1, num_classes):
+        for cls in range(1, num_classes):
             cls_inds = np.where(targets[:, 12] == cls)[0]
             if cls_inds.size > 0:
                 class_counts[cls] += cls_inds.size
@@ -122,9 +122,9 @@ def add_bbox_regression_targets(roidb):
     stds = np.sqrt(squared_sums / class_counts - means ** 2)
 
     # Normalize targets
-    for im_i in xrange(num_images):
+    for im_i in range(num_images):
         targets = roidb[im_i]['info_boxes']
-        for cls in xrange(1, num_classes):
+        for cls in range(1, num_classes):
             cls_inds = np.where(targets[:, 12] == cls)[0]
             roidb[im_i]['info_boxes'][cls_inds, 14:] -= means[cls, :]
             if stds[cls, 0] != 0:

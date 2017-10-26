@@ -18,16 +18,16 @@ if __name__ == '__main__':
     print('Using config:')
     pprint.pprint(cfg)
     imdb = get_imdb('voc_2007_trainval')
-    print 'Loaded dataset `{:s}` for training'.format(imdb.name)
+    print('Loaded dataset `{:s}` for training'.format(imdb.name))
     roidb = get_training_roidb(imdb)
 
     output_dir = get_output_dir(imdb, None)
     log_dir = get_log_dir(imdb)
-    print 'Output will be saved to `{:s}`'.format(output_dir)
-    print 'Logs will be saved to `{:s}`'.format(log_dir)
+    print('Output will be saved to `{:s}`'.format(output_dir))
+    print('Logs will be saved to `{:s}`'.format(log_dir))
 
     device_name = '/gpu:0'
-    print device_name
+    print(device_name)
 
     network = get_network('VGGnet_train')
 

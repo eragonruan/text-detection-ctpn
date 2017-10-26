@@ -26,9 +26,9 @@ def prepare_roidb(imdb):
     recorded.
     """
     sizes = [PIL.Image.open(imdb.image_path_at(i)).size
-             for i in xrange(imdb.num_images)]
+             for i in range(imdb.num_images)]
     roidb = imdb.roidb
-    for i in xrange(len(imdb.image_index)):
+    for i in range(len(imdb.image_index)):
         roidb[i]['image'] = imdb.image_path_at(i)
         roidb[i]['width'] = sizes[i][0]
         roidb[i]['height'] = sizes[i][1]
@@ -60,7 +60,7 @@ def add_bbox_regression_targets(roidb):
     num_images = len(roidb)
     # Infer number of classes from the number of columns in gt_overlaps
     num_classes = roidb[0]['gt_overlaps'].shape[1]
-    for im_i in xrange(num_images):
+    for im_i in range(num_images):
         rois = roidb[im_i]['boxes']
         max_overlaps = roidb[im_i]['max_overlaps']
         max_classes = roidb[im_i]['max_classes']
@@ -79,9 +79,9 @@ def add_bbox_regression_targets(roidb):
         class_counts = np.zeros((num_classes, 1)) + cfg.EPS
         sums = np.zeros((num_classes, 4))
         squared_sums = np.zeros((num_classes, 4))
-        for im_i in xrange(num_images):
+        for im_i in range(num_images):
             targets = roidb[im_i]['bbox_targets']
-            for cls in xrange(1, num_classes):
+            for cls in range(1, num_classes):
                 cls_inds = np.where(targets[:, 0] == cls)[0]
                 if cls_inds.size > 0:
                     class_counts[cls] += cls_inds.size
@@ -95,24 +95,24 @@ def add_bbox_regression_targets(roidb):
         assert np.min(stds) < 0.01, \
             'Boxes std is too small, std:{}'.format(stds)
 
-    print 'bbox target means:'
-    print means
-    print means[1:, :].mean(axis=0) # ignore bg class
-    print 'bbox target stdevs:'
-    print stds
-    print stds[1:, :].mean(axis=0) # ignore bg class
+    print('bbox target means:')
+    print(means)
+    print(means[1:, :].mean(axis=0)) # ignore bg class
+    print('bbox target stdevs:')
+    print(stds)
+    print(stds[1:, :].mean(axis=0)) # ignore bg class
 
     # Normalize targets
     if cfg.TRAIN.BBOX_NORMALIZE_TARGETS:
-        print "Normalizing targets"
-        for im_i in xrange(num_images):
+        print("Normalizing targets")
+        for im_i in range(num_images):
             targets = roidb[im_i]['bbox_targets']
-            for cls in xrange(1, num_classes):
+            for cls in range(1, num_classes):
                 cls_inds = np.where(targets[:, 0] == cls)[0]
                 roidb[im_i]['bbox_targets'][cls_inds, 1:] -= means[cls, :]
                 roidb[im_i]['bbox_targets'][cls_inds, 1:] /= stds[cls, :]
     else:
-        print "NOT normalizing targets"
+        print("NOT normalizing targets")
 
     # These values will be needed for making predictions
     # (the predicts will need to be unnormalized and uncentered)

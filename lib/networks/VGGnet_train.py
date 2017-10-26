@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import tensorflow as tf
 import numpy as np
-from network import Network
+from .network import Network
 from ..fast_rcnn.config import cfg
 
 class VGGnet_train(Network):

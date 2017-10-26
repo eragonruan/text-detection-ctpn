@@ -141,7 +141,7 @@ if __name__ == '__main__':
             for obj in objs:
                 cls = obj['class']
                 allclasses[cls] = 0 \
-                    if not cls in allclasses.keys() else allclasses[cls] + 1
+                    if not cls in list(allclasses.keys()) else allclasses[cls] + 1
 
             for cls in cls_in_image:
                 if cls in class_sets:

@@ -4,5 +4,5 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
 # --------------------------------------------------------
-import roidb
+from . import roidb
 # from layer import GtDataLayer

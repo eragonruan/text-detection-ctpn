@@ -61,7 +61,7 @@ def get_minibatch(roidb, num_classes):
         bbox_targets_blob = np.zeros((0, 4 * num_classes), dtype=np.float32)
         bbox_inside_blob = np.zeros(bbox_targets_blob.shape, dtype=np.float32)
         # all_overlaps = []
-        for im_i in xrange(num_images):
+        for im_i in range(num_images):
             labels, overlaps, im_rois, bbox_targets, bbox_inside_weights \
                 = _sample_rois(roidb[im_i], fg_rois_per_image, rois_per_image,
                                num_classes)
@@ -145,7 +145,7 @@ def _get_image_blob(roidb, scale_inds):
     num_images = len(roidb)
     processed_ims = []
     im_scales = []
-    for i in xrange(num_images):
+    for i in range(num_images):
         im = cv2.imread(roidb[i]['image'])
         if roidb[i]['flipped']:
             im = im[:, ::-1, :]
@@ -192,7 +192,7 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
 def _vis_minibatch(im_blob, rois_blob, labels_blob, overlaps):
     """Visualize a mini-batch for debugging."""
     import matplotlib.pyplot as plt
-    for i in xrange(rois_blob.shape[0]):
+    for i in range(rois_blob.shape[0]):
         rois = rois_blob[i, :]
         im_ind = rois[0]
         roi = rois[1:]
@@ -202,7 +202,7 @@ def _vis_minibatch(im_blob, rois_blob, labels_blob, overlaps):
         im = im.astype(np.uint8)
         cls = labels_blob[i]
         plt.imshow(im)
-        print 'class: ', cls, ' overlap: ', overlaps[i]
+        print('class: ', cls, ' overlap: ', overlaps[i])
         plt.gca().add_patch(
             plt.Rectangle((roi[0], roi[1]), roi[2] - roi[0],
                           roi[3] - roi[1], fill=False,
