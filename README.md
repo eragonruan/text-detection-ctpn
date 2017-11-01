@@ -42,7 +42,9 @@ Simplely run
 ```shell
 python ./ctpn/train_net.py
 ```
-you can modify some hyper parameters in ctpn/text.yml, or just used the parameters I set.
+- you can modify some hyper parameters in ctpn/text.yml, or just used the parameters I set.
+- The model I provided in checkpoints is trained on GTX1070 for 50k iters.
+- If you are using cuda nms, it takes about 0.2s per iter. So it will takes about 2.5 hours to finished 50k iterations.
 ***
 
 
