@@ -1,20 +1,13 @@
-import argparse
 import numpy as np
 import cv2
 import pickle
-import heapq
 import os
-import math
-import tensorflow as tf
 import matplotlib.pyplot as plt
 
 from .config import cfg, get_output_dir
-
+from lib.fast_rcnn.nms_wrapper import nms
 from ..utils.timer import Timer
-from ..utils.nms import nms
 from ..utils.blob import im_list_to_blob
-from ..utils.boxes_grid import get_boxes_grid
-
 from ..fast_rcnn.bbox_transform import clip_boxes, bbox_transform_inv
 
 
@@ -145,18 +138,6 @@ def test_ctpn(sess, net, im, boxes=None):
 
     blobs, im_scales = _get_blobs(im, boxes)
 
-    # When mapping from image ROIs to feature map ROIs, there's some aliasing
-    # (some distinct image ROIs get mapped to the same feature ROI).
-    # Here, we identify duplicate feature ROIs, so we only compute features
-    # on the unique subset.
-    if cfg.DEDUP_BOXES > 0 and not cfg.TEST.HAS_RPN:
-        v = np.array([1, 1e3, 1e6, 1e9, 1e12])
-        hashes = np.round(blobs['rois'] * cfg.DEDUP_BOXES).dot(v)
-        _, index, inv_index = np.unique(hashes, return_index=True,
-                                        return_inverse=True)
-        blobs['rois'] = blobs['rois'][index, :]
-        boxes = boxes[index, :]
-
     if cfg.TEST.HAS_RPN:
         im_blob = blobs['data']
         blobs['im_info'] = np.array(
@@ -165,8 +146,6 @@ def test_ctpn(sess, net, im, boxes=None):
     # forward pass
     if cfg.TEST.HAS_RPN:
         feed_dict = {net.data: blobs['data'], net.im_info: blobs['im_info'], net.keep_prob: 1.0}
-    else:
-        feed_dict = {net.data: blobs['data'], net.rois: blobs['rois'], net.keep_prob: 1.0}
 
     rois = sess.run([net.get_output('rois')[0]],feed_dict=feed_dict)
     rois=rois[0]
@@ -176,11 +155,6 @@ def test_ctpn(sess, net, im, boxes=None):
         assert len(im_scales) == 1, "Only single-image batch implemented"
         boxes = rois[:, 1:5] / im_scales[0]
 
-
-    if cfg.DEDUP_BOXES > 0 and not cfg.TEST.HAS_RPN:
-        # Map scores and predictions back to the original set of boxes
-        boxes = boxes[inv_index,:]
-        scores=scores[inv_index,:]
 
     return scores,boxes
 

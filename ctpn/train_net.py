@@ -35,5 +35,5 @@ if __name__ == '__main__':
               output_dir=output_dir,
               log_dir=log_dir,
               pretrained_model='data/pretrain/VGG_imagenet.npy',
-              max_iters=180000,
-              restore=bool(int(0)))
+              max_iters=60000,
+              restore=bool(int(1)))

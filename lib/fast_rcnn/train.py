@@ -98,25 +98,23 @@ class SolverWrapper(object):
         """Network training loop."""
 
         data_layer = get_data_layer(self.roidb, self.imdb.num_classes)
-        rpn_loss, rpn_cross_entropy, rpn_loss_box = self.net.build_loss(ohem=cfg.TRAIN.OHEM)
+        total_loss, rpn_cross_entropy, rpn_loss_box=self.net.build_loss(ohem=cfg.TRAIN.OHEM)
         # scalar summary
-        tf.summary.scalar('rpn_rgs_loss', rpn_loss_box)
+        tf.summary.scalar('rpn_reg_loss', rpn_loss_box)
         tf.summary.scalar('rpn_cls_loss', rpn_cross_entropy)
-        tf.summary.scalar('rpn_loss',rpn_loss)
+        tf.summary.scalar('total_loss',total_loss)
         summary_op = tf.summary.merge_all()
 
-        # image writer
-        # NOTE: this image is independent to summary_op
         log_image, log_image_data, log_image_name =\
             self.build_image_summary()
 
         # optimizer
+        lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
         if cfg.TRAIN.SOLVER == 'Adam':
             opt = tf.train.AdamOptimizer(cfg.TRAIN.LEARNING_RATE)
         elif cfg.TRAIN.SOLVER == 'RMS':
             opt = tf.train.RMSPropOptimizer(cfg.TRAIN.LEARNING_RATE)
         else:
-            lr = tf.Variable(cfg.TRAIN.LEARNING_RATE, trainable=False)
             # lr = tf.Variable(0.0, trainable=False)
             momentum = cfg.TRAIN.MOMENTUM
             opt = tf.train.MomentumOptimizer(lr, momentum)
@@ -125,10 +123,10 @@ class SolverWrapper(object):
         with_clip = True
         if with_clip:
             tvars = tf.trainable_variables()
-            grads, norm = tf.clip_by_global_norm(tf.gradients(rpn_loss, tvars), 10.0)
+            grads, norm = tf.clip_by_global_norm(tf.gradients(total_loss, tvars), 10.0)
             train_op = opt.apply_gradients(list(zip(grads, tvars)), global_step=global_step)
         else:
-            train_op = opt.minimize(rpn_loss, global_step=global_step)
+            train_op = opt.minimize(total_loss, global_step=global_step)
 
         # intialize variables
         sess.run(tf.global_variables_initializer())
@@ -159,7 +157,6 @@ class SolverWrapper(object):
         last_snapshot_iter = -1
         timer = Timer()
         #tf.Graph.finalize(tf.get_default_graph())
-        # for iter in range(max_iters):
         for iter in range(restore_iter, max_iters):
             timer.tic()
 
@@ -171,9 +168,6 @@ class SolverWrapper(object):
             # get one batch
             blobs = data_layer.forward()
 
-            if (iter + 1) % (cfg.TRAIN.DISPLAY) == 0:
-                print('image: %s' %(blobs['im_name']), end=' ')
-
             feed_dict={
                 self.net.data: blobs['data'],
                 self.net.im_info: blobs['im_info'],
@@ -183,36 +177,12 @@ class SolverWrapper(object):
                 self.net.dontcare_areas: blobs['dontcare_areas']
             }
             res_fetches=[]
-            fetch_list = [rpn_cross_entropy,
-                          rpn_loss_box,
-                          rpn_loss,
+            fetch_list = [total_loss, rpn_cross_entropy, rpn_loss_box,
                           summary_op,
                           train_op] + res_fetches
 
-            if _DEBUG:
-
-                fetch_list = [rpn_cross_entropy,
-                              rpn_loss_box,
-                              rpn_loss,
-                              summary_op] + res_fetches
-
-                fetch_list += [self.net.get_output('rpn_cls_score_reshape'), self.net.get_output('rpn_cls_prob_reshape')]
-
-                fetch_list += []
-                rpn_loss_cls_value, rpn_loss_box_value, rpn_loss_value,\
-                summary_str, \
-                rpn_cls_score_reshape_np, rpn_cls_prob_reshape_np\
-                        =  sess.run(fetches=fetch_list, feed_dict=feed_dict)
-            else:
-                fetch_list = [rpn_cross_entropy,
-                              rpn_loss_box,
-                              rpn_loss,
-                              summary_op,
-                              train_op] + res_fetches
-
-                fetch_list += []
-                rpn_loss_cls_value, rpn_loss_box_value, rpn_loss_value, \
-                summary_str, _=  sess.run(fetches=fetch_list, feed_dict=feed_dict)
+            total_loss_val, rpn_loss_cls_val, rpn_loss_box_val, \
+                summary_str, _ = sess.run(fetches=fetch_list, feed_dict=feed_dict)
 
             self.writer.add_summary(summary=summary_str, global_step=global_step.eval())
 
@@ -220,9 +190,8 @@ class SolverWrapper(object):
 
 
             if (iter) % (cfg.TRAIN.DISPLAY) == 0:
-                print('iter: %d / %d, total loss: %.4f, rpn_loss_cls: %.4f, rpn_loss_box: %.4f, rpn_loss: %.4f, lr: %f'%\
-                        (iter, max_iters, rpn_loss_cls_value + rpn_loss_box_value + rpn_loss_value ,\
-                         rpn_loss_cls_value, rpn_loss_box_value,rpn_loss_value,lr.eval()))
+                print('iter: %d / %d, total loss: %.4f, rpn_loss_cls: %.4f, rpn_loss_box: %.4f, lr: %f'%\
+                        (iter, max_iters, total_loss_val,rpn_loss_cls_val,rpn_loss_box_val,lr.eval()))
                 print('speed: {:.3f}s / iter'.format(_diff_time))
 
             if (iter+1) % cfg.TRAIN.SNAPSHOT_ITERS == 0:
@@ -332,7 +301,7 @@ def train_net(network, imdb, roidb, output_dir, log_dir, pretrained_model=None, 
 
     config = tf.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allocator_type = 'BFC'
-    #config.gpu_options.per_process_gpu_memory_fraction = 0.40
+    config.gpu_options.per_process_gpu_memory_fraction = 0.75
     with tf.Session(config=config) as sess:
         sw = SolverWrapper(sess, network, imdb, roidb, output_dir, logdir= log_dir, pretrained_model=pretrained_model)
         print('Solving...')

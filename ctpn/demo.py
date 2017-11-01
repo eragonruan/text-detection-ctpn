@@ -1,6 +1,5 @@
 from __future__ import print_function
 import tensorflow as tf
-import matplotlib.pyplot as plt
 import numpy as np
 import os, sys, cv2
 import glob
@@ -10,8 +9,7 @@ sys.path.append(os.getcwd())
 from lib.networks.factory import get_network
 from lib.fast_rcnn.config import cfg
 from lib.fast_rcnn.test import test_ctpn
-#from lib.fast_rcnn.nms_wrapper import nms
-from lib.utils.nms import nms
+from lib.fast_rcnn.nms_wrapper import nms
 from lib.utils.timer import Timer
 from text_proposal_connector import TextProposalConnector
 
@@ -80,6 +78,7 @@ if __name__ == '__main__':
     os.makedirs("data/results/")
 
     cfg.TEST.HAS_RPN = True  # Use RPN for proposals
+    #cfg.GPU_ID = 1
     # init session
     config = tf.ConfigProto(allow_soft_placement=True)
     sess = tf.Session(config=config)
@@ -88,9 +87,17 @@ if __name__ == '__main__':
     # load model
     print(('Loading network {:s}... '.format("VGGnet_test")), end=' ')
     saver = tf.train.Saver()
-    saver.restore(sess, os.path.join(os.getcwd(),"checkpoints/model_final_tf13.ckpt"))
+
+    try:
+        ckpt = tf.train.get_checkpoint_state("output/ctpn_end2end/voc_2007_trainval/")
+        print('Restoring from {}...'.format(ckpt.model_checkpoint_path), end=' ')
+        saver.restore(sess, ckpt.model_checkpoint_path)
+        print('done')
+    except:
+        raise 'Check your pretrained {:s}'.format(ckpt.model_checkpoint_path)
     print (' done.')
 
+    #saver.restore(sess, os.path.join(os.getcwd(),"checkpoints/model_final_tf13.ckpt"))
     # Warmup on a dummy image
     im = 128 * np.ones((300, 300, 3), dtype=np.uint8)
     for i in range(2):

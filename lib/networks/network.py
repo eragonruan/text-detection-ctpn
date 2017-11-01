@@ -1,14 +1,9 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import tensorflow as tf
-
 from ..fast_rcnn.config import cfg
-#from ..roi_pooling_layer import roi_pooling_op as roi_pool_op
 from ..rpn_msr.proposal_layer_tf import proposal_layer as proposal_layer_py
 from ..rpn_msr.anchor_target_layer_tf import anchor_target_layer as anchor_target_layer_py
-from ..rpn_msr.proposal_target_layer_tf import proposal_target_layer as proposal_target_layer_py
-# FCN pooling
-#from ..psroi_pooling_layer import psroi_pooling_op as psroi_pooling_op
 
 
 DEFAULT_PADDING = 'SAME'
@@ -93,32 +88,6 @@ class Network(object):
 
 
     @layer
-    def conv_rpn(self, input, k_h, k_w, c_o, s_h, s_w, name, biased=True, relu=True, padding=DEFAULT_PADDING,
-             trainable=True):
-        """ contribution by miraclebiu, and biased option"""
-        self.validate_padding(padding)
-        c_i = input.get_shape()[-1]
-        convolve = lambda i, k: tf.nn.conv2d(i, k, [1, s_h, s_w, 1], padding=padding)
-        with tf.variable_scope(name) as scope:
-
-            init_weights = tf.truncated_normal_initializer(0.0, stddev=0.0001)
-            init_biases = tf.constant_initializer(0.0)
-            kernel = self.make_var('weights', [k_h, k_w, c_i, c_o], init_weights, trainable, \
-                                   regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
-            if biased:
-                biases = self.make_var('biases', [c_o], init_biases, trainable)
-                conv = convolve(input, kernel)
-                if relu:
-                    bias = tf.nn.bias_add(conv, biases)
-                    return tf.nn.relu(bias, name=scope.name)
-                return tf.nn.bias_add(conv, biases, name=scope.name)
-            else:
-                conv = convolve(input, kernel)
-                if relu:
-                    return tf.nn.relu(conv, name=scope.name)
-                return conv
-
-    @layer
     def lstm(self, input, d_i, d_h, name,trainable=True):
         input_shape = tf.shape(input)
         input = tf.reshape(input, [-1, d_i])
@@ -199,38 +168,6 @@ class Network(object):
                               name=name)
 
     @layer
-    def roi_pool(self, input, pooled_height, pooled_width, spatial_scale, name):
-        # only use the first input
-        if isinstance(input[0], tuple):
-            input[0] = input[0][0]
-
-        if isinstance(input[1], tuple):
-            input[1] = input[1][0]
-
-        print(input)
-        return roi_pool_op.roi_pool(input[0], input[1],
-                                    pooled_height,
-                                    pooled_width,
-                                    spatial_scale,
-                                    name=name)[0]
-
-    @layer
-    def psroi_pool(self, input, output_dim, group_size, spatial_scale, name):
-        """contribution by miraclebiu"""
-        # only use the first input
-        if isinstance(input[0], tuple):
-            input[0] = input[0][0]
-
-        if isinstance(input[1], tuple):
-            input[1] = input[1][0]
-
-        return psroi_pooling_op.psroi_pool(input[0], input[1],
-                                           output_dim=output_dim,
-                                           group_size=group_size,
-                                           spatial_scale=spatial_scale,
-                                           name=name)[0]
-
-    @layer
     def proposal_layer(self, input, _feat_stride, anchor_scales, cfg_key, name):
         if isinstance(input[0], tuple):
             input[0] = input[0][0]
@@ -267,34 +204,6 @@ class Network(object):
 
 
             return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
-
-
-    @layer
-    def proposal_target_layer(self, input, classes, name):
-        if isinstance(input[0], tuple):
-            input[0] = input[0][0]
-        with tf.variable_scope(name) as scope:
-            #inputs: 'rpn_rois','gt_boxes', 'gt_ishard', 'dontcare_areas'
-            rois,labels,bbox_targets,bbox_inside_weights,bbox_outside_weights,rois_targets,cls_score\
-                = tf.py_func(proposal_target_layer_py,
-                             [input[0],input[1],input[2],input[3],input[4],classes],
-                             [tf.float32,tf.float32,tf.float32,tf.float32,tf.float32,tf.float32,tf.float32])
-
-            rois = tf.reshape(rois, [-1, 5], name='rois') # goes to roi_pooling
-            labels = tf.convert_to_tensor(tf.cast(labels,tf.int32), name = 'labels') # goes to FRCNN loss
-            bbox_targets = tf.convert_to_tensor(bbox_targets, name = 'bbox_targets') # goes to FRCNN loss
-            bbox_inside_weights = tf.convert_to_tensor(bbox_inside_weights, name = 'bbox_inside_weights')
-            bbox_outside_weights = tf.convert_to_tensor(bbox_outside_weights, name = 'bbox_outside_weights')
-
-            rois_targets = tf.convert_to_tensor(rois_targets, name='rois_targets')  # goes to FRCNN loss
-            cls_score = tf.convert_to_tensor(cls_score, name='rois_cls_score')
-
-            self.layers['rois'] = rois
-            self.layers['rois_targets'] = rois_targets
-            self.layers['rois_cls_score'] = cls_score
-
-            return rois, labels, bbox_targets, bbox_inside_weights, bbox_outside_weights,rois_targets,cls_score
-
 
     @layer
     def reshape_layer(self, input, d, name):
@@ -343,27 +252,6 @@ class Network(object):
     @layer
     def concat(self, inputs, axis, name):
         return tf.concat(concat_dim=axis, values=inputs, name=name)
-
-    @layer
-    def fc_bbox(self, input, num_out, name, relu=True, trainable=True):
-        with tf.variable_scope(name) as scope:
-            input_shape = tf.shape(input)
-            feed_in = tf.reshape(input, [-1, input_shape[3]])
-            i_s = input.get_shape()
-            dim=i_s[3]
-            #dim = int(128)
-
-            init_weights = tf.truncated_normal_initializer(0.0, stddev=0.001)
-            init_biases = tf.constant_initializer(0.0)
-
-            weights = self.make_var('weights', [dim, num_out], init_weights, trainable, \
-                                    regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
-            biases = self.make_var('biases', [num_out], init_biases, trainable)
-
-            op = tf.nn.relu_layer if relu else tf.nn.xw_plus_b
-            fc = op(feed_in, weights, biases, name=scope.name)
-            return tf.reshape(fc, [input_shape[0], input_shape[1], input_shape[2], int(num_out)])
-
 
     @layer
     def fc(self, input, num_out, name, relu=True, trainable=True):
@@ -449,7 +337,6 @@ class Network(object):
 
 
     def build_loss(self, ohem=False):
-        ############# RPN
         # classification loss
         rpn_cls_score = tf.reshape(self.get_output('rpn_cls_score_reshape'), [-1, 2])  # shape (HxWxA, 2)
         rpn_label = tf.reshape(self.get_output('rpn-data')[0], [-1])  # shape (HxWxA)
@@ -458,7 +345,6 @@ class Network(object):
         rpn_keep = tf.where(tf.not_equal(rpn_label, -1))
         rpn_cls_score = tf.gather(rpn_cls_score, rpn_keep) # shape (N, 2)
         rpn_label = tf.gather(rpn_label, rpn_keep)
-        #rpn_cross_entropy_n = tf.nn.sparse_softmax_cross_entropy_with_logits(rpn_cls_score, rpn_label)=model_output, =y_target
         rpn_cross_entropy_n = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=rpn_label,logits=rpn_cls_score)
 
         # box loss
@@ -471,39 +357,12 @@ class Network(object):
         rpn_bbox_inside_weights = tf.gather(tf.reshape(rpn_bbox_inside_weights, [-1, 4]), rpn_keep)
         rpn_bbox_outside_weights = tf.gather(tf.reshape(rpn_bbox_outside_weights, [-1, 4]), rpn_keep)
 
-
-
         rpn_loss_box_n = tf.reduce_sum(rpn_bbox_outside_weights * self.smooth_l1_dist(
             rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)), reduction_indices=[1])
 
-        rpn_loss_n = tf.reshape(rpn_cross_entropy_n + rpn_loss_box_n * 5, [-1])
-
-
-        rpn_loss_box = 100 * tf.reduce_mean(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
-        # rpn_loss_box = 5 * tf.reduce_sum(rpn_loss_box_n)
+        rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
         rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)
 
-        #TODO:XXXXXXXXXXXXXXXXXXX
-        # classification loss
 
-        cls_score = (self.get_output('roi-data')[6])
-        label = tf.reshape(self.get_output('roi-data')[1], [-1])
-        cross_entropy_n = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(\
-            logits=cls_score, labels=label))
-
-
-        bbox_pred = self.get_output('roi-data')[5]  # (R, (C+1)x4)
-        bbox_targets = self.get_output('roi-data')[2]  # (R, (C+1)x4)
-        bbox_inside_weights = self.get_output('roi-data')[3]  # (R, (C+1)x4)
-        bbox_outside_weights = self.get_output('roi-data')[4]  # (R, (C+1)x4)
-
-        loss_box_n = tf.reduce_sum( \
-            bbox_outside_weights * self.smooth_l1_dist(bbox_inside_weights * (bbox_pred - bbox_targets)), \
-            reduction_indices=[1])
-
-
-        loss_box = tf.reduce_mean(loss_box_n)
-
-        rpn_loss = rpn_cross_entropy + rpn_loss_box+loss_box +0.3 *cross_entropy_n
-
-        return rpn_loss, rpn_cross_entropy, rpn_loss_box
+        total_loss = rpn_cross_entropy + 2 * rpn_loss_box
+        return total_loss, rpn_cross_entropy, rpn_loss_box
