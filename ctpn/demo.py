@@ -30,7 +30,7 @@ def save_results(image_name,im,line,thresh):
     for i in inds:
         bbox=line[i,:4]
         score=line[i,-1]
-        cv2.rectangle(im,(bbox[0],bbox[1]),(bbox[2],bbox[3]),color=(0,0,255),thickness=1)
+        cv2.rectangle(im,(bbox[0],bbox[1]),(bbox[2],bbox[3]),color=(0,255,0),thickness=2)
     image_name=image_name.split('/')[-1]
     cv2.imwrite(os.path.join("data/results",image_name),im)
 
