@@ -1,20 +1,10 @@
 # -*- coding:utf-8 -*-
-# --------------------------------------------------------
-# Faster R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick and Sean Bell
-# --------------------------------------------------------
-
 import numpy as np
 from .generate_anchors import generate_anchors
-
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from ..fast_rcnn.nms_wrapper import nms
-# <<<< obsolete
+
 
 
 DEBUG = False

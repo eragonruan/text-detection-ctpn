@@ -1,21 +1,7 @@
-# --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
-"""Transform a roidb into a trainable roidb by adding a bunch of metadata."""
-
 import numpy as np
-
 import PIL
-
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform
-# <<<< obsolete
 from lib.utils.bbox import bbox_overlaps
 
 def prepare_roidb(imdb):

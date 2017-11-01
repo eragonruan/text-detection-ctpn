@@ -1,33 +1,14 @@
 # -*- coding:utf-8 -*-
-# --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
-import xml.dom.minidom as minidom
-
 import os
-import PIL
 import numpy as np
 import scipy.sparse
-import subprocess
 import pickle
-import math
-import glob
 import uuid
 import scipy.io as sio
 import xml.etree.ElementTree as ET
-
 from .imdb import imdb
-from .imdb import ROOT_DIR
 from . import ds_utils
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
-# <<<< obsolete
-
 
 class pascal_voc(imdb):
     def __init__(self, image_set, year, devkit_path=None):
@@ -193,14 +174,6 @@ class pascal_voc(imdb):
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         tree = ET.parse(filename)
         objs = tree.findall('object')
-        # if not self.config['use_diff']:
-        #     # Exclude the samples labeled as difficult
-        #     non_diff_objs = [
-        #         obj for obj in objs if int(obj.find('difficult').text) == 0]
-        #     # if len(non_diff_objs) != len(objs):
-        #     #     print 'Removed {} difficult objects'.format(
-        #     #         len(objs) - len(non_diff_objs))
-        #     objs = non_diff_objs
         num_objs = len(objs)
 
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
@@ -249,7 +222,6 @@ class pascal_voc(imdb):
         return comp_id
 
     def _get_voc_results_file_template(self):
-        # VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
         filename = self._get_comp_id() + '_det_' + self._image_set + '_{:s}.txt'
         filedir = os.path.join(self._devkit_path, 'results', 'VOC' + self._year, 'Main')
         if not os.path.exists(filedir):

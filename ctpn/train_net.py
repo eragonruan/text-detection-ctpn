@@ -11,8 +11,6 @@ from lib.datasets.factory import get_imdb
 from lib.networks.factory import get_network
 from lib.fast_rcnn.config import cfg
 
-
-
 if __name__ == '__main__':
     cfg_from_file('ctpn/text.yml')
     print('Using config:')

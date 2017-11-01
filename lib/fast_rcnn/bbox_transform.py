@@ -1,5 +1,4 @@
 import numpy as np
-import warnings
 
 def bbox_transform(ex_rois, gt_rois):
     """

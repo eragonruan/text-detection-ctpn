@@ -1,24 +1,12 @@
 # -*- coding:utf-8 -*-
-# --------------------------------------------------------
-# Faster R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick and Sean Bell
-# --------------------------------------------------------
 import numpy as np
 import numpy.random as npr
-
 from .generate_anchors import generate_anchors
 from ..utils.bbox import bbox_overlaps, bbox_intersections
-
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform
-# <<<< obsolete
 
 DEBUG = False
-
 def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_info, _feat_stride = [16,], anchor_scales = [16,]):
     """
     Assign anchors to ground-truth targets. Produces anchor classification

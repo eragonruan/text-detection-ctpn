@@ -1,12 +1,4 @@
-# --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
 """Blob helper functions."""
-
 import numpy as np
 import cv2
 from ..fast_rcnn.config import cfg
