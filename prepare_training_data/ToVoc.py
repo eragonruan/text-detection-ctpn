@@ -5,7 +5,6 @@ import glob
 import shutil
 import numpy as np
 
-
 def generate_xml(name, lines, img_size, class_sets, doncateothers=True):
     doc = Document()
 

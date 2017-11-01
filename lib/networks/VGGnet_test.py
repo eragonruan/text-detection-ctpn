@@ -14,9 +14,6 @@ class VGGnet_test(Network):
         self.setup()
 
     def setup(self):
-        # n_classes = 21
-        n_classes = cfg.NCLASSES
-        # anchor_scales = [8, 16, 32]
         anchor_scales = cfg.ANCHOR_SCALES
         _feat_stride = [16, ]
 
@@ -43,18 +40,7 @@ class VGGnet_test(Network):
         (self.feed('rpn_conv/3x3').lstm(512, 128, name='lstm_o'))
         (self.feed('lstm_o').lstm_bbox(128, len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
         (self.feed('lstm_o').lstm_bbox(128, len(anchor_scales) * 10 * 2, name='rpn_cls_score'))
-        #(self.feed('lstm_o').fc_bbox(256, name='fc_box'))
-        #(self.feed('fc_box').fc_bbox(len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
-        #(self.feed('fc_box').fc_bbox(len(anchor_scales) * 10 * 2, name='rpn_cls_score'))
 
-        '''
-        (self.feed('conv5_3')
-         .conv(3, 3, 512, 1, 1, name='rpn_conv/3x3')
-         .conv(1, 1, len(anchor_scales) * 10 * 2, 1, 1, padding='VALID', relu=False, name='rpn_cls_score'))
-
-        (self.feed('rpn_conv/3x3')
-         .conv_rpn(1, 1, len(anchor_scales) * 10 * 4, 1, 1, padding='VALID', relu=False, name='rpn_bbox_pred'))
-        '''
         #  shape is (1, H, W, Ax2) -> (1, H, WxA, 2)
         (self.feed('rpn_cls_score')
          .spatial_reshape_layer(2, name='rpn_cls_score_reshape')
@@ -66,16 +52,3 @@ class VGGnet_test(Network):
 
         (self.feed('rpn_cls_prob_reshape', 'rpn_bbox_pred', 'im_info')
          .proposal_layer(_feat_stride, anchor_scales, 'TEST', name='rois'))
-
-
-        '''
-        (self.feed('conv5_3', 'rois')
-         .roi_pool(7, 7, 1.0 / 16, name='pool_5')
-         .fc(4096, name='fc6')
-         .fc(4096, name='fc7')
-         .fc(n_classes, relu=False, name='cls_score')
-         .softmax(name='cls_prob'))
-
-        (self.feed('fc7')
-         .fc(n_classes * 4, relu=False, name='bbox_pred'))
-        '''

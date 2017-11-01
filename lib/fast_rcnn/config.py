@@ -1,21 +1,3 @@
-# --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
-"""Fast R-CNN config system.
-
-This file specifies default config options for Fast R-CNN. You should not
-change values in this file. Instead, you should write a config file (in yaml)
-and use cfg_from_file(yaml_file) to load it and override the default options.
-
-Most tools in $ROOT/tools take a --cfg option to specify an override file.
-    - See tools/{train,test}_net.py for example code that uses cfg_from_file()
-    - See experiments/cfgs/*.yml for example YAML config override files
-"""
-
 import os
 import os.path as osp
 import numpy as np
@@ -23,19 +5,16 @@ from time import strftime, localtime
 from easydict import EasyDict as edict
 
 __C = edict()
-# Consumers can get config by:
-#   from fast_rcnn_config import cfg
 cfg = __C
 
-#
-# Training options
-#
+# Default GPU device id
+__C.GPU_ID = 0
 
-# region proposal network (RPN) or not
+# Training options
 __C.IS_RPN = True
 __C.ANCHOR_SCALES = [16]
 __C.NCLASSES = 2
-
+__C.USE_GPU_NMS = True
 # multiscale training and testing
 __C.IS_MULTISCALE = False
 __C.IS_EXTRAPOLATING = True
@@ -61,19 +40,8 @@ __C.TRAIN.RANDOM_DOWNSAMPLE = False
 
 # Scales to compute real features
 __C.TRAIN.SCALES_BASE = (0.25, 0.5, 1.0, 2.0, 3.0)
-# __C.TRAIN.SCALES_BASE = (1.0,)
-
-# parameters for ROI generating
-#__C.TRAIN.SPATIAL_SCALE = 0.0625
 __C.TRAIN.KERNEL_SIZE = 5
-
-# Aspect ratio to use during training
-# __C.TRAIN.ASPECTS = (1, 0.75, 0.5, 0.25)
 __C.TRAIN.ASPECTS= (1,)
-
-
-# Scales to use during training (can list multiple scales)
-# Each scale is the pixel size of an image's shortest side
 __C.TRAIN.SCALES = (600,)
 
 # Max pixel size of the longest side of a scaled input image
@@ -254,8 +222,7 @@ __C.LOG_DIR = 'default'
 # Use GPU implementation of non-maximum suppression
 __C.USE_GPU_NMS = True
 
-# Default GPU device id
-__C.GPU_ID = 0
+
 
 def get_output_dir(imdb, weights_filename):
     """Return the directory where experimental artifacts are placed.

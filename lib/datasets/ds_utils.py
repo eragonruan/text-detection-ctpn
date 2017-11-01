@@ -1,9 +1,3 @@
-# --------------------------------------------------------
-# Fast/er R-CNN
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
 import numpy as np
 
 def unique_boxes(boxes, scale=1.0):

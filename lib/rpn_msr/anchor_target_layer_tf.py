@@ -1,27 +1,12 @@
 # -*- coding:utf-8 -*-
-# --------------------------------------------------------
-# Faster R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick and Sean Bell
-# --------------------------------------------------------
-
-import os
-import yaml
 import numpy as np
 import numpy.random as npr
-
 from .generate_anchors import generate_anchors
 from ..utils.bbox import bbox_overlaps, bbox_intersections
-
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform
-# <<<< obsolete
 
 DEBUG = False
-
 def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_info, _feat_stride = [16,], anchor_scales = [16,]):
     """
     Assign anchors to ground-truth targets. Produces anchor classification
@@ -269,7 +254,6 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
         print('rpn: num_negative avg', _bg_sum / _count)
 
     # labels
-    #pdb.set_trace()
     labels = labels.reshape((1, height, width, A))#reshap一下label
     rpn_labels = labels
 
@@ -281,17 +265,12 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     # bbox_inside_weights
     bbox_inside_weights = bbox_inside_weights \
         .reshape((1, height, width, A * 4))
-    #assert bbox_inside_weights.shape[2] == height
-    #assert bbox_inside_weights.shape[3] == width
 
     rpn_bbox_inside_weights = bbox_inside_weights
 
     # bbox_outside_weights
     bbox_outside_weights = bbox_outside_weights \
         .reshape((1, height, width, A * 4))
-    #assert bbox_outside_weights.shape[2] == height
-    #assert bbox_outside_weights.shape[3] == width
-
     rpn_bbox_outside_weights = bbox_outside_weights
 
     return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights

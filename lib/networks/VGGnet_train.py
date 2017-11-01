@@ -45,28 +45,13 @@ class VGGnet_train(Network):
              .conv(3, 3, 512, 1, 1, name='conv5_2')
              .conv(3, 3, 512, 1, 1, name='conv5_3'))
         #========= RPN ============
-        # zai 5-3 te zheng ceng yong yi ge 3*3 de huan dong chuan kou
         (self.feed('conv5_3')
              .conv(3,3,512,1,1,name='rpn_conv/3x3'))
-
 
         (self.feed('rpn_conv/3x3').lstm(512,128,name='lstm_o'))
         (self.feed('lstm_o').lstm_bbox(128,len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
         (self.feed('lstm_o').lstm_bbox(128,len(anchor_scales) * 10 * 2,name='rpn_cls_score'))
-        #(self.feed('lstm_o').fc_bbox(256, name='fc_box'))
-        #(self.feed('fc_box').fc_bbox(len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
-        #(self.feed('fc_box').fc_bbox(len(anchor_scales) * 10 * 2, name='rpn_cls_score'))
 
-        # Loss of rpn_cls & rpn_boxes
-        # shape is (1, H, W, A x 4) and (1, H, W, A x 2)
-        # 加入全卷积层，用来预测anchor的相对位置，也即delta
-        '''
-        (self.feed('rpn_conv/3x3')
-             .conv_rpn(1,1,len(anchor_scales) * 10 * 4, 1, 1, padding='VALID', relu = False, name='rpn_bbox_pred'))
-        # 加入全卷积层，用来预测每一个delta的得分，object和non-object两个得分
-        (self.feed('rpn_conv/3x3')
-             .conv(1, 1, len(anchor_scales) * 10 * 2, 1, 1, padding='VALID', relu=False, name='rpn_cls_score'))
-        '''
         # generating training labels on the fly
         # output: rpn_labels(HxWxA, 2) rpn_bbox_targets(HxWxA, 4) rpn_bbox_inside_weights rpn_bbox_outside_weights
         # 给每个anchor上标签，并计算真值（也是delta的形式），以及内部权重和外部权重
@@ -78,19 +63,3 @@ class VGGnet_train(Network):
         (self.feed('rpn_cls_score')
              .spatial_reshape_layer(2, name = 'rpn_cls_score_reshape')
              .spatial_softmax(name='rpn_cls_prob'))
-
-        # shape is (1, H, WxA, 2) -> (1, H, W, Ax2)
-        #把得分reshape回正常的shape
-        (self.feed('rpn_cls_prob')
-             .spatial_reshape_layer(len(anchor_scales)*10*2, name = 'rpn_cls_prob_reshape'))
-
-        # 生成固定anchor，并给所有的anchor加上之前得到的rpn-bbox-pred，也就是delta
-        # 在做nms之类的处理，最后得到2000个rpn-rois
-        (self.feed('rpn_cls_prob_reshape','rpn_bbox_pred','im_info')
-             .proposal_layer(_feat_stride, anchor_scales, 'TRAIN', name = 'rpn_rois_data'))
-
-        # matching boxes and groundtruth,
-        # and randomly sample some rois and labels for RCNN
-        # 在之前生成的2000个proposal中挑选一部分，并上标签，准备送入rcnn
-        (self.feed('rpn_rois','rpn_targets','gt_boxes', 'gt_ishard', 'dontcare_areas')
-             .proposal_target_layer(n_classes,name = 'roi-data'))

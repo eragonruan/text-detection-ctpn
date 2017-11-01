@@ -1,22 +1,10 @@
 # -*- coding:utf-8 -*-
-# --------------------------------------------------------
-# Faster R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick and Sean Bell
-# --------------------------------------------------------
-
 import numpy as np
-import yaml
-
 from .generate_anchors import generate_anchors
-
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
 from ..fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
 from ..fast_rcnn.nms_wrapper import nms
-# <<<< obsolete
+
 
 
 DEBUG = False
@@ -79,10 +67,6 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
                         [1, height, width, _num_anchors])
     #提取到object的分数，non-object的我们不关心
     #并reshape到1*H*W*9
-
-    # TODO: NOTICE: the old version is ordered by (1, H, W, 2, A) !!!!
-    # TODO: if you use the old trained model, VGGnet_fast_rcnn_iter_70000.ckpt, uncomment this line
-    # scores = rpn_cls_prob_reshape[:,:,:,_num_anchors:]
 
     bbox_deltas = rpn_bbox_pred#模型输出的pred是相对值，需要进一步处理成真实图像中的坐标
     #im_info = bottom[2].data[0, :]
@@ -170,21 +154,9 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     # Our RPN implementation only supports a single input image, so all
     # batch inds are 0
     blob = np.hstack((scores.astype(np.float32, copy=False), proposals.astype(np.float32, copy=False)))
-    '''
-    if cfg_key == 'TEST':
-        blob = np.hstack((scores.astype(np.float32, copy=False), proposals.astype(np.float32, copy=False)))
-    else:
-        batch_inds = np.zeros((proposals.shape[0], 1), dtype=np.float32)  # 返回最后的rois
-        blob = np.hstack((batch_inds, proposals.astype(np.float32, copy=False)))
-    '''
-    return blob,bbox_deltas
-    #top[0].reshape(*(blob.shape))
-    #top[0].data[...] = blob
 
-    # [Optional] output scores blob
-    #if len(top) > 1:
-    #    top[1].reshape(*(scores.shape))
-    #    top[1].data[...] = scores
+    return blob,bbox_deltas
+
 
 def _filter_boxes(boxes, min_size):
     """Remove all boxes with any side smaller than min_size."""
