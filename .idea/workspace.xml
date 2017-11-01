@@ -2,38 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ce69bde4-1799-4078-9c5a-3e278c846213" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/007.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/010.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/011.JPG" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/012.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/013.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/014.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/demo/015.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/006.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/007.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/010.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/012.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/013.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/014.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/015.jpg" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/002.jpg" afterPath="$PROJECT_DIR$/data/demo/002.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/003.jpg" afterPath="$PROJECT_DIR$/data/demo/003.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/004.jpg" afterPath="$PROJECT_DIR$/data/demo/004.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/005.jpg" afterPath="$PROJECT_DIR$/data/demo/005.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/006.jpg" afterPath="$PROJECT_DIR$/data/demo/006.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/008.jpg" afterPath="$PROJECT_DIR$/data/demo/008.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/demo/009.jpg" afterPath="$PROJECT_DIR$/data/demo/009.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/001.jpg" afterPath="$PROJECT_DIR$/data/results/001.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/002.jpg" afterPath="$PROJECT_DIR$/data/results/002.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/003.jpg" afterPath="$PROJECT_DIR$/data/results/003.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/004.jpg" afterPath="$PROJECT_DIR$/data/results/004.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/005.jpg" afterPath="$PROJECT_DIR$/data/results/005.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/008.jpg" afterPath="$PROJECT_DIR$/data/results/008.jpg" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/009.jpg" afterPath="$PROJECT_DIR$/data/results/009.jpg" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/img_75.jpg" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/demo.py" afterPath="$PROJECT_DIR$/ctpn/demo.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/text.yml" afterPath="$PROJECT_DIR$/ctpn/text.yml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/fast_rcnn/config.py" afterPath="$PROJECT_DIR$/lib/fast_rcnn/config.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/fast_rcnn/nms_wrapper.py" afterPath="$PROJECT_DIR$/lib/fast_rcnn/nms_wrapper.py" />
     </list>
     <ignored path="untitled.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -56,8 +26,8 @@
       <file leaf-file-name="demo.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="295">
-              <caret line="32" column="75" lean-forward="false" selection-start-line="32" selection-start-column="75" selection-end-line="32" selection-end-column="75" />
+            <state relative-caret-position="460">
+              <caret line="91" column="57" lean-forward="false" selection-start-line="91" selection-start-column="57" selection-end-line="91" selection-end-column="57" />
               <folding />
             </state>
           </provider>
@@ -582,7 +552,7 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32990655" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36635515" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36635515" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32984293" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -1073,8 +1043,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="295">
-          <caret line="32" column="75" lean-forward="false" selection-start-line="32" selection-start-column="75" selection-end-line="32" selection-end-column="75" />
+        <state relative-caret-position="460">
+          <caret line="91" column="57" lean-forward="false" selection-start-line="91" selection-start-column="57" selection-end-line="91" selection-end-column="57" />
           <folding />
         </state>
       </provider>

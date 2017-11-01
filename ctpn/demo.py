@@ -89,7 +89,7 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
 
     try:
-        ckpt = tf.train.get_checkpoint_state("output/ctpn_end2end/voc_2007_trainval/")
+        ckpt = tf.train.get_checkpoint_state("checkpoints/")
         print('Restoring from {}...'.format(ckpt.model_checkpoint_path), end=' ')
         saver.restore(sess, ckpt.model_checkpoint_path)
         print('done')
