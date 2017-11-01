@@ -25,6 +25,7 @@ ln -s TEXTVOC VOCdevkit2007
 # demo
 - to run the demo, you have to build nms implement in cython or cuda first
 - you can change USE_GPU_NMS in ctpn/text.yml to decide whether to use gpu nms or cython nms
+- You can modify lib/utils/setup.py if you do not want build nms implemented in cuda.
 ```shell
 cd lib/utils
 chmod +x make.sh
@@ -61,5 +62,5 @@ you can modify some hyper parameters in ctpn/text.yml, or just used the paramete
 `NOTICE:` all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
 <img src="/data/results/001.jpg" width=320 height=240 /><img src="/data/results/004.jpg" width=320 height=240 />
 <img src="/data/results/006.jpg" width=320 height=480 /><img src="/data/results/009.jpg" width=320 height=480 />
-<img src="/data/results/008.jpg" width=320 height=480 /><img src="/data/results/010.jpg" width=320 height=320 />
+<img src="/data/results/008.jpg" width=320 height=480 /><img src="/data/results/010.png" width=320 height=320 />
 ***
