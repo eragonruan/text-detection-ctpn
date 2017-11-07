@@ -26,6 +26,7 @@ __C.SUBCLS_NAME = 'voxel_exemplars'
 
 __C.TRAIN = edict()
 # Adam, Momentum, RMS
+__C.TRAIN.restore = 0
 __C.TRAIN.SOLVER = 'Momentum'
 # learning rate
 __C.TRAIN.WEIGHT_DECAY = 0.0005
@@ -143,7 +144,7 @@ __C.TRAIN.RPN_POSITIVE_WEIGHT = -1.0
 #
 
 __C.TEST = edict()
-
+__C.TEST.checkpoints_path = "checkpoints/"
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
 __C.TEST.SCALES = (600,)

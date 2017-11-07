@@ -7,7 +7,7 @@ import shutil
 sys.path.append(os.getcwd())
 
 from lib.networks.factory import get_network
-from lib.fast_rcnn.config import cfg
+from lib.fast_rcnn.config import cfg,cfg_from_file
 from lib.fast_rcnn.test import test_ctpn
 from lib.fast_rcnn.nms_wrapper import nms
 from lib.utils.timer import Timer
@@ -77,8 +77,8 @@ if __name__ == '__main__':
         shutil.rmtree("data/results/")
     os.makedirs("data/results/")
 
-    cfg.TEST.HAS_RPN = True  # Use RPN for proposals
-    #cfg.GPU_ID = 1
+    cfg_from_file('ctpn/text.yml')
+
     # init session
     config = tf.ConfigProto(allow_soft_placement=True)
     sess = tf.Session(config=config)
@@ -89,7 +89,8 @@ if __name__ == '__main__':
     saver = tf.train.Saver()
 
     try:
-        ckpt = tf.train.get_checkpoint_state("checkpoints/")
+        ckpt = tf.train.get_checkpoint_state(cfg.TEST.checkpoints_path)
+        #ckpt=tf.train.get_checkpoint_state("output/ctpn_end2end/voc_2007_trainval/")
         print('Restoring from {}...'.format(ckpt.model_checkpoint_path), end=' ')
         saver.restore(sess, ckpt.model_checkpoint_path)
         print('done')

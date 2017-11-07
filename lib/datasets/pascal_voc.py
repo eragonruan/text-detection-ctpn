@@ -2,7 +2,11 @@
 import os
 import numpy as np
 import scipy.sparse
-import pickle
+try:
+    import cPickle as pickle
+except:
+    import pickle
+#import pickle
 import uuid
 import scipy.io as sio
 import xml.etree.ElementTree as ET
