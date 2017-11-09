@@ -22,20 +22,33 @@ def connect_proposal(text_proposals, scores, im_size):
     line = cp.get_text_lines(text_proposals, scores, im_size)
     return line
 
-def save_results(image_name,im,line,thresh):
+def save_results(image_name,im,im_scale,line,thresh):
     inds=np.where(line[:,-1]>=thresh)[0]
+    image_name=image_name.split('/')[-1]
     if len(inds)==0:
+        im = cv2.resize(im, None, None, fx=1.0/im_scale, fy=1.0/im_scale, interpolation=cv2.INTER_LINEAR)
+        cv2.imwrite(os.path.join("data/results",image_name),im)
         return 
 
     for i in inds:
         bbox=line[i,:4]
         score=line[i,-1]
         cv2.rectangle(im,(bbox[0],bbox[1]),(bbox[2],bbox[3]),color=(0,255,0),thickness=2)
-    image_name=image_name.split('/')[-1]
+    im = cv2.resize(im, None, None, fx=1.0/im_scale, fy=1.0/im_scale, interpolation=cv2.INTER_LINEAR)
     cv2.imwrite(os.path.join("data/results",image_name),im)
 
 
-def check_img(im):
+def check_img(img):
+    img_size = img.shape
+    im_size_min = np.min(img_size[0:2])
+    im_size_max = np.max(img_size[0:2])
+
+    im_scale = float(600) / float(im_size_min)
+    if np.round(im_scale * im_size_max) > 1200:
+        im_scale = float(1200) / float(im_size_max)
+    re_im = cv2.resize(img, None, None, fx=im_scale, fy=im_scale, interpolation=cv2.INTER_LINEAR)
+    return re_im, im_scale
+    '''
     im_size = im.shape
     if max(im_size[0:2]) < 600:
         img = np.zeros((600, 600, 3), dtype=np.uint8)
@@ -47,11 +60,12 @@ def check_img(im):
         return img
     else:
         return im
+    '''
 
 
 def ctpn(sess, net, image_name):
     img = cv2.imread(image_name)
-    im = check_img(img)
+    im, im_scale = check_img(img)
     timer = Timer()
     timer.tic()
     scores, boxes = test_ctpn(sess, net, im)
@@ -69,7 +83,7 @@ def ctpn(sess, net, image_name):
     keep = np.where(dets[:, 4] >= 0.7)[0]
     dets = dets[keep, :]
     line = connect_proposal(dets[:, 0:4], dets[:, 4], im.shape)
-    save_results(image_name, im, line,thresh=0.9)
+    save_results(image_name, im,im_scale, line,thresh=0.9)
 
 
 if __name__ == '__main__':
