@@ -1,6 +1,6 @@
 import numpy as np
 from .config import cfg
-from ..utils.nms import nms
+from ..utils.cython_nms import nms as cython_nms
 from lib.utils.gpu_nms import gpu_nms
 
 def nms(dets, thresh):
@@ -9,4 +9,4 @@ def nms(dets, thresh):
     if cfg.USE_GPU_NMS:
         return gpu_nms(dets, thresh, device_id=cfg.GPU_ID)
     else:
-        return nms(dets, thresh)
+        return cython_nms(dets, thresh)

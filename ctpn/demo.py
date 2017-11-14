@@ -48,19 +48,6 @@ def check_img(img):
         im_scale = float(1200) / float(im_size_max)
     re_im = cv2.resize(img, None, None, fx=im_scale, fy=im_scale, interpolation=cv2.INTER_LINEAR)
     return re_im, im_scale
-    '''
-    im_size = im.shape
-    if max(im_size[0:2]) < 600:
-        img = np.zeros((600, 600, 3), dtype=np.uint8)
-        start_row = int((600 - im_size[0]) / 2)
-        start_col = int((600 - im_size[1]) / 2)
-        end_row = start_row + im_size[0]
-        end_col = start_col + im_size[1]
-        img[start_row:end_row, start_col:end_col, :] = im
-        return img
-    else:
-        return im
-    '''
 
 
 def ctpn(sess, net, image_name):
