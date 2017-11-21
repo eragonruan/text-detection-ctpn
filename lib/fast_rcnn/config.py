@@ -145,6 +145,7 @@ __C.TRAIN.RPN_POSITIVE_WEIGHT = -1.0
 
 __C.TEST = edict()
 __C.TEST.checkpoints_path = "checkpoints/"
+__C.TEST.DETECT_MODE = "H"#H/O for horizontal/oriented mode
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
 __C.TEST.SCALES = (600,)
