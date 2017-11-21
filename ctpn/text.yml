@@ -15,7 +15,7 @@ TRAIN:
   DISPLAY: 10
   SNAPSHOT_ITERS: 1000
   HAS_RPN: True
-  LEARNING_RATE: 0.0001
+  LEARNING_RATE: 0.00001
   MOMENTUM: 0.9
   GAMMA: 0.1
   STEPSIZE: 200000
@@ -32,6 +32,6 @@ TRAIN:
   WEIGHT_DECAY: 0.0005
 TEST:
   HAS_RPN: True
-  DETECT_MODE: O
+  DETECT_MODE: H
   checkpoints_path: checkpoints/
   #checkpoints_path: output/ctpn_end2end/voc_2007_trainval
