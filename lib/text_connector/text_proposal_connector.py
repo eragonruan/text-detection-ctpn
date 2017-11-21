@@ -1,11 +1,8 @@
 import numpy as np
-from other import clip_boxes
-from text_proposal_graph_builder import TextProposalGraphBuilder
+from .other import clip_boxes
+from .text_proposal_graph_builder import TextProposalGraphBuilder
 
 class TextProposalConnector:
-    """
-        Connect text proposals into text lines
-    """
     def __init__(self):
         self.graph_builder=TextProposalGraphBuilder()
 
@@ -49,4 +46,19 @@ class TextProposalConnector:
 
         text_lines=clip_boxes(text_lines, im_size)
 
-        return text_lines
+        text_recs = np.zeros((len(text_lines), 9), np.float)
+        index = 0
+        for line in text_lines:
+            xmin,ymin,xmax,ymax=line[0],line[1],line[2],line[3]
+            text_recs[index, 0] = xmin
+            text_recs[index, 1] = ymin
+            text_recs[index, 2] = xmax
+            text_recs[index, 3] = ymin
+            text_recs[index, 4] = xmin
+            text_recs[index, 5] = ymax
+            text_recs[index, 6] = xmax
+            text_recs[index, 7] = ymax
+            text_recs[index, 8] = line[4]
+            index = index + 1
+
+        return text_recs

@@ -32,5 +32,6 @@ TRAIN:
   WEIGHT_DECAY: 0.0005
 TEST:
   HAS_RPN: True
+  DETECT_MODE: O
   checkpoints_path: checkpoints/
   #checkpoints_path: output/ctpn_end2end/voc_2007_trainval
