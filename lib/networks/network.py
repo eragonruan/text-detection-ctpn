@@ -86,7 +86,7 @@ class Network(object):
     def validate_padding(self, padding):
         assert padding in ('SAME', 'VALID')
 
-
+    '''
     @layer
     def lstm(self, input, d_i, d_h, name,trainable=True):
         input_shape = tf.shape(input)
@@ -105,7 +105,8 @@ class Network(object):
             _istate = lstm_cell.zero_state(batch_size, dtype='float32')
             _LSTM_O, _LSTM_S = tf.contrib.rnn.static_rnn(lstm_cell, _Hsplit, initial_state=_istate)
             return tf.reshape(_LSTM_O[-1],[input_shape[0],input_shape[1],input_shape[2],int(d_h)])
-
+    
+    
     @layer
     def lstm_bbox(self, input,d_h, d_o, name, trainable=True):
         input_shape = tf.shape(input)
@@ -119,6 +120,55 @@ class Network(object):
 
             _O = tf.matmul(input, kernel) + biases
             return tf.reshape(_O, [input_shape[0], input_shape[1], input_shape[2], int(d_o)])
+            
+    '''
+
+    @layer
+    def lstm(self, input, d_i,d_h,d_o, name, trainable=True):
+        img = input[0]
+        im_info=input[1]
+
+        with tf.variable_scope(name) as scope:
+            shape = tf.shape(img)
+            N,H,W,C = shape[0], shape[1],shape[2], shape[3]
+            img = tf.reshape(img,[N*H,W,C])
+            img.set_shape([None,None,d_i])
+
+            lstm_cell = tf.contrib.rnn.LSTMCell(d_h, state_is_tuple=True)
+            initial_state = lstm_cell.zero_state(N*H, dtype=tf.float32)
+
+            lstm_out, last_state = tf.nn.dynamic_rnn(lstm_cell, img,
+                                               initial_state=initial_state,dtype=tf.float32)
+
+            lstm_out = tf.reshape(lstm_out,[N*H*W,d_h])
+
+
+            init_weights = tf.truncated_normal_initializer(stddev=0.1)
+            init_biases = tf.constant_initializer(0.0)
+            weights = self.make_var('weights', [d_h, d_o], init_weights, trainable, \
+                              regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
+            biases = self.make_var('biases', [d_o], init_biases, trainable)
+            outputs = tf.matmul(lstm_out, weights) + biases
+
+
+            outputs = tf.reshape(outputs, [N,H,W,d_o])
+            return outputs
+
+    @layer
+    def lstm_fc(self, input, d_i, d_o, name, trainable=True):
+        with tf.variable_scope(name) as scope:
+            shape = tf.shape(input)
+            N, H, W, C = shape[0], shape[1], shape[2], shape[3]
+            input = tf.reshape(input, [N*H*W,C])
+
+            init_weights = tf.truncated_normal_initializer(0.0, stddev=0.01)
+            init_biases = tf.constant_initializer(0.0)
+            kernel = self.make_var('weights', [d_i, d_o], init_weights, trainable,
+                                   regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
+            biases = self.make_var('biases', [d_o], init_biases, trainable)
+
+            _O = tf.matmul(input, kernel) + biases
+            return tf.reshape(_O, [N, H, W, int(d_o)])
 
     @layer
     def conv(self, input, k_h, k_w, c_o, s_h, s_w, name, biased=True,relu=True, padding=DEFAULT_PADDING, trainable=True):

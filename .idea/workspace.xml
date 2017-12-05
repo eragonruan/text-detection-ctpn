@@ -2,25 +2,30 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ce69bde4-1799-4078-9c5a-3e278c846213" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ctpn/cfg.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ctpn/other.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ctpn/text_proposal_connector.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ctpn/text_proposal_graph_builder.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_50000.ckpt.data-00000-of-00001" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_50000.ckpt.index" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_50000.ckpt.meta" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/001.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/002.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/003.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/004.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/005.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/006.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/007.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/008.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/009.jpg" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/010.png" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/007.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/007.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/008.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/008.jpg" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/__init__.py" afterPath="$PROJECT_DIR$/ctpn/__init__.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/checkpoints/checkpoint" afterPath="$PROJECT_DIR$/checkpoints/checkpoint" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/demo.py" afterPath="$PROJECT_DIR$/ctpn/demo.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/text.yml" afterPath="$PROJECT_DIR$/ctpn/text.yml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/__init__.py" afterPath="$PROJECT_DIR$/lib/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/fast_rcnn/config.py" afterPath="$PROJECT_DIR$/lib/fast_rcnn/config.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/train_net.py" afterPath="$PROJECT_DIR$/ctpn/train_net.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/networks/VGGnet_test.py" afterPath="$PROJECT_DIR$/lib/networks/VGGnet_test.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/networks/VGGnet_train.py" afterPath="$PROJECT_DIR$/lib/networks/VGGnet_train.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/networks/network.py" afterPath="$PROJECT_DIR$/lib/networks/network.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py" afterPath="$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py" />
     </list>
     <ignored path="untitled.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -43,18 +48,58 @@
       <file leaf-file-name="text.yml" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ctpn/text.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="506">
-              <caret line="34" column="16" lean-forward="false" selection-start-line="34" selection-start-column="16" selection-end-line="34" selection-end-column="16" />
+            <state relative-caret-position="460">
+              <caret line="36" column="3" lean-forward="false" selection-start-line="36" selection-start-column="3" selection-end-line="36" selection-end-column="3" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="text_proposal_connector.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector.py">
+      <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="143">
-              <caret line="48" column="59" lean-forward="false" selection-start-line="48" selection-start-column="59" selection-end-line="48" selection-end-column="59" />
+            <state relative-caret-position="-2185">
+              <caret line="17" column="36" lean-forward="false" selection-start-line="17" selection-start-column="36" selection-end-line="17" selection-end-column="36" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="VGGnet_train.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="253">
+              <caret line="50" column="8" lean-forward="false" selection-start-line="50" selection-start-column="8" selection-end-line="52" selection-end-column="91" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="VGGnet_test.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="203">
+              <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="network.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="159">
+              <caret line="161" column="48" lean-forward="false" selection-start-line="161" selection-start-column="48" selection-end-line="161" selection-end-column="48" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="demo.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="356">
+              <caret line="31" column="83" lean-forward="false" selection-start-line="31" selection-start-column="83" selection-end-line="31" selection-end-column="83" />
               <folding />
             </state>
           </provider>
@@ -63,45 +108,9 @@
       <file leaf-file-name="text_connect_cfg.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="230">
-              <caret line="10" column="22" lean-forward="false" selection-start-line="10" selection-start-column="22" selection-end-line="10" selection-end-column="22" />
+            <state relative-caret-position="184">
+              <caret line="8" column="32" lean-forward="false" selection-start-line="8" selection-start-column="32" selection-end-line="8" selection-end-column="32" />
               <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="detectors.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/text_connector/detectors.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="364">
-              <caret line="43" column="71" lean-forward="false" selection-start-line="43" selection-start-column="71" selection-end-line="43" selection-end-column="71" />
-              <folding>
-                <element signature="e#14#32#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="text_proposal_connector_oriented.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector_oriented.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="235">
-              <caret line="62" column="60" lean-forward="false" selection-start-line="62" selection-start-column="20" selection-end-line="62" selection-end-column="60" />
-              <folding>
-                <element signature="e#14#32#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="demo.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="410">
-              <caret line="30" column="8" lean-forward="false" selection-start-line="30" selection-start-column="8" selection-end-line="30" selection-end-column="8" />
-              <folding>
-                <element signature="e#0#37#0" expanded="true" />
-              </folding>
             </state>
           </provider>
         </entry>
@@ -140,6 +149,7 @@
       <find>ROOT_DIR</find>
       <find>CLASSES</find>
       <find>Graph</find>
+      <find>im_info</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -151,9 +161,6 @@
         <option value="$PROJECT_DIR$/lib/utils/__init__.py" />
         <option value="$PROJECT_DIR$/lib/utils/setup.py" />
         <option value="$PROJECT_DIR$/lib/rpn_msr/proposal_target_layer_tf.py" />
-        <option value="$PROJECT_DIR$/lib/networks/VGGnet_test.py" />
-        <option value="$PROJECT_DIR$/lib/networks/VGGnet_train.py" />
-        <option value="$PROJECT_DIR$/lib/networks/network.py" />
         <option value="$PROJECT_DIR$/ctpn/text_proposal_graph_builder.py" />
         <option value="$PROJECT_DIR$/lib/datasets/ds_utils.py" />
         <option value="$PROJECT_DIR$/lib/datasets/factory.py" />
@@ -178,7 +185,6 @@
         <option value="$PROJECT_DIR$/prepare_training_data/ToVoc.py" />
         <option value="$PROJECT_DIR$/lib/fast_rcnn/train.py" />
         <option value="$PROJECT_DIR$/lib/datasets/__init__.py" />
-        <option value="$PROJECT_DIR$/ctpn/train_net.py" />
         <option value="$PROJECT_DIR$/lib/fast_rcnn/nms_wrapper.py" />
         <option value="$PROJECT_DIR$/ctpn/__init__.py" />
         <option value="$PROJECT_DIR$/lib/__init__.py" />
@@ -196,6 +202,10 @@
         <option value="$PROJECT_DIR$/lib/text_connector/text_proposal_connector_oriented.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/text_proposal_connector.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/detectors.py" />
+        <option value="$PROJECT_DIR$/lib/networks/VGGnet_train.py" />
+        <option value="$PROJECT_DIR$/lib/networks/network.py" />
+        <option value="$PROJECT_DIR$/lib/networks/VGGnet_test.py" />
+        <option value="$PROJECT_DIR$/ctpn/train_net.py" />
         <option value="$PROJECT_DIR$/ctpn/demo.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py" />
         <option value="$PROJECT_DIR$/ctpn/text.yml" />
@@ -203,10 +213,10 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1504" />
-    <option name="y" value="-11" />
-    <option name="width" value="1857" />
-    <option name="height" value="1212" />
+    <option name="x" value="1505" />
+    <option name="y" value="-4" />
+    <option name="width" value="1855" />
+    <option name="height" value="1204" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -352,7 +362,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../DataSet/ICDAR" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -557,10 +567,10 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1504" y="-11" width="1857" height="1212" extended-state="6" />
+    <frame x="1505" y="-4" width="1855" height="1204" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.29196677" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30360112" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32990655" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -653,14 +663,9 @@
           <option name="timeStamp" value="32" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/lib/text_connector/detectors.py</url>
-          <line>41</line>
-          <option name="timeStamp" value="33" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/lib/text_connector/detectors.py</url>
-          <line>21</line>
-          <option name="timeStamp" value="34" />
+          <url>file://$PROJECT_DIR$/ctpn/demo.py</url>
+          <line>28</line>
+          <option name="timeStamp" value="35" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -670,7 +675,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="35" />
+      <option name="time" value="36" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -688,27 +693,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="46">
           <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2153">
-          <caret line="362" column="55" lean-forward="false" selection-start-line="362" selection-start-column="55" selection-end-line="362" selection-end-column="55" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="15" column="20" lean-forward="false" selection-start-line="15" selection-start-column="20" selection-end-line="15" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="696">
-          <caret line="46" column="35" lean-forward="true" selection-start-line="46" selection-start-column="35" selection-end-line="46" selection-end-column="35" />
         </state>
       </provider>
     </entry>
@@ -737,13 +721,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/anchor_target_layer_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2300">
-          <caret line="8" column="13" lean-forward="false" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
         </state>
       </provider>
     </entry>
@@ -824,30 +801,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="17" column="36" lean-forward="false" selection-start-line="17" selection-start-column="36" selection-end-line="17" selection-end-column="36" />
-          <folding>
-            <element signature="e#0#37#0" expanded="false" />
-            <marker date="1509539910929" expanded="true" signature="299:9136" ph="..." />
-            <marker date="1509539910929" expanded="true" signature="6317:7616" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/lib/datasets/factory.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="460">
           <caret line="20" column="0" lean-forward="false" selection-start-line="20" selection-start-column="0" selection-end-line="20" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="69">
-          <caret line="5" column="5" lean-forward="false" selection-start-line="5" selection-start-column="5" selection-end-line="5" selection-end-column="5" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -856,9 +813,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="23">
           <caret line="1" column="26" lean-forward="false" selection-start-line="1" selection-start-column="26" selection-end-line="1" selection-end-column="26" />
-          <folding>
-            <element signature="e#0#37#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -877,93 +831,26 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/text_connect/other.py" />
-    <entry file="file://$PROJECT_DIR$/ctpn/cfg.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="138">
-          <caret line="6" column="0" lean-forward="true" selection-start-line="6" selection-start-column="0" selection-end-line="6" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connect/text_proposal_connector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="857">
-          <caret line="65" column="0" lean-forward="true" selection-start-line="65" selection-start-column="0" selection-end-line="65" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connect/detectors.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-575">
-          <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connect/text_proposal_graph_builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="207">
-          <caret line="9" column="21" lean-forward="false" selection-start-line="9" selection-start-column="21" selection-end-line="9" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connect/text_connect_cfg.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connect/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="46">
-          <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/cfg.py" />
+    <entry file="file://$PROJECT_DIR$/lib/text_connect/text_proposal_connector.py" />
+    <entry file="file://$PROJECT_DIR$/lib/text_connect/detectors.py" />
+    <entry file="file://$PROJECT_DIR$/lib/text_connect/text_proposal_graph_builder.py" />
+    <entry file="file://$PROJECT_DIR$/lib/text_connect/text_connect_cfg.py" />
+    <entry file="file://$PROJECT_DIR$/lib/text_connect/__init__.py" />
     <entry file="file://$PROJECT_DIR$/lib/text_connector/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#35#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/text_proposal_graph_builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1196">
-          <caret line="53" column="57" lean-forward="false" selection-start-line="53" selection-start-column="43" selection-end-line="53" selection-end-column="57" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/text_proposal_connector.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="603">
-          <caret line="49" column="19" lean-forward="false" selection-start-line="49" selection-start-column="19" selection-end-line="49" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/other.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="16" column="0" lean-forward="false" selection-start-line="16" selection-start-column="0" selection-end-line="29" selection-end-column="25" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/text_proposal_graph_builder.py" />
+    <entry file="file://$PROJECT_DIR$/ctpn/text_proposal_connector.py" />
+    <entry file="file://$PROJECT_DIR$/ctpn/other.py" />
     <entry file="file://$PROJECT_DIR$/lib/text_connector/other.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -971,9 +858,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="92">
           <caret line="4" column="0" lean-forward="false" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#51#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -981,68 +865,101 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="322">
           <caret line="147" column="59" lean-forward="false" selection-start-line="147" selection-start-column="59" selection-end-line="147" selection-end-column="59" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/demo_oriented.py" />
+    <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector_oriented.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1403">
+          <caret line="62" column="60" lean-forward="false" selection-start-line="62" selection-start-column="20" selection-end-line="62" selection-end-column="60" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/rpn_msr/anchor_target_layer_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="322">
+          <caret line="19" column="4" lean-forward="true" selection-start-line="19" selection-start-column="4" selection-end-line="19" selection-end-column="64" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/demo_oriented.py">
+    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="327">
-          <caret line="57" column="34" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="88" selection-end-column="0" />
+        <state relative-caret-position="-2185">
+          <caret line="17" column="36" lean-forward="false" selection-start-line="17" selection-start-column="36" selection-end-line="17" selection-end-column="36" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="253">
+          <caret line="50" column="8" lean-forward="false" selection-start-line="50" selection-start-column="8" selection-end-line="52" selection-end-column="91" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="203">
+          <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="35" column="26" lean-forward="false" selection-start-line="35" selection-start-column="26" selection-end-line="35" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="387">
+          <caret line="48" column="59" lean-forward="false" selection-start-line="48" selection-start-column="59" selection-end-line="48" selection-end-column="59" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/text_connector/detectors.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="364">
-          <caret line="43" column="71" lean-forward="false" selection-start-line="43" selection-start-column="71" selection-end-line="43" selection-end-column="71" />
-          <folding>
-            <element signature="e#14#32#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector_oriented.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="235">
-          <caret line="62" column="60" lean-forward="false" selection-start-line="62" selection-start-column="20" selection-end-line="62" selection-end-column="60" />
-          <folding>
-            <element signature="e#14#32#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="-47">
+          <caret line="18" column="8" lean-forward="false" selection-start-line="18" selection-start-column="8" selection-end-line="18" selection-end-column="8" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="410">
-          <caret line="30" column="8" lean-forward="false" selection-start-line="30" selection-start-column="8" selection-end-line="30" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="356">
+          <caret line="31" column="83" lean-forward="false" selection-start-line="31" selection-start-column="83" selection-end-line="31" selection-end-column="83" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector.py">
+    <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="143">
-          <caret line="48" column="59" lean-forward="false" selection-start-line="48" selection-start-column="59" selection-end-line="48" selection-end-column="59" />
+        <state relative-caret-position="159">
+          <caret line="161" column="48" lean-forward="false" selection-start-line="161" selection-start-column="48" selection-end-line="161" selection-end-column="48" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="10" column="22" lean-forward="false" selection-start-line="10" selection-start-column="22" selection-end-line="10" selection-end-column="22" />
+        <state relative-caret-position="184">
+          <caret line="8" column="32" lean-forward="false" selection-start-line="8" selection-start-column="32" selection-end-line="8" selection-end-column="32" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/text.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="506">
-          <caret line="34" column="16" lean-forward="false" selection-start-line="34" selection-start-column="16" selection-end-line="34" selection-end-column="16" />
+        <state relative-caret-position="460">
+          <caret line="36" column="3" lean-forward="false" selection-start-line="36" selection-start-column="3" selection-end-line="36" selection-end-column="3" />
           <folding />
         </state>
       </provider>
