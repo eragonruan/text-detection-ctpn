@@ -63,10 +63,11 @@ python ./ctpn/train_net.py
 # some results
 `NOTICE:` all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
 <img src="/data/results/002.jpg" width=320 height=240 /><img src="/data/results/003.jpg" width=320 height=240 />
-<img src="/data/results/008.jpg" width=320 height=480 /><img src="/data/results/009.png" width=320 height=480 />
+<img src="/data/results/009.jpg" width=320 height=480 /><img src="/data/results/010.png" width=320 height=320 />
 ***
 # comparison of horizontal and oriented text connector
 - oriented text connector has been implemented, i's working, but still need futher improvement.
 - left figure is the result for DETECT_MODE H, right figure for DETECT_MODE O
 <img src="/data/results/007.jpg" width=320 height=240 /><img src="/data/oriented_results/007.jpg" width=320 height=240 />
+<img src="/data/results/008.jpg" width=320 height=480 /><img src="/data/oriented_results/008.jpg" width=320 height=480 />
 ***
