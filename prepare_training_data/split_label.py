@@ -3,14 +3,14 @@ import numpy as np
 import math
 import cv2 as cv
 
-path = '/media/D/DataSet/MLT/training/image'
-gt_path = '/media/D/DataSet/MLT/training/label'
+path = '/media/D/code/OCR/text-detection-ctpn/data/mlt_english+chinese/image'
+gt_path = '/media/D/code/OCR/text-detection-ctpn/data/mlt_english+chinese/label'
 out_path = 're_image'
 if not os.path.exists(out_path):
     os.makedirs(out_path)
 files = os.listdir(path)
 files.sort()
-files=files[:100]
+#files=files[:100]
 for file in files:
     _, basename = os.path.split(file)
     if basename.lower().split('.')[-1] not in ['jpg', 'png']:

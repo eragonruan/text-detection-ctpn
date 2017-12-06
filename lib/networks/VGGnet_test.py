@@ -18,11 +18,11 @@ class VGGnet_test(Network):
         _feat_stride = [16, ]
 
         (self.feed('data')
-         .conv(3, 3, 64, 1, 1, name='conv1_1', trainable=False)
-         .conv(3, 3, 64, 1, 1, name='conv1_2', trainable=False)
+         .conv(3, 3, 64, 1, 1, name='conv1_1')
+         .conv(3, 3, 64, 1, 1, name='conv1_2')
          .max_pool(2, 2, 2, 2, padding='VALID', name='pool1')
-         .conv(3, 3, 128, 1, 1, name='conv2_1', trainable=False)
-         .conv(3, 3, 128, 1, 1, name='conv2_2', trainable=False)
+         .conv(3, 3, 128, 1, 1, name='conv2_1')
+         .conv(3, 3, 128, 1, 1, name='conv2_2')
          .max_pool(2, 2, 2, 2, padding='VALID', name='pool2')
          .conv(3, 3, 256, 1, 1, name='conv3_1')
          .conv(3, 3, 256, 1, 1, name='conv3_2')
@@ -38,7 +38,7 @@ class VGGnet_test(Network):
 
         (self.feed('conv5_3').conv(3, 3, 512, 1, 1, name='rpn_conv/3x3'))
 
-        (self.feed('rpn_conv/3x3', 'im_info').lstm(512, 128, 512, name='lstm_o'))
+        (self.feed('rpn_conv/3x3').Bilstm(512, 128, 512, name='lstm_o'))
         (self.feed('lstm_o').lstm_fc(512, len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
         (self.feed('lstm_o').lstm_fc(512, len(anchor_scales) * 10 * 2, name='rpn_cls_score'))
 

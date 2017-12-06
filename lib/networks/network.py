@@ -86,48 +86,37 @@ class Network(object):
     def validate_padding(self, padding):
         assert padding in ('SAME', 'VALID')
 
-    '''
-    @layer
-    def lstm(self, input, d_i, d_h, name,trainable=True):
-        input_shape = tf.shape(input)
-        input = tf.reshape(input, [-1, d_i])
-        batch_size=tf.shape(input)[0]
-        with tf.variable_scope(name) as scope:
-            init_weights = tf.truncated_normal_initializer(0.0, stddev=0.01)
-            init_biases = tf.constant_initializer(0.0)
-            kernel = self.make_var('weights', [d_i, d_h], init_weights, trainable,
-                                   regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
-            biases = self.make_var('biases', [d_h], init_biases, trainable)
 
-            _H = tf.matmul(input, kernel) + biases
-            _Hsplit = tf.split(_H, 1,0)
-            lstm_cell = tf.contrib.rnn.BasicLSTMCell(d_h, forget_bias=1.0, state_is_tuple=False)
-            _istate = lstm_cell.zero_state(batch_size, dtype='float32')
-            _LSTM_O, _LSTM_S = tf.contrib.rnn.static_rnn(lstm_cell, _Hsplit, initial_state=_istate)
-            return tf.reshape(_LSTM_O[-1],[input_shape[0],input_shape[1],input_shape[2],int(d_h)])
-    
-    
     @layer
-    def lstm_bbox(self, input,d_h, d_o, name, trainable=True):
-        input_shape = tf.shape(input)
-        input = tf.reshape(input, [-1, d_h])
+    def Bilstm(self, input, d_i, d_h, d_o, name, trainable=True):
+        img = input
         with tf.variable_scope(name) as scope:
-            init_weights = tf.truncated_normal_initializer(0.0, stddev=0.01)
+            shape = tf.shape(img)
+            N, H, W, C = shape[0], shape[1], shape[2], shape[3]
+            img = tf.reshape(img, [N * H, W, C])
+            img.set_shape([None, None, d_i])
+
+            lstm_fw_cell = tf.contrib.rnn.LSTMCell(d_h, state_is_tuple=True)
+            lstm_bw_cell = tf.contrib.rnn.LSTMCell(d_h, state_is_tuple=True)
+
+            lstm_out, last_state = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,lstm_bw_cell, img, dtype=tf.float32)
+            lstm_out = tf.concat(lstm_out, axis=-1)
+
+            lstm_out = tf.reshape(lstm_out, [N * H * W, 2*d_h])
+
+            init_weights = tf.truncated_normal_initializer(stddev=0.1)
             init_biases = tf.constant_initializer(0.0)
-            kernel = self.make_var('weights', [d_h, d_o], init_weights, trainable,
-                                   regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
+            weights = self.make_var('weights', [2*d_h, d_o], init_weights, trainable, \
+                                    regularizer=self.l2_regularizer(cfg.TRAIN.WEIGHT_DECAY))
             biases = self.make_var('biases', [d_o], init_biases, trainable)
+            outputs = tf.matmul(lstm_out, weights) + biases
 
-            _O = tf.matmul(input, kernel) + biases
-            return tf.reshape(_O, [input_shape[0], input_shape[1], input_shape[2], int(d_o)])
-            
-    '''
+            outputs = tf.reshape(outputs, [N, H, W, d_o])
+            return outputs
 
     @layer
     def lstm(self, input, d_i,d_h,d_o, name, trainable=True):
-        img = input[0]
-        im_info=input[1]
-
+        img = input
         with tf.variable_scope(name) as scope:
             shape = tf.shape(img)
             N,H,W,C = shape[0], shape[1],shape[2], shape[3]
@@ -414,5 +403,9 @@ class Network(object):
         rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)
 
 
-        total_loss = rpn_cross_entropy + 2 * rpn_loss_box
-        return total_loss, rpn_cross_entropy, rpn_loss_box
+        model_loss = rpn_cross_entropy +  rpn_loss_box
+
+        regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+        total_loss = tf.add_n(regularization_losses) + model_loss
+
+        return total_loss,model_loss, rpn_cross_entropy, rpn_loss_box
