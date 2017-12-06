@@ -100,7 +100,7 @@ def build_voc_dirs(outdir):
 
 
 if __name__ == '__main__':
-    _outdir = 'TEXTVOC'
+    _outdir = 'TEXTVOC/VOC2007'
     _draw = bool(0)
     _dest_label_dir, _dest_img_dir, _dest_set_dir = build_voc_dirs(_outdir)
     _doncateothers = bool(1)

@@ -27,6 +27,7 @@ __C.SUBCLS_NAME = 'voxel_exemplars'
 __C.TRAIN = edict()
 # Adam, Momentum, RMS
 __C.TRAIN.restore = 0
+__C.TRAIN.max_steps = 100000
 __C.TRAIN.SOLVER = 'Momentum'
 # learning rate
 __C.TRAIN.WEIGHT_DECAY = 0.0005

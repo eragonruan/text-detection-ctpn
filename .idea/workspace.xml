@@ -2,30 +2,43 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ce69bde4-1799-4078-9c5a-3e278c846213" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_50000.ckpt.data-00000-of-00001" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_50000.ckpt.index" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_50000.ckpt.meta" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/001.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/002.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/003.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/004.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/005.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/006.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/007.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/008.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/009.jpg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/data/results/010.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_150000.ckpt.data-00000-of-00001" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_150000.ckpt.index" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/checkpoints/VGGnet_fast_rcnn_iter_150000.ckpt.meta" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/VOCdevkit2007" afterPath="$PROJECT_DIR$/data/VOCdevkit2007" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/001.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/001.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/002.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/002.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/003.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/003.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/004.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/004.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/005.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/005.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/006.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/006.jpg" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/007.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/007.jpg" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/008.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/008.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/009.jpg" afterPath="$PROJECT_DIR$/data/oriented_results/009.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/oriented_results/010.png" afterPath="$PROJECT_DIR$/data/oriented_results/010.png" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/001.jpg" afterPath="$PROJECT_DIR$/data/results/001.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/002.jpg" afterPath="$PROJECT_DIR$/data/results/002.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/003.jpg" afterPath="$PROJECT_DIR$/data/results/003.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/004.jpg" afterPath="$PROJECT_DIR$/data/results/004.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/005.jpg" afterPath="$PROJECT_DIR$/data/results/005.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/006.jpg" afterPath="$PROJECT_DIR$/data/results/006.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/007.jpg" afterPath="$PROJECT_DIR$/data/results/007.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/008.jpg" afterPath="$PROJECT_DIR$/data/results/008.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/009.jpg" afterPath="$PROJECT_DIR$/data/results/009.jpg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data/results/010.png" afterPath="$PROJECT_DIR$/data/results/010.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/checkpoints/checkpoint" afterPath="$PROJECT_DIR$/checkpoints/checkpoint" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/demo.py" afterPath="$PROJECT_DIR$/ctpn/demo.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/text.yml" afterPath="$PROJECT_DIR$/ctpn/text.yml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctpn/train_net.py" afterPath="$PROJECT_DIR$/ctpn/train_net.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/fast_rcnn/config.py" afterPath="$PROJECT_DIR$/lib/fast_rcnn/config.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/fast_rcnn/train.py" afterPath="$PROJECT_DIR$/lib/fast_rcnn/train.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/networks/VGGnet_test.py" afterPath="$PROJECT_DIR$/lib/networks/VGGnet_test.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/networks/VGGnet_train.py" afterPath="$PROJECT_DIR$/lib/networks/VGGnet_train.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/networks/network.py" afterPath="$PROJECT_DIR$/lib/networks/network.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py" afterPath="$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/prepare_training_data/ToVoc.py" afterPath="$PROJECT_DIR$/prepare_training_data/ToVoc.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/prepare_training_data/split_label.py" afterPath="$PROJECT_DIR$/prepare_training_data/split_label.py" />
     </list>
     <ignored path="untitled.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -44,72 +57,12 @@
     <favorites_list name="untitled" />
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+    <leaf>
       <file leaf-file-name="text.yml" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/ctpn/text.yml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="460">
-              <caret line="36" column="3" lean-forward="false" selection-start-line="36" selection-start-column="3" selection-end-line="36" selection-end-column="3" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="train.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2185">
-              <caret line="17" column="36" lean-forward="false" selection-start-line="17" selection-start-column="36" selection-end-line="17" selection-end-column="36" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="VGGnet_train.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="253">
-              <caret line="50" column="8" lean-forward="false" selection-start-line="50" selection-start-column="8" selection-end-line="52" selection-end-column="91" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="VGGnet_test.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="203">
-              <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="network.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="159">
-              <caret line="161" column="48" lean-forward="false" selection-start-line="161" selection-start-column="48" selection-end-line="161" selection-end-column="48" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="demo.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="356">
-              <caret line="31" column="83" lean-forward="false" selection-start-line="31" selection-start-column="83" selection-end-line="31" selection-end-column="83" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="text_connect_cfg.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="184">
-              <caret line="8" column="32" lean-forward="false" selection-start-line="8" selection-start-column="32" selection-end-line="8" selection-end-column="32" />
+            <state relative-caret-position="189">
+              <caret line="9" column="11" lean-forward="false" selection-start-line="9" selection-start-column="2" selection-end-line="9" selection-end-column="11" />
               <folding />
             </state>
           </provider>
@@ -150,6 +103,7 @@
       <find>CLASSES</find>
       <find>Graph</find>
       <find>im_info</find>
+      <find>max</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -183,7 +137,6 @@
         <option value="$PROJECT_DIR$/lib/utils/blob.py" />
         <option value="$PROJECT_DIR$/lib/utils/timer.py" />
         <option value="$PROJECT_DIR$/prepare_training_data/ToVoc.py" />
-        <option value="$PROJECT_DIR$/lib/fast_rcnn/train.py" />
         <option value="$PROJECT_DIR$/lib/datasets/__init__.py" />
         <option value="$PROJECT_DIR$/lib/fast_rcnn/nms_wrapper.py" />
         <option value="$PROJECT_DIR$/ctpn/__init__.py" />
@@ -198,17 +151,18 @@
         <option value="$PROJECT_DIR$/ctpn/other.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/other.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/text_proposal_graph_builder.py" />
-        <option value="$PROJECT_DIR$/lib/fast_rcnn/config.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/text_proposal_connector_oriented.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/text_proposal_connector.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/detectors.py" />
+        <option value="$PROJECT_DIR$/ctpn/demo.py" />
         <option value="$PROJECT_DIR$/lib/networks/VGGnet_train.py" />
+        <option value="$PROJECT_DIR$/lib/fast_rcnn/train.py" />
         <option value="$PROJECT_DIR$/lib/networks/network.py" />
         <option value="$PROJECT_DIR$/lib/networks/VGGnet_test.py" />
-        <option value="$PROJECT_DIR$/ctpn/train_net.py" />
-        <option value="$PROJECT_DIR$/ctpn/demo.py" />
+        <option value="$PROJECT_DIR$/lib/fast_rcnn/config.py" />
         <option value="$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py" />
         <option value="$PROJECT_DIR$/ctpn/text.yml" />
+        <option value="$PROJECT_DIR$/ctpn/train_net.py" />
       </list>
     </option>
   </component>
@@ -233,7 +187,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -358,11 +311,12 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../DataSet/ICDAR" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../gogogo/recognition/SCCM" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -570,11 +524,11 @@
     <frame x="1505" y="-4" width="1855" height="1204" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.30360112" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.31911358" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32990655" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36635515" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.36635515" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32984293" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -653,19 +607,14 @@
           <option name="timeStamp" value="27" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ctpn/train_net.py</url>
-          <line>17</line>
-          <option name="timeStamp" value="28" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/lib/text_connector/detectors.py</url>
           <line>46</line>
           <option name="timeStamp" value="32" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/ctpn/demo.py</url>
-          <line>28</line>
-          <option name="timeStamp" value="35" />
+          <url>file://$PROJECT_DIR$/lib/fast_rcnn/train.py</url>
+          <line>163</line>
+          <option name="timeStamp" value="36" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -675,7 +624,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="36" />
+      <option name="time" value="37" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -861,13 +810,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="322">
-          <caret line="147" column="59" lean-forward="false" selection-start-line="147" selection-start-column="59" selection-end-line="147" selection-end-column="59" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/demo_oriented.py" />
     <entry file="file://$PROJECT_DIR$/lib/text_connector/text_proposal_connector_oriented.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -880,39 +822,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="322">
           <caret line="19" column="4" lean-forward="true" selection-start-line="19" selection-start-column="4" selection-end-line="19" selection-end-column="64" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2185">
-          <caret line="17" column="36" lean-forward="false" selection-start-line="17" selection-start-column="36" selection-end-line="17" selection-end-column="36" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="50" column="8" lean-forward="false" selection-start-line="50" selection-start-column="8" selection-end-line="52" selection-end-column="91" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="43" column="0" lean-forward="false" selection-start-line="43" selection-start-column="0" selection-end-line="43" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="465">
-          <caret line="35" column="26" lean-forward="false" selection-start-line="35" selection-start-column="26" selection-end-line="35" selection-end-column="26" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -920,7 +829,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="387">
           <caret line="48" column="59" lean-forward="false" selection-start-line="48" selection-start-column="59" selection-end-line="48" selection-end-column="59" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -932,34 +840,76 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="97">
+          <caret line="49" column="0" lean-forward="false" selection-start-line="49" selection-start-column="0" selection-end-line="49" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/networks/VGGnet_test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="24" column="47" lean-forward="true" selection-start-line="24" selection-start-column="47" selection-end-line="24" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/demo.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="31" column="83" lean-forward="false" selection-start-line="31" selection-start-column="83" selection-end-line="31" selection-end-column="83" />
+        <state relative-caret-position="966">
+          <caret line="42" column="10" lean-forward="true" selection-start-line="42" selection-start-column="10" selection-end-line="42" selection-end-column="10" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="299">
+          <caret line="29" column="19" lean-forward="false" selection-start-line="29" selection-start-column="10" selection-end-line="29" selection-end-column="19" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/networks/network.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="159">
-          <caret line="161" column="48" lean-forward="false" selection-start-line="161" selection-start-column="48" selection-end-line="161" selection-end-column="48" />
+        <state relative-caret-position="-3376">
+          <caret line="88" column="0" lean-forward="false" selection-start-line="88" selection-start-column="0" selection-end-line="88" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/text_connector/text_connect_cfg.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="184">
-          <caret line="8" column="32" lean-forward="false" selection-start-line="8" selection-start-column="32" selection-end-line="8" selection-end-column="32" />
+        <state relative-caret-position="322">
+          <caret line="14" column="0" lean-forward="false" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ctpn/train_net.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="479">
+          <caret line="37" column="0" lean-forward="true" selection-start-line="37" selection-start-column="0" selection-end-line="37" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lib/fast_rcnn/train.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1545">
+          <caret line="139" column="23" lean-forward="false" selection-start-line="139" selection-start-column="23" selection-end-line="139" selection-end-column="23" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/ctpn/text.yml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="460">
-          <caret line="36" column="3" lean-forward="false" selection-start-line="36" selection-start-column="3" selection-end-line="36" selection-end-column="3" />
+        <state relative-caret-position="189">
+          <caret line="9" column="11" lean-forward="false" selection-start-line="9" selection-start-column="2" selection-end-line="9" selection-end-column="11" />
           <folding />
         </state>
       </provider>
