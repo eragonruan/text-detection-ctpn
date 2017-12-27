@@ -205,7 +205,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
 
 
     bbox_inside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
-    bbox_inside_weights[labels == 1, :] = np.array(cfg.TRAIN.RPN_BBOX_INSIDE_WEIGHTS)#内部权重，前景就给1，其他是0
+    bbox_inside_weights[labels == 1, :] = np.array(cfg.TRAIN.BBOX_INSIDE_WEIGHTS)#内部权重，前景就给1，其他是0
 
     bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
     if cfg.TRAIN.RPN_POSITIVE_WEIGHT < 0:#暂时使用uniform 权重，也就是正样本是1，负样本是0
