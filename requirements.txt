@@ -1,0 +1,8 @@
+easydict==1.7
+tensorflow_gpu==1.3.0
+scipy==0.18.1
+numpy==1.11.1
+opencv_python==3.4.0.12
+Cython==0.27.3
+Pillow==5.0.0
+PyYAML==3.12
