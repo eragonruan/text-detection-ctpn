@@ -5,6 +5,8 @@ import glob
 import shutil
 import numpy as np
 
+import argparse
+
 def generate_xml(name, lines, img_size, class_sets, doncateothers=True):
     doc = Document()
 
@@ -71,17 +73,13 @@ def generate_xml(name, lines, img_size, class_sets, doncateothers=True):
 
 
 def _is_hard(cls, truncation, occlusion, x1, y1, x2, y2):
-    hard = False
     if y2 - y1 < 25 and occlusion >= 2:
-        hard = True
-        return hard
+        return True
     if occlusion >= 3:
-        hard = True
-        return hard
+        return True
     if truncation > 0.8:
-        hard = True
-        return hard
-    return hard
+        return True
+    return False
 
 
 def build_voc_dirs(outdir):
@@ -100,35 +98,40 @@ def build_voc_dirs(outdir):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--dir', type=str, required=True, help='Directory of images and TSV files')
+    args = vars(parser.parse_args())
+
     _outdir = 'TEXTVOC/VOC2007'
     _draw = bool(0)
     _dest_label_dir, _dest_img_dir, _dest_set_dir = build_voc_dirs(_outdir)
     _doncateothers = bool(1)
     for dset in ['train']:
-        _labeldir = 'label_tmp'
-        _imagedir = 're_image'
-        class_sets = ('text', 'dontcare')
+        _labeldir = args['dir']
+        _imagedir = args['dir']
+        class_sets = ('hw', 'dontcare')
         class_sets_dict = dict((k, i) for i, k in enumerate(class_sets))
         allclasses = {}
         fs = [open(os.path.join(_dest_set_dir, cls + '_' + dset + '.txt'), 'w') for cls in class_sets]
         ftrain = open(os.path.join(_dest_set_dir, dset + '.txt'), 'w')
 
-        files = glob.glob(os.path.join(_labeldir, '*.txt'))
+        files = glob.glob(os.path.join(_labeldir, '*.tsv'))
         files.sort()
         for file in files:
             path, basename = os.path.split(file)
             stem, ext = os.path.splitext(basename)
             with open(file, 'r') as f:
                 lines = f.readlines()
-            img_file = os.path.join(_imagedir, stem + '.jpg')
+            img_file = os.path.join(_imagedir, stem + '.png')
 
             print(img_file)
             img = cv2.imread(img_file)
+            assert img is not None, 'Could not read image {}'.format(img_file)
             img_size = img.shape
 
             doc, objs = generate_xml(stem, lines, img_size, class_sets=class_sets, doncateothers=_doncateothers)
 
-            cv2.imwrite(os.path.join(_dest_img_dir, stem + '.jpg'), img)
+            cv2.imwrite(os.path.join(_dest_img_dir, stem + '.png'), img)
             xmlfile = os.path.join(_dest_label_dir, stem + '.xml')
             with open(xmlfile, 'w') as f:
                 f.write(doc.toprettyxml(indent='	'))

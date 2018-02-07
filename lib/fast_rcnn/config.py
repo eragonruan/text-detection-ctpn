@@ -8,7 +8,7 @@ __C = edict()
 cfg = __C
 
 # Default GPU device id
-__C.GPU_ID = 0
+__C.GPU_ID = int(os.environ['CUDA_VISIBLE_DEVICES'])
 
 # Training options
 __C.IS_RPN = True
@@ -26,7 +26,7 @@ __C.SUBCLS_NAME = 'voxel_exemplars'
 
 __C.TRAIN = edict()
 # Adam, Momentum, RMS
-__C.TRAIN.restore = 0
+__C.TRAIN.restore = False
 __C.TRAIN.max_steps = 100000
 __C.TRAIN.SOLVER = 'Momentum'
 # learning rate

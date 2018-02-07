@@ -46,11 +46,11 @@ class VGGnet_train(Network):
              .conv(3, 3, 512, 1, 1, name='conv5_3'))
         #========= RPN ============
         (self.feed('conv5_3')
-             .conv(3,3,512,1,1,name='rpn_conv/3x3'))
+             .conv(3, 3, 512, 1, 1, name='rpn_conv/3x3'))
 
-        (self.feed('rpn_conv/3x3').Bilstm(512,128,512,name='lstm_o'))
-        (self.feed('lstm_o').lstm_fc(512,len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
-        (self.feed('lstm_o').lstm_fc(512,len(anchor_scales) * 10 * 2,name='rpn_cls_score'))
+        (self.feed('rpn_conv/3x3').Bilstm(512, 128, 512, name='lstm_o'))
+        (self.feed('lstm_o').lstm_fc(512, len(anchor_scales) * 10 * 4, name='rpn_bbox_pred'))
+        (self.feed('lstm_o').lstm_fc(512, len(anchor_scales) * 10 * 2, name='rpn_cls_score'))
 
         # generating training labels on the fly
         # output: rpn_labels(HxWxA, 2) rpn_bbox_targets(HxWxA, 4) rpn_bbox_inside_weights rpn_bbox_outside_weights

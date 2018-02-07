@@ -127,6 +127,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     overlaps = bbox_overlaps(
         np.ascontiguousarray(anchors, dtype=np.float),
         np.ascontiguousarray(gt_boxes, dtype=np.float))#假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
+    # assert overlaps.size > 0, 'Cannot have empty overlaps in anchor_target_layer'
+
     # 存放每一个anchor和每一个gtbox之间的overlap
     argmax_overlaps = overlaps.argmax(axis=1) # (A)#找到和每一个gtbox，overlap最大的那个anchor
     max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]

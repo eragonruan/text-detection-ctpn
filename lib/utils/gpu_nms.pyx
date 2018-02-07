@@ -14,7 +14,7 @@ cdef extern from "gpu_nms.hpp":
     void _nms(np.int32_t*, int*, np.float32_t*, int, int, float, int)
 
 def gpu_nms(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh,
-            np.int32_t device_id=0):
+            np.int32_t device_id=1):
     cdef int boxes_num = dets.shape[0]
     cdef int boxes_dim = dets.shape[1]
     cdef int num_out

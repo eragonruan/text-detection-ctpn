@@ -6,22 +6,24 @@ ANCHOR_SCALES: [16]
 NCLASSES: 2
 USE_GPU_NMS: True
 TRAIN:
-  restore: 0
+  USE_FLIPPED: False
+  restore: True
   max_steps: 50000
   SOLVER: Adam
-  OHEM: False
+  # OHEM: False
   RPN_BATCHSIZE: 300
   BATCH_SIZE: 300
   LOG_IMAGE_ITERS: 100
   DISPLAY: 10
   SNAPSHOT_ITERS: 1000
   HAS_RPN: True
-  LEARNING_RATE: 0.00001
-  MOMENTUM: 0.9
-  GAMMA: 0.1
+  LEARNING_RATE: 0.0001
+  # MOMENTUM: 0.9
+  GAMMA: 0.1 # when stepsize is 0, LR <- LR * GAMMA
   STEPSIZE: 30000
   IMS_PER_BATCH: 1
   BBOX_NORMALIZE_TARGETS_PRECOMPUTED: True
+  # BBOX_NORMALIZE_TARGETS: False
   RPN_POSITIVE_OVERLAP: 0.7
   PROPOSAL_METHOD: gt
   BG_THRESH_LO: 0.0
@@ -34,5 +36,5 @@ TRAIN:
 TEST:
   HAS_RPN: True
   DETECT_MODE: H
-  checkpoints_path: checkpoints/
-  # checkpoints_path: output/ctpn_end2end/voc_2007_trainval
+  # checkpoints_path: checkpoints/
+  checkpoints_path: output/ctpn_end2end/voc_2007_trainval
