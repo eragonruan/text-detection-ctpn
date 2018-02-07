@@ -6,6 +6,8 @@ logs/
 output/
 build/
 dist/
+data/demo/
+data/results/
 *.py[cod]
 *.c[cod]
 *.so
