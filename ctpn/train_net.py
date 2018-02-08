@@ -13,9 +13,9 @@ from lib.fast_rcnn.config import cfg
 
 if __name__ == '__main__':
     cfg_from_file('ctpn/text.yml')
-    print('Using config:')
-    pprint.pprint(cfg)
-    imdb = get_imdb('voc_2007_trainval')
+    # print('Using config:')
+    # pprint.pprint(cfg)
+    imdb = get_imdb('voc_2007_trainval', cfg.DATA_DIR + '/template_generative')
     print('Loaded dataset `{:s}` for training'.format(imdb.name))
     roidb = get_training_roidb(imdb)
 
