@@ -7,7 +7,7 @@ NCLASSES: 2
 USE_GPU_NMS: True
 TRAIN:
   USE_FLIPPED: False
-  restore: True
+  restore: False
   max_steps: 50000
   SOLVER: Adam
   # OHEM: False

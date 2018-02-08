@@ -3,6 +3,7 @@ import numpy as np
 import numpy.random as npr
 from .generate_anchors import generate_anchors
 from ..utils.bbox import bbox_overlaps, bbox_intersections
+from ..utils.cython_argmax import cy_argmax
 from ..fast_rcnn.config import cfg
 from ..fast_rcnn.bbox_transform import bbox_transform
 
@@ -132,7 +133,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     # 存放每一个anchor和每一个gtbox之间的overlap
     argmax_overlaps = overlaps.argmax(axis=1) # (A)#找到和每一个gtbox，overlap最大的那个anchor
     max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
-    gt_argmax_overlaps = overlaps.argmax(axis=0) # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
+    # gt_argmax_overlaps = overlaps.argmax(axis=0) # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
+    gt_argmax_overlaps = cy_argmax(overlaps) # the version above is too slow
     gt_max_overlaps = overlaps[gt_argmax_overlaps,
                                np.arange(overlaps.shape[1])]
     gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]

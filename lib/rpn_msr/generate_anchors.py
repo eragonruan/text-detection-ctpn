@@ -23,8 +23,8 @@ def scale_anchor(anchor, h, w):
 
 def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
                      scales=2**np.arange(3, 6)):
-    # heights = [10, 16, 23] # on the constats there are only a few heights (Cipri.Tom) [, 33, 48, 68, 97, 139, 198, 283]
-    heights = [10, 16, 23, 33, 48, 68, 97, 139, 198, 283]
+    heights = [10, 16, 23] # on the constats there are only a few heights (Cipri.Tom) [, 33, 48, 68, 97, 139, 198, 283]
+    # heights = [10, 16, 23, 33, 48, 68, 97, 139, 198, 283]
     widths = [16]
     sizes = []
     for h in heights:

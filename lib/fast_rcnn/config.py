@@ -8,7 +8,9 @@ __C = edict()
 cfg = __C
 
 # Default GPU device id
-__C.GPU_ID = int(os.environ['CUDA_VISIBLE_DEVICES'])
+# Leave it 0 i.e. the first one *seen* by CUDA which can
+# be controlled by 'CUDA_VISIBLE_DEVICES' env variable
+__C.GPU_ID = 0
 
 # Training options
 __C.IS_RPN = True
