@@ -85,6 +85,12 @@ ext_modules = [
         extra_compile_args={'gcc': ["-Wno-cpp", "-Wno-unused-function"]},
         include_dirs = [numpy_include]
     ),
+    Extension(
+        "utils.cython_argmax",
+        ["cython_argmax.pyx"],
+        extra_compile_args={'gcc': ["-Wno-cpp", "-Wno-unused-function"]},
+        include_dirs = [numpy_include]
+    ),
     Extension('utils.gpu_nms',
         ['nms_kernel.cu', 'gpu_nms.pyx'],
         library_dirs=[CUDA['lib64']],
