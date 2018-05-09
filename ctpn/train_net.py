@@ -26,6 +26,8 @@ if __name__ == '__main__':
 
     device_name = '/gpu:0'
     print(device_name)
+    import os
+    os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
     network = get_network('VGGnet_train')
 
