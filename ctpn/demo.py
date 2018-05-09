@@ -12,6 +12,8 @@ from lib.utils.timer import Timer
 from lib.text_connector.detectors import TextDetector
 from lib.text_connector.text_connect_cfg import Config as TextLineCfg
 
+resultDestination = "data/results"
+
 
 def resize_im(im, scale, max_scale=None):
     f=float(scale)/min(im.shape[0], im.shape[1])
@@ -44,7 +46,7 @@ def draw_boxes(img,image_name,boxes,scale):
             f.write(line)
 
     img=cv2.resize(img, None, None, fx=1.0/scale, fy=1.0/scale, interpolation=cv2.INTER_LINEAR)
-    cv2.imwrite(os.path.join("data/results", base_name), img)
+    cv2.imwrite(os.path.join(resultDestination, base_name), img)
 
 def ctpn(sess, net, image_name):
     timer = Timer()
@@ -64,9 +66,9 @@ def ctpn(sess, net, image_name):
 
 
 if __name__ == '__main__':
-    if os.path.exists("data/results/"):
-        shutil.rmtree("data/results/")
-    os.makedirs("data/results/")
+    if os.path.exists(resultDestination):
+        shutil.rmtree(resultDestination)
+    os.makedirs(resultDestination)
 
     cfg_from_file('ctpn/text.yml')
 
