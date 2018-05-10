@@ -45,6 +45,7 @@ ln -s TEXTVOC VOCdevkit2007
 ## train 
 Simplely run
 ```shell
+rm -rf data/cache(optional, only when you want to train a new dataset and this folder is not empty)
 python ./ctpn/train_net.py
 ```
 - you can modify some hyper parameters in ctpn/text.yml, or just used the parameters I set.
