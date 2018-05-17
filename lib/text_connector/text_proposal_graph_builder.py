@@ -80,9 +80,11 @@ class TextProposalGraphBuilder:
         for index in range(graph.shape[0]):
             if graph[index, :].any():
                 succession_index = np.where(graph[index, :])[0][0]
-                if graph[succession_index, :].any():
+                while graph[succession_index, :].any():
                     next_succession_index = np.where(graph[succession_index, :])[0][0]
                     if not self.meet_v_iou(index, next_succession_index):
-                        graph[index, succession_index]=False
+                        graph[succession_index, next_succession_index] = False
+                    else:
+                        succession_index = next_succession_index
 
         return Graph(graph)
