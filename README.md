@@ -1,6 +1,6 @@
 # text-detection-ctpn
 
-text detection mainly based on ctpn (connectionist text proposal network). It is implemented in tensorflow. I use id card detect as an example to demonstrate the results, but it should be noticing that this model can be used in almost every horizontal scene text detection task. The origin paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the origin repo in caffe can be found in [here](https://github.com/tianzhi0549/CTPN). For more detail about the paper and code, see this [blog](http://slade-ruan.me/2017/10/22/text-detection-ctpn/)
+text detection mainly based on ctpn (connectionist text proposal network). It is implemented in tensorflow. I use id card detect as an example to demonstrate the results, but it should be noticing that this model can be used in almost every horizontal scene text detection task. The origin paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the origin repo in caffe can be found in [here](https://github.com/tianzhi0549/CTPN). For more detail about the paper and code, see this [blog](http://slade-ruan.me/2017/10/22/text-detection-ctpn/). If you got any questions, check the issue first, if the problem persists, open a new issue.
 ***
 # setup
 - requirements: tensorflow1.3, cython0.24, opencv-python, easydict,(recommend to install Anaconda)
@@ -27,10 +27,10 @@ python ./ctpn/demo.py
 # training
 ## prepare data
 - First, download the pre-trained model of VGG net and put it in data/pretrain/VGG_imagenet.npy. you can download it from [google drive](https://drive.google.com/open?id=0B_WmJoEtfQhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). 
-- Second, prepare the training data as referred in paper, or you can download the data I prepared from previous link. Or you can prepare your own data according to the following steps. 
+- Second, prepare the training data as referred in paper, or you can download the data I prepared from [google drive](https://drive.google.com/open?id=0B_WmJoEtfGhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). Or you can prepare your own data according to the following steps. 
 - Modify the path and gt_path in prepare_training_data/split_label.py according to your dataset. And run
 ```shell
-cd prepare_training_data
+cd lib/prepare_training_data
 python split_label.py
 ```
 - it will generate the prepared data in current folder, and then run
@@ -39,7 +39,7 @@ python ToVoc.py
 ```
 - to convert the prepared training data into voc format. It will generate a folder named TEXTVOC. move this folder to data/ and then run
 ```shell
-cd ../data
+cd ../../data
 ln -s TEXTVOC VOCdevkit2007
 ```
 ## train 
