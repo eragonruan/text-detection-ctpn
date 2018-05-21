@@ -19,6 +19,7 @@ there are some parameters you may need to modify according to your requirement, 
 - checkpoints_path # the model I provided is in checkpoints/, if you train the model by yourself,it will be saved in output/
 ***
 # demo
+- download the checkpoints from release, unzip it in checkpoints/
 - put your images in data/demo, the results will be saved in data/results, and run demo in the root 
 ```shell
 python ./ctpn/demo.py
