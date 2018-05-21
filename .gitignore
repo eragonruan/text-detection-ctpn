@@ -6,6 +6,7 @@ logs/
 output/
 build/
 dist/
+.idea/
 *.py[cod]
 *.c[cod]
 *.so
