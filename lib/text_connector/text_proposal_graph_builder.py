@@ -75,4 +75,16 @@ class TextProposalGraphBuilder:
                 # NOTE: a box can have multiple successions(precursors) if multiple successions(precursors)
                 # have equal scores.
                 graph[index, succession_index]=True
+                        
+        # delete the one that are continous decline or rise       
+        for index in range(graph.shape[0]):
+            if graph[index, :].any():
+                succession_index = np.where(graph[index, :])[0][0]
+                while graph[succession_index, :].any():
+                    next_succession_index = np.where(graph[succession_index, :])[0][0]
+                    if not self.meet_v_iou(index, next_succession_index):
+                        graph[succession_index, next_succession_index] = False
+                    else:
+                        succession_index = next_succession_index
+
         return Graph(graph)
