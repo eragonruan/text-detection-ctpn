@@ -131,6 +131,11 @@ class SolverWrapper(object):
                 self.saver.restore(sess, ckpt.model_checkpoint_path)
                 stem = os.path.splitext(os.path.basename(ckpt.model_checkpoint_path))[0]
                 restore_iter = int(stem.split('_')[-1])
+                # lower lr
+                lowerCount = (restore_iter / cfg.TRAIN.STEPSIZE)
+                while(lowerCount):
+                    sess.run(tf.assign(lr, lr.eval() * cfg.TRAIN.GAMMA))
+                    lowerCount -= 1
                 sess.run(global_step.assign(restore_iter))
                 print('done')
             except:
