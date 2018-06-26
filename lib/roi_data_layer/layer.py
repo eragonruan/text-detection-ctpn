@@ -1,22 +1,6 @@
-# --------------------------------------------------------
-# Fast R-CNN
-# Copyright (c) 2015 Microsoft
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Ross Girshick
-# --------------------------------------------------------
-
-"""The data layer used during training to train a Fast R-CNN network.
-
-RoIDataLayer implements a Caffe Python layer.
-"""
-
 import numpy as np
-
-# TODO: make fast_rcnn irrelevant
-# >>>> obsolete, because it depends on sth outside of this project
-from ..fast_rcnn.config import cfg
-# <<<< obsolete
-from ..roi_data_layer.minibatch import get_minibatch
+from lib.fast_rcnn.config import cfg
+from lib.roi_data_layer.minibatch import get_minibatch
 
 class RoIDataLayer(object):
     """Fast R-CNN data layer used for training."""

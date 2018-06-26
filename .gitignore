@@ -6,9 +6,10 @@ logs/
 output/
 build/
 dist/
+checkpoints/
 .idea/
 *.py[cod]
 *.c[cod]
 *.so
 *.swp
-
+*.pb

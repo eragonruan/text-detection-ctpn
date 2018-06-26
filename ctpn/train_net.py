@@ -1,10 +1,8 @@
+import os.path
 import pprint
 import sys
-import os.path
 
 sys.path.append(os.getcwd())
-this_dir = os.path.dirname(__file__)
-
 from lib.fast_rcnn.train import get_training_roidb, train_net
 from lib.fast_rcnn.config import cfg_from_file, get_output_dir, get_log_dir
 from lib.datasets.factory import get_imdb

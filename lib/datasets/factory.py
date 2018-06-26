@@ -1,6 +1,5 @@
-__sets = {}
 from .pascal_voc import pascal_voc
-
+__sets = {}
 def _selective_search_IJCV_top_k(split, year, top_k):
     imdb = pascal_voc(split, year)
     imdb.roidb_handler = imdb.selective_search_IJCV_roidb

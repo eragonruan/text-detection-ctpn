@@ -1,21 +1,21 @@
 from __future__ import print_function
 
-import cv2
 import glob
 import os
 import shutil
 import sys
 
+import cv2
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.platform import gfile
 
 sys.path.append(os.getcwd())
-from lib.networks.factory import get_network
 from lib.fast_rcnn.config import cfg, cfg_from_file
-from lib.fast_rcnn.test import test_ctpn
-from lib.utils.timer import Timer
+from lib.fast_rcnn.test import _get_blobs
 from lib.text_connector.detectors import TextDetector
 from lib.text_connector.text_connect_cfg import Config as TextLineCfg
+from lib.rpn_msr.proposal_layer_tf import proposal_layer
 
 
 def resize_im(im, scale, max_scale=None):
@@ -52,23 +52,8 @@ def draw_boxes(img, image_name, boxes, scale):
     cv2.imwrite(os.path.join("data/results", base_name), img)
 
 
-def ctpn(sess, net, image_name):
-    timer = Timer()
-    timer.tic()
-
-    img = cv2.imread(image_name)
-    img, scale = resize_im(img, scale=TextLineCfg.SCALE, max_scale=TextLineCfg.MAX_SCALE)
-    scores, boxes = test_ctpn(sess, net, img)
-
-    textdetector = TextDetector()
-    boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
-    draw_boxes(img, image_name, boxes, scale)
-    timer.toc()
-    print(('Detection took {:.3f}s for '
-           '{:d} object proposals').format(timer.total_time, boxes.shape[0]))
-
-
 if __name__ == '__main__':
+
     if os.path.exists("data/results/"):
         shutil.rmtree("data/results/")
     os.makedirs("data/results/")
@@ -78,23 +63,16 @@ if __name__ == '__main__':
     # init session
     config = tf.ConfigProto(allow_soft_placement=True)
     sess = tf.Session(config=config)
-    # load network
-    net = get_network("VGGnet_test")
-    # load model
-    print(('Loading network {:s}... '.format("VGGnet_test")), end=' ')
-    saver = tf.train.Saver()
+    with gfile.FastGFile('data/ctpn.pb', 'rb') as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+        sess.graph.as_default()
+        tf.import_graph_def(graph_def, name='')
+    sess.run(tf.global_variables_initializer())
 
-    try:
-        ckpt = tf.train.get_checkpoint_state(cfg.TEST.checkpoints_path)
-        print('Restoring from {}...'.format(ckpt.model_checkpoint_path), end=' ')
-        saver.restore(sess, ckpt.model_checkpoint_path)
-        print('done')
-    except:
-        raise 'Check your pretrained {:s}'.format(ckpt.model_checkpoint_path)
-
-    im = 128 * np.ones((300, 300, 3), dtype=np.uint8)
-    for i in range(2):
-        _, _ = test_ctpn(sess, net, im)
+    input_img = sess.graph.get_tensor_by_name('Placeholder:0')
+    output_cls_prob = sess.graph.get_tensor_by_name('Reshape_2:0')
+    output_box_pred = sess.graph.get_tensor_by_name('rpn_bbox_pred/Reshape_1:0')
 
     im_names = glob.glob(os.path.join(cfg.DATA_DIR, 'demo', '*.png')) + \
                glob.glob(os.path.join(cfg.DATA_DIR, 'demo', '*.jpg'))
@@ -102,4 +80,19 @@ if __name__ == '__main__':
     for im_name in im_names:
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         print(('Demo for {:s}'.format(im_name)))
-        ctpn(sess, net, im_name)
+        img = cv2.imread(im_name)
+        img, scale = resize_im(img, scale=TextLineCfg.SCALE, max_scale=TextLineCfg.MAX_SCALE)
+        blobs, im_scales = _get_blobs(img, None)
+        if cfg.TEST.HAS_RPN:
+            im_blob = blobs['data']
+            blobs['im_info'] = np.array(
+                [[im_blob.shape[1], im_blob.shape[2], im_scales[0]]],
+                dtype=np.float32)
+        cls_prob, box_pred = sess.run([output_cls_prob, output_box_pred], feed_dict={input_img: blobs['data']})
+        rois, _ = proposal_layer(cls_prob, box_pred, blobs['im_info'], 'TEST', anchor_scales=cfg.ANCHOR_SCALES)
+
+        scores = rois[:, 0]
+        boxes = rois[:, 1:5] / im_scales[0]
+        textdetector = TextDetector()
+        boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
+        draw_boxes(img, im_name, boxes, scale)

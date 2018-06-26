@@ -2,10 +2,10 @@ from __future__ import print_function
 import numpy as np
 import os
 import tensorflow as tf
-from ..roi_data_layer.layer import RoIDataLayer
-from ..utils.timer import Timer
-from ..roi_data_layer import roidb as rdl_roidb
-from ..fast_rcnn.config import cfg
+from lib.roi_data_layer.layer import RoIDataLayer
+from lib.utils.timer import Timer
+from lib.roi_data_layer import roidb as rdl_roidb
+from lib.fast_rcnn.config import cfg
 
 _DEBUG = False
 
@@ -121,7 +121,7 @@ class SolverWrapper(object):
                    'weights from {:s}').format(self.pretrained_model))
                 self.net.load(self.pretrained_model, sess, True)
             except:
-                raise 'Check your pretrained model {:s}'.format(self.pretrained_model)
+                raise Exception('Check your pretrained model {:s}'.format(self.pretrained_model))
 
         # resuming a trainer
         if restore:

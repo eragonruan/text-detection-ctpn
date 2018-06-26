@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from .config import cfg
-from ..utils.blob import im_list_to_blob
+from lib.utils.blob import im_list_to_blob
 
 
 def _get_image_blob(im):
