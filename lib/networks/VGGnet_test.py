@@ -1,6 +1,6 @@
 import tensorflow as tf
 from .network import Network
-from ..fast_rcnn.config import cfg
+from lib.fast_rcnn.config import cfg
 
 
 class VGGnet_test(Network):

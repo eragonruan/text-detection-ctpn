@@ -1,11 +1,9 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import tensorflow as tf
-from ..fast_rcnn.config import cfg
-from ..rpn_msr.proposal_layer_tf import proposal_layer as proposal_layer_py
-from ..rpn_msr.anchor_target_layer_tf import anchor_target_layer as anchor_target_layer_py
-
-
+from lib.fast_rcnn.config import cfg
+from lib.rpn_msr.proposal_layer_tf import proposal_layer as proposal_layer_py
+from lib.rpn_msr.anchor_target_layer_tf import anchor_target_layer as anchor_target_layer_py
 DEFAULT_PADDING = 'SAME'
 
 def layer(op):
