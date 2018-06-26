@@ -11,4 +11,4 @@ dist/
 *.c[cod]
 *.so
 *.swp
-
+*.pb
