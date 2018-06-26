@@ -11,7 +11,8 @@ text detection mainly based on ctpn (connectionist text proposal network). It is
 ***
 # demo
 - for a quick demo,you don't have to build the library, simpely use demo_pb.py for inference.
-- download the pb file from [release](https://github.com/eragonruan/text-detection-ctpn/releases)
+- first, git clone git@github.com:eragonruan/text-detection-ctpn.git --depth=1
+- then, download the pb file from [release](https://github.com/eragonruan/text-detection-ctpn/releases)
 - put ctpn.pb in data/
 - put your images in data/demo, the results will be saved in data/results, and run demo in the root 
 ```shell
