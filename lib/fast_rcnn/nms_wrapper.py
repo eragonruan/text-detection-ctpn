@@ -12,7 +12,7 @@ def nms(dets, thresh):
     if dets.shape[0] == 0:
         return []
     if pure_python_nms:
-        print("Fall back to pure python nms")
+        # print("Fall back to pure python nms")
         return py_cpu_nms(dets, thresh)
     if cfg.USE_GPU_NMS:
         return gpu_nms(dets, thresh, device_id=cfg.GPU_ID)
