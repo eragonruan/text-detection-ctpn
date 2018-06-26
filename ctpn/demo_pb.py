@@ -1,11 +1,11 @@
 from __future__ import print_function
 
-import cv2
 import glob
 import os
 import shutil
 import sys
 
+import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.platform import gfile

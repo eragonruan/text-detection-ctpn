@@ -1,11 +1,14 @@
 from __future__ import print_function
-from tensorflow.python.framework.graph_util import convert_variables_to_constants
+
+import os
+import sys
+
 import tensorflow as tf
-import os, sys
+from tensorflow.python.framework.graph_util import convert_variables_to_constants
+
 sys.path.append(os.getcwd())
 from lib.networks.factory import get_network
-from lib.fast_rcnn.config import cfg,cfg_from_file
-
+from lib.fast_rcnn.config import cfg, cfg_from_file
 
 if __name__ == "__main__":
     cfg_from_file('ctpn/text.yml')
