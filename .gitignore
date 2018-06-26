@@ -12,3 +12,4 @@ dist/
 *.so
 *.swp
 *.pb
+*.ckpt.*
