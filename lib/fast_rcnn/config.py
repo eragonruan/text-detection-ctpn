@@ -16,7 +16,8 @@ __C.GPU_ID = 0
 __C.IS_RPN = True
 __C.ANCHOR_SCALES = [16]
 __C.NCLASSES = 2
-__C.USE_GPU_NMS = True
+__C.USE_GPU_NMS = False
+__C.IMG_EXT = '.jpg'
 # multiscale training and testing
 __C.IS_MULTISCALE = False
 __C.IS_EXTRAPOLATING = True
@@ -225,7 +226,7 @@ __C.EXP_DIR = 'default'
 __C.LOG_DIR = 'default'
 
 # Use GPU implementation of non-maximum suppression
-__C.USE_GPU_NMS = True
+__C.USE_GPU_NMS = False
 
 
 
