@@ -18,17 +18,17 @@ def im_list_to_blob(ims):
 
     return blob
 
-def prep_im_for_blob(im, pixel_means, target_size, max_size):
+def prep_im_for_blob(im, target_size, max_size):
     """Mean subtract and scale an image for use in a blob."""
     im = im.astype(np.float32, copy=False)
-    im -= pixel_means
+    im -= cfg.PIXEL_MEANS
     im_shape = im.shape
     im_size_min = np.min(im_shape[0:2])
     im_size_max = np.max(im_shape[0:2])
-    im_scale = float(target_size) / float(im_size_min)
+    im_scale = target_size / im_size_min
     # Prevent the biggest axis from being more than MAX_SIZE
     if np.round(im_scale * im_size_max) > max_size:
-        im_scale = float(max_size) / float(im_size_max)
+        im_scale = max_size / im_size_max
     if cfg.TRAIN.RANDOM_DOWNSAMPLE:
         r = 0.6 + np.random.rand() * 0.4
         im_scale *= r
