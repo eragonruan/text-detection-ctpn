@@ -21,10 +21,29 @@ def resize_im(im, scale, max_scale=None):
 
 
 def draw_boxes(img,image_name,boxes,scale):
-    base_name = image_name.split('/')[-1]
-    with open('data/results/' + 'res_{}.txt'.format(base_name.split('.')[0]), 'w') as f:
+    base_name = os.path.basename(image_name)
+    res_file = os.path.splitext(base_name)[0] + '.tsv'
+    height, width, _ = img.shape
+    should_save_img = (base_name[-5] == '0')
+    with open('data/valid_results/' + res_file, 'w') as f:
         for box in boxes:
             if np.linalg.norm(box[0] - box[1]) < 5 or np.linalg.norm(box[3] - box[0]) < 5:
+                continue
+            min_x = min(int(box[0]/scale),int(box[2]/scale),int(box[4]/scale),int(box[6]/scale))
+            min_y = min(int(box[1]/scale),int(box[3]/scale),int(box[5]/scale),int(box[7]/scale))
+            max_x = max(int(box[0]/scale),int(box[2]/scale),int(box[4]/scale),int(box[6]/scale))
+            max_y = max(int(box[1]/scale),int(box[3]/scale),int(box[5]/scale),int(box[7]/scale))
+            # scaled_xs = box[0:8:2] / width
+            # scaled_ys = box[1:8:2] / height
+            # min_x = scaled_xs.min()
+            # max_x = scaled_xs.max()
+            # min_y = scaled_ys.min()
+            # max_y = scaled_ys.max()
+
+            line = '\t'.join(map(str, (min_x, min_y, max_x, max_y, box[8])))+'\r\n'
+            f.write(line)
+
+            if not should_save_img:
                 continue
             if box[8] >= 0.9:
                 color = (0, 255, 0)
@@ -35,16 +54,10 @@ def draw_boxes(img,image_name,boxes,scale):
             cv2.line(img, (int(box[6]), int(box[7])), (int(box[2]), int(box[3])), color, 2)
             cv2.line(img, (int(box[4]), int(box[5])), (int(box[6]), int(box[7])), color, 2)
 
-            min_x = min(int(box[0]/scale),int(box[2]/scale),int(box[4]/scale),int(box[6]/scale))
-            min_y = min(int(box[1]/scale),int(box[3]/scale),int(box[5]/scale),int(box[7]/scale))
-            max_x = max(int(box[0]/scale),int(box[2]/scale),int(box[4]/scale),int(box[6]/scale))
-            max_y = max(int(box[1]/scale),int(box[3]/scale),int(box[5]/scale),int(box[7]/scale))
 
-            line = ','.join([str(min_x),str(min_y),str(max_x),str(max_y)])+'\r\n'
-            f.write(line)
-
-    img=cv2.resize(img, None, None, fx=1.0/scale, fy=1.0/scale, interpolation=cv2.INTER_LINEAR)
-    cv2.imwrite(os.path.join("data/results", base_name), img)
+    if should_save_img:
+        img=cv2.resize(img, None, None, fx=1.0/scale, fy=1.0/scale, interpolation=cv2.INTER_LINEAR)
+        cv2.imwrite(os.path.join('data', 'valid_results', base_name), img)
 
 def ctpn(sess, net, image_name):
     timer = Timer()
@@ -53,20 +66,20 @@ def ctpn(sess, net, image_name):
     img = cv2.imread(image_name)
     img, scale = resize_im(img, scale=TextLineCfg.SCALE, max_scale=TextLineCfg.MAX_SCALE)
     scores, boxes = test_ctpn(sess, net, img)
+    print(boxes.shape)
 
     textdetector = TextDetector()
     boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
+    # scale = 1
     draw_boxes(img, image_name, boxes, scale)
     timer.toc()
-    print(('Detection took {:.3f}s for '
-           '{:d} object proposals').format(timer.total_time, boxes.shape[0]))
+    # print(('Detection took {:.3f}s for '
+    #        '{:d} object proposals').format(timer.total_time, boxes.shape[0]))
 
 
 
 if __name__ == '__main__':
-    if os.path.exists("data/results/"):
-        shutil.rmtree("data/results/")
-    os.makedirs("data/results/")
+    os.makedirs("data/valid_results/", exist_ok=True)
 
     cfg_from_file('ctpn/text.yml')
 
@@ -94,8 +107,11 @@ if __name__ == '__main__':
     im_names = glob.glob(os.path.join(cfg.DATA_DIR, 'demo', '*.png')) + \
                glob.glob(os.path.join(cfg.DATA_DIR, 'demo', '*.jpg'))
 
-    for im_name in im_names:
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print(('Demo for {:s}'.format(im_name)))
+    print('Result images will be saved at smaller scale')
+    print('Result files will have relative coordinates')
+    for idx, im_name in enumerate(im_names):
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        if idx % 10:
+            print(('Demo for {:s}'.format(im_name)))
         ctpn(sess, net, im_name)
 
