@@ -9,7 +9,7 @@ dist/
 data/demo/
 data/results/
 *.py[cod]
-*.c[cod]
+*.c
 *.so
 *.swp
 

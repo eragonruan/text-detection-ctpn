@@ -1,16 +1,17 @@
 # text-detection-ctpn
 
-text detection mainly based on ctpn (connectionist text proposal network). It is implemented in tensorflow. I use id card detect as an example to demonstrate the results, but it should be noticing that this model can be used in almost every horizontal scene text detection task. The origin paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the origin repo in caffe can be found in [here](https://github.com/tianzhi0549/CTPN). For more detail about the paper and code, see this [blog](http://slade-ruan.me/2017/10/22/text-detection-ctpn/)
+text detection mainly based on ctpn (connectionist text proposal network). It is implemented in tensorflow. The original paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the original repo in caffe can be found [here](https://github.com/tianzhi0549/CTPN). For more detail about the paper and code, see this [blog](http://slade-ruan.me/2017/10/22/text-detection-ctpn/)
 ***
 # setup
 - requirements: tensorflow1.3, cython0.24, opencv-python, easydict,(recommend to install Anaconda)
-- if you do not have a gpu device,follow here to [setup](https://github.com/eragonruan/text-detection-ctpn/issues/43)
 - if you have a gpu device, build the library by
 ```shell
 cd lib/utils
 chmod +x make.sh
 ./make.sh
 ```
+- if you do not have a gpu device, replace the last line above with `NO_CUDA=1 ./make.sh` and change `lib/fast_rcnn/config.py` so that `__C.USE_GPU_NMS=False`
+
 ***
 # parameters
 there are some parameters you may need to modify according to your requirement, you can find them in ctpn/text.yml
@@ -19,15 +20,15 @@ there are some parameters you may need to modify according to your requirement, 
 - checkpoints_path # the model I provided is in checkpoints/, if you train the model by yourself,it will be saved in output/
 ***
 # demo
-- put your images in data/demo, the results will be saved in data/results, and run demo in the root 
+- put your images in data/demo, the results will be saved in data/results, and run demo in the root
 ```shell
 python ./ctpn/demo.py
 ```
 ***
 # training
 ## prepare data
-- First, download the pre-trained model of VGG net and put it in data/pretrain/VGG_imagenet.npy. you can download it from [google drive](https://drive.google.com/open?id=0B_WmJoEtfQhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). 
-- Second, prepare the training data as referred in paper, or you can download the data I prepared from previous link. Or you can prepare your own data according to the following steps. 
+- First, download the pre-trained model of VGG net and put it in data/pretrain/VGG_imagenet.npy. you can download it from [google drive](https://drive.google.com/open?id=0B_WmJoEtfQhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l).
+- Second, prepare the training data as referred in paper, or you can download the data I prepared from previous link. Or you can prepare your own data according to the following steps.
 - Modify the path and gt_path in prepare_training_data/split_label.py according to your dataset. And run
 ```shell
 cd prepare_training_data
@@ -42,7 +43,7 @@ python ToVoc.py
 cd ../data
 ln -s TEXTVOC VOCdevkit2007
 ```
-## train 
+## train
 Simplely run
 ```shell
 python ./ctpn/train_net.py

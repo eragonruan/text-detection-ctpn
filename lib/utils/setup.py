@@ -36,7 +36,10 @@ def locate_cuda():
             raise EnvironmentError('The CUDA %s path could not be located in %s' % (k, v))
     return cudaconfig
 
-CUDA = locate_cuda()
+if os.environ['NO_CUDA']:
+    CUDA=None
+else:
+    CUDA = locate_cuda()
 
 
 try:
@@ -91,21 +94,24 @@ ext_modules = [
         extra_compile_args={'gcc': ["-Wno-cpp", "-Wno-unused-function"]},
         include_dirs = [numpy_include]
     ),
-    Extension('utils.gpu_nms',
-        ['nms_kernel.cu', 'gpu_nms.pyx'],
-        library_dirs=[CUDA['lib64']],
-        libraries=['cudart'],
-        language='c++',
-        runtime_library_dirs=[CUDA['lib64']],
-        extra_compile_args={'gcc': ["-Wno-unused-function"],
-                            'nvcc': ['-arch=sm_35',
-                                     '--ptxas-options=-v',
-                                     '-c',
-                                     '--compiler-options',
-                                     "'-fPIC'"]},
-        include_dirs = [numpy_include, CUDA['include']]
-    ),
 ]
+if CUDA is not None:
+    ext_modules.append(
+        Extension('utils.gpu_nms',
+            ['nms_kernel.cu', 'gpu_nms.pyx'],
+            library_dirs=[CUDA['lib64']],
+            libraries=['cudart'],
+            language='c++',
+            runtime_library_dirs=[CUDA['lib64']],
+            extra_compile_args={'gcc': ["-Wno-unused-function"],
+                                'nvcc': ['-arch=sm_35',
+                                         '--ptxas-options=-v',
+                                         '-c',
+                                         '--compiler-options',
+                                         "'-fPIC'"]},
+            include_dirs = [numpy_include, CUDA['include']]
+        )
+    )
 
 setup(
     ext_modules=ext_modules,
