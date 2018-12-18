@@ -63,8 +63,7 @@ python ./ctpn/train_net.py
 ***
 # some results
 `NOTICE:` all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
-<img src="/data/results/001.jpg" width=320 height=240 /><img src="/data/results/002.jpg" width=320 height=240 />
-<img src="/data/results/003.jpg" width=320 height=240 /><img src="/data/results/004.jpg" width=320 height=240 />
+<img src="/data/results/006.jpg" width=320 height=480 /><img src="/data/results/008.jpg" width=320 height=480 />
 <img src="/data/results/009.jpg" width=320 height=480 /><img src="/data/results/010.png" width=320 height=320 />
 ***
 ## oriented text connector
