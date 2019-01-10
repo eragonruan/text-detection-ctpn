@@ -1,38 +1,20 @@
 # encoding:utf-8
+import os
 import time
-import os, random
-import numpy as np
-import matplotlib.pyplot as plt
-from utils.data_util import GeneratorEnqueuer
+
 import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 
-DATA_FOLDER = "/home/slade/code/generate/SynthText/data/croped/"
-charset_path = 'data/charset_synthtext.txt'
+from utils.dataset.data_util import GeneratorEnqueuer
 
-SPACE_INDEX = 0
-SPACE_TOKEN = ''
-TARGET_HEIGHT = 32
-TARGET_WIDTH = 256
-
-def get_encode_decode_maps():
-    char = ''
-    with open(charset_path) as f:
-        for ch in f.readlines():
-            ch = ch.strip('\r\n')
-            char = char + ch
-
-    char = 'ず'+char
-    print('nclass:', len(char))
-
-    id_to_char = {i: j for i, j in enumerate(char)}
-    char_to_id = {j: i for i, j in enumerate(char)}
-    return id_to_char,char_to_id
+DATA_FOLDER = "data/dataset/mlt/"
 
 
 def get_training_data():
     img_files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for parent, dirnames, filenames in os.walk(DATA_FOLDER):
+    for parent, dirnames, filenames in os.walk(os.path.join(DATA_FOLDER, "image")):
         for filename in filenames:
             for ext in exts:
                 if filename.endswith(ext):
@@ -42,74 +24,49 @@ def get_training_data():
     return img_files
 
 
-def load_charset(charset_path):
-    charset = dict()
-    with open(charset_path) as f:
+def load_annoataion(p):
+    bbox = []
+    with open(p, "r") as f:
         lines = f.readlines()
-        for cnt,line in enumerate(lines):
-            line = line.strip()
-            charset[line] = cnt+1
-    return charset
-
-def load_label(img_path,charset):
-    txt_path = img_path[:-3] + 'txt'
-    with open(txt_path) as f:
-        line = f.readline()
-        label = []
-        for i in range(len(line)):
-            label.append(charset[line[i]])
-    return label
+    for line in lines:
+        line = line.strip().split(",")
+        x_min, y_min, x_max, y_max = map(int, line)
+        bbox.append([x_min, y_min, x_max, y_max])
+    return bbox
 
 
-def ReadImg(img_path,charset):
-    img = cv2.imread(img_path)
-    labels = load_label(img_path,charset)
-    return img, labels
+def generator(vis=False):
+    image_list = np.array(get_training_data())
+    print('{} training images in {}'.format(image_list.shape[0], DATA_FOLDER))
+    index = np.arange(0, image_list.shape[0])
+    while True:
+        np.random.shuffle(index)
+        for i in index:
+            try:
+                im_fn = image_list[i]
+                im = cv2.imread(im_fn)
+                h, w, _ = im.shape
+                _, fn = os.path.split(im_fn)
+                fn, _ = os.path.splitext(fn)
+                txt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
+                if not os.path.exists(txt_fn):
+                    continue
+                bbox = load_annoataion(txt_fn)
 
-
-def ProcessImg(im, label):
-    # rgb2gray
-    # im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    # resize and pad image
-    h, w, _ = im.shape
-    ratio = float(TARGET_HEIGHT) / h
-
-    resize_h = TARGET_HEIGHT
-    resize_w = int(w * ratio)
-
-    if resize_w >= TARGET_WIDTH:
-        im = cv2.resize(im, (int(TARGET_WIDTH), int(TARGET_HEIGHT)))
-    else:
-        img = cv2.resize(im, (int(resize_w), int(resize_h)))
-        # padding to taget width
-        im = np.zeros([TARGET_HEIGHT, TARGET_WIDTH, 3])
-        im[:, :resize_w,:] = img
-    im = np.array(im).reshape([TARGET_HEIGHT,TARGET_WIDTH,3])
-    label_vec = [int(c) for c in label]
-    label_vec = np.array(label_vec).reshape([-1])
-
-    return im, label_vec
-
-
-
-def generator(batch_size=1):
-    
-                images.append(im)
-                labels.extend(label_vec)
-                label_lens.extend(label_len)
-                time_steps.extend(time_step)
-
-                if len(label_lens)==batch_size:
-                    yield images, labels, label_lens, time_steps
-                    images = []
-                    labels = []
-                    label_lens = []
-                    time_steps=[]
+                if vis:
+                    for p in bbox:
+                        cv2.rectangle(im,(p[0],p[1]),(p[2],p[3]),color=(0,0,255),thickness=1)
+                    fig, axs = plt.subplots(1, 1, figsize=(30, 30))
+                    axs.imshow(im[:, :, ::-1])
+                    axs.set_xticks([])
+                    axs.set_yticks([])
+                    plt.tight_layout()
+                    plt.show()
+                    plt.close()
+                yield im, bbox
 
             except Exception as e:
                 print(e)
-                # import traceback
-                # traceback.print_exc()
                 continue
 
 
@@ -133,7 +90,7 @@ def get_batch(num_workers, **kwargs):
 
 
 if __name__ == '__main__':
-    gen = get_batch(num_workers=2, batch_size=2, vis=False)
+    gen = get_batch(num_workers=2,vis=True)
     while True:
-        images, labels, label_lens, time_steps = next(gen)
+        image, bbox = next(gen)
         print('done')
