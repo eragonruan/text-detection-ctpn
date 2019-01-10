@@ -1,118 +1,96 @@
 import os
-import numpy as np
-import math
+import sys
 import cv2 as cv
+import numpy as np
+from tqdm import tqdm
+sys.path.append(os.getcwd())
+from utils.utils import orderConvex, shrink_poly
 
-path = '/media/D/code/OCR/text-detection-ctpn/data/mlt_english+chinese/image'
-gt_path = '/media/D/code/OCR/text-detection-ctpn/data/mlt_english+chinese/label'
-out_path = 're_image'
-if not os.path.exists(out_path):
-    os.makedirs(out_path)
-files = os.listdir(path)
-files.sort()
-#files=files[:100]
-for file in files:
-    _, basename = os.path.split(file)
-    if basename.lower().split('.')[-1] not in ['jpg', 'png']:
-        continue
-    stem, ext = os.path.splitext(basename)
-    gt_file = os.path.join(gt_path, 'gt_' + stem + '.txt')
-    img_path = os.path.join(path, file)
-    print(img_path)
-    img = cv.imread(img_path)
-    img_size = img.shape
-    im_size_min = np.min(img_size[0:2])
-    im_size_max = np.max(img_size[0:2])
+DATA_FOLDER = "/media/D/DataSet/mlt_selected/"
+OUTPUT = "data/dataset/mlt/"
+MAX_LEN = 1200
+MIN_LEN = 600
 
-    im_scale = float(600) / float(im_size_min)
-    if np.round(im_scale * im_size_max) > 1200:
-        im_scale = float(1200) / float(im_size_max)
-    re_im = cv.resize(img, None, None, fx=im_scale, fy=im_scale, interpolation=cv.INTER_LINEAR)
-    re_size = re_im.shape
-    cv.imwrite(os.path.join(out_path, stem) + '.jpg', re_im)
+# get image fns
+im_fns = os.listdir(os.path.join(DATA_FOLDER, "image"))
+im_fns.sort()
+# im_fns = im_fns[507:]
 
-    with open(gt_file, 'r') as f:
-        lines = f.readlines()
-    for line in lines:
-        splitted_line = line.strip().lower().split(',')
-        pt_x = np.zeros((4, 1))
-        pt_y = np.zeros((4, 1))
-        pt_x[0, 0] = int(float(splitted_line[0]) / img_size[1] * re_size[1])
-        pt_y[0, 0] = int(float(splitted_line[1]) / img_size[0] * re_size[0])
-        pt_x[1, 0] = int(float(splitted_line[2]) / img_size[1] * re_size[1])
-        pt_y[1, 0] = int(float(splitted_line[3]) / img_size[0] * re_size[0])
-        pt_x[2, 0] = int(float(splitted_line[4]) / img_size[1] * re_size[1])
-        pt_y[2, 0] = int(float(splitted_line[5]) / img_size[0] * re_size[0])
-        pt_x[3, 0] = int(float(splitted_line[6]) / img_size[1] * re_size[1])
-        pt_y[3, 0] = int(float(splitted_line[7]) / img_size[0] * re_size[0])
+# create output folder
+if not os.path.exists(os.path.join(OUTPUT, "image")):
+    os.makedirs(os.path.join(OUTPUT, "image"))
+if not os.path.exists(os.path.join(OUTPUT, "label")):
+    os.makedirs(os.path.join(OUTPUT, "label"))
 
-        ind_x = np.argsort(pt_x, axis=0)
-        pt_x = pt_x[ind_x]
-        pt_y = pt_y[ind_x]
+for im_fn in tqdm(im_fns):
+    try:
+        _, fn = os.path.split(im_fn)
+        bfn, ext = os.path.splitext(fn)
+        if ext.lower() not in ['.jpg', '.png']:
+            continue
 
-        if pt_y[0] < pt_y[1]:
-            pt1 = (pt_x[0], pt_y[0])
-            pt3 = (pt_x[1], pt_y[1])
-        else:
-            pt1 = (pt_x[1], pt_y[1])
-            pt3 = (pt_x[0], pt_y[0])
+        gt_path = os.path.join(DATA_FOLDER, "label", 'gt_' + bfn + '.txt')
+        img_path = os.path.join(DATA_FOLDER, "image", im_fn)
 
-        if pt_y[2] < pt_y[3]:
-            pt2 = (pt_x[2], pt_y[2])
-            pt4 = (pt_x[3], pt_y[3])
-        else:
-            pt2 = (pt_x[3], pt_y[3])
-            pt4 = (pt_x[2], pt_y[2])
+        img = cv.imread(img_path)
+        img_size = img.shape
+        im_size_min = np.min(img_size[0:2])
+        im_size_max = np.max(img_size[0:2])
 
-        xmin = int(min(pt1[0], pt2[0]))
-        ymin = int(min(pt1[1], pt2[1]))
-        xmax = int(max(pt2[0], pt4[0]))
-        ymax = int(max(pt3[1], pt4[1]))
+        im_scale = float(600) / float(im_size_min)
+        if np.round(im_scale * im_size_max) > 1200:
+            im_scale = float(1200) / float(im_size_max)
+        new_h = int(img_size[0] * im_scale)
+        new_w = int(img_size[1] * im_scale)
 
-        if xmin < 0:
-            xmin = 0
-        if xmax > re_size[1] - 1:
-            xmax = re_size[1] - 1
-        if ymin < 0:
-            ymin = 0
-        if ymax > re_size[0] - 1:
-            ymax = re_size[0] - 1
+        new_h = new_h if new_h // 16 == 0 else (new_h // 16 + 1) * 16
+        new_w = new_w if new_w // 16 == 0 else (new_w // 16 + 1) * 16
 
-        width = xmax - xmin
-        height = ymax - ymin
+        re_im = cv.resize(img, (new_w, new_h), interpolation=cv.INTER_LINEAR)
+        re_size = re_im.shape
 
-        # reimplement
-        step = 16.0
-        x_left = []
-        x_right = []
-        x_left.append(xmin)
-        x_left_start = int(math.ceil(xmin / 16.0) * 16.0)
-        if x_left_start == xmin:
-            x_left_start = xmin + 16
-        for i in np.arange(x_left_start, xmax, 16):
-            x_left.append(i)
-        x_left = np.array(x_left)
+        polys = []
+        with open(gt_path, 'r') as f:
+            lines = f.readlines()
+        for line in lines:
+            splitted_line = line.strip().lower().split(',')
+            x1, y1, x2, y2, x3, y3, x4, y4 = map(float, splitted_line[:8])
+            poly = np.array([x1, y1, x2, y2, x3, y3, x4, y4]).reshape([4, 2])
+            poly[:, 0] = poly[:, 0] / img_size[1] * re_size[1]
+            poly[:, 1] = poly[:, 1] / img_size[0] * re_size[0]
+            poly = orderConvex(poly)
+            polys.append(poly)
 
-        x_right.append(x_left_start - 1)
-        for i in range(1, len(x_left) - 1):
-            x_right.append(x_left[i] + 15)
-        x_right.append(xmax)
-        x_right = np.array(x_right)
+            # cv.polylines(re_im, [poly.astype(np.int32).reshape((-1, 1, 2))], True,color=(0, 255, 0), thickness=2)
 
-        idx = np.where(x_left == x_right)
-        x_left = np.delete(x_left, idx, axis=0)
-        x_right = np.delete(x_right, idx, axis=0)
+        res_polys = []
+        for poly in polys:
+            # delete polys with width less than 10 pixel
+            if np.linalg.norm(poly[0] - poly[1]) < 10 or np.linalg.norm(poly[3] - poly[0]) < 10:
+                continue
 
-        if not os.path.exists('label_tmp'):
-            os.makedirs('label_tmp')
-        with open(os.path.join('label_tmp', stem) + '.txt', 'a') as f:
-            for i in range(len(x_left)):
-                f.writelines("text\t")
-                f.writelines(str(int(x_left[i])))
-                f.writelines("\t")
-                f.writelines(str(int(ymin)))
-                f.writelines("\t")
-                f.writelines(str(int(x_right[i])))
-                f.writelines("\t")
-                f.writelines(str(int(ymax)))
-                f.writelines("\n")
+            res = shrink_poly(poly)
+            # for p in res:
+            #    cv.polylines(re_im, [p.astype(np.int32).reshape((-1, 1, 2))], True, color=(0, 255, 0), thickness=1)
+
+            res = res.reshape([-1, 4, 2])
+            for r in res:
+                x_min = np.min(r[:, 0])
+                y_min = np.min(r[:, 1])
+                x_max = np.max(r[:, 0])
+                y_max = np.max(r[:, 1])
+
+                res_polys.append([x_min, y_min, x_max, y_max])
+
+        cv.imwrite(os.path.join(OUTPUT, "image", fn), re_im)
+        with open(os.path.join(OUTPUT, "label", bfn) + ".txt", "w") as f:
+            for p in res_polys:
+                line = ",".join(str(p[i]) for i in range(4))
+                f.writelines(line + "\r\n")
+        # for p in res_polys:
+        #    cv.rectangle(re_im,(p[0],p[1]),(p[2],p[3]),color=(0,0,255),thickness=1)
+
+        # cv.imshow("demo",re_im)
+        # cv.waitKey(0)
+    except:
+        print("Error processing {}".format(im_fn))
