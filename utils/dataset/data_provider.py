@@ -31,7 +31,7 @@ def load_annoataion(p):
     for line in lines:
         line = line.strip().split(",")
         x_min, y_min, x_max, y_max = map(int, line)
-        bbox.append([x_min, y_min, x_max, y_max])
+        bbox.append([x_min, y_min, x_max, y_max, 1])
     return bbox
 
 

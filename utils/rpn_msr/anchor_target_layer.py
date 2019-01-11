@@ -1,17 +1,16 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import numpy.random as npr
-from lib.fast_rcnn.bbox_transform import bbox_transform
-from lib.fast_rcnn.config import cfg
-from lib.utils.bbox import bbox_overlaps, bbox_intersections
+from utils.rpn_msr.config import Config as cfg
+from utils.rpn_msr.generate_anchors import generate_anchors
+from utils.bbox.bbox_transform import bbox_transform
+from utils.bbox.bbox import bbox_overlaps, bbox_intersections
 
-from .generate_anchors import generate_anchors
 
 DEBUG = False
 
 
-def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_info, _feat_stride=[16, ],
-                        anchor_scales=[16, ]):
+def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ],anchor_scales=[16, ]):
     """
     Assign anchors to ground-truth targets. Produces anchor classification
     labels and bounding-box regression targets.
@@ -19,8 +18,6 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     ----------
     rpn_cls_score: (1, H, W, Ax2) bg/fg scores of previous conv layer
     gt_boxes: (G, 5) vstack of [x1, y1, x2, y2, class]
-    gt_ishard: (G, 1), 1 or 0 indicates difficult or not
-    dontcare_areas: (D, 4), some areas may contains small objs but no labelling. D may be 0
     im_info: a list of [image_height, image_width, scale_ratios]
     _feat_stride: the downsampling ratio of feature map to the original input image
     anchor_scales: the scales to the basic_anchor (basic anchor is [16, 16])
@@ -58,7 +55,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     # height, width = rpn_cls_score.shape[1:3]
 
     im_info = im_info[0]  # 图像的高宽及通道数
-
+    if DEBUG:
+        print("im_info: ", im_info)
     # 在feature-map上定位anchor，并加上delta，得到在实际图像中anchor的真实坐标
     # Algorithm:
     # for each (H, W) location i
@@ -67,8 +65,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     # filter out-of-image anchors
     # measure GT overlap
 
-    assert rpn_cls_score.shape[0] == 1, \
-        'Only single item batches are supported'
+    assert rpn_cls_score.shape[0] == 1, 'Only single item batches are supported'
 
     # map of shape (..., H, W)
     height, width = rpn_cls_score.shape[1:3]  # feature-map的高宽
@@ -139,50 +136,24 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
                                np.arange(overlaps.shape[1])]
     gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]
 
-    if not cfg.TRAIN.RPN_CLOBBER_POSITIVES:
+    if not cfg.RPN_CLOBBER_POSITIVES:
         # assign bg labels first so that positive labels can clobber them
-        labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
+        labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
 
     # fg label: for each gt, anchor with highest overlap
     labels[gt_argmax_overlaps] = 1  # 每个位置上的9个anchor中overlap最大的认为是前景
     # fg label: above threshold IOU
-    labels[max_overlaps >= cfg.TRAIN.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
+    labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
 
-    if cfg.TRAIN.RPN_CLOBBER_POSITIVES:
+    if cfg.RPN_CLOBBER_POSITIVES:
         # assign bg labels last so that negative labels can clobber positives
-        labels[max_overlaps < cfg.TRAIN.RPN_NEGATIVE_OVERLAP] = 0
+        labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0
 
-    # preclude dontcare areas
-    if dontcare_areas is not None and dontcare_areas.shape[0] > 0:  # 这里我们暂时不考虑有doncare_area的存在
-        # intersec shape is D x A
-        intersecs = bbox_intersections(
-            np.ascontiguousarray(dontcare_areas, dtype=np.float),  # D x 4
-            np.ascontiguousarray(anchors, dtype=np.float)  # A x 4
-        )
-        intersecs_ = intersecs.sum(axis=0)  # A x 1
-        labels[intersecs_ > cfg.TRAIN.DONTCARE_AREA_INTERSECTION_HI] = -1
-
-    # 这里我们暂时不考虑难样本的问题
-    # preclude hard samples that are highly occlusioned, truncated or difficult to see
-    if cfg.TRAIN.PRECLUDE_HARD_SAMPLES and gt_ishard is not None and gt_ishard.shape[0] > 0:
-        assert gt_ishard.shape[0] == gt_boxes.shape[0]
-        gt_ishard = gt_ishard.astype(int)
-        gt_hardboxes = gt_boxes[gt_ishard == 1, :]
-        if gt_hardboxes.shape[0] > 0:
-            # H x A
-            hard_overlaps = bbox_overlaps(
-                np.ascontiguousarray(gt_hardboxes, dtype=np.float),  # H x 4
-                np.ascontiguousarray(anchors, dtype=np.float))  # A x 4
-            hard_max_overlaps = hard_overlaps.max(axis=0)  # (A)
-            labels[hard_max_overlaps >= cfg.TRAIN.RPN_POSITIVE_OVERLAP] = -1
-            max_intersec_label_inds = hard_overlaps.argmax(axis=1)  # H x 1
-            labels[max_intersec_label_inds] = -1  #
 
     # subsample positive labels if we have too many
     # 对正样本进行采样，如果正样本的数量太多的话
     # 限制正样本的数量不超过128个
-    # TODO 这个后期可能还需要修改，毕竟如果使用的是字符的片段，那个正样本的数量是很多的。
-    num_fg = int(cfg.TRAIN.RPN_FG_FRACTION * cfg.TRAIN.RPN_BATCHSIZE)
+    num_fg = int(cfg.RPN_FG_FRACTION * cfg.RPN_BATCHSIZE)
     fg_inds = np.where(labels == 1)[0]
     if len(fg_inds) > num_fg:
         disable_inds = npr.choice(
@@ -193,7 +164,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     # 对负样本进行采样，如果负样本的数量太多的话
     # 正负样本总数是256，限制正样本数目最多128，
     # 如果正样本数量小于128，差的那些就用负样本补上，凑齐256个样本
-    num_bg = cfg.TRAIN.RPN_BATCHSIZE - np.sum(labels == 1)
+    num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
     bg_inds = np.where(labels == 0)[0]
     if len(bg_inds) > num_bg:
         disable_inds = npr.choice(
@@ -208,10 +179,10 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
     bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
 
     bbox_inside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
-    bbox_inside_weights[labels == 1, :] = np.array(cfg.TRAIN.RPN_BBOX_INSIDE_WEIGHTS)  # 内部权重，前景就给1，其他是0
+    bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)  # 内部权重，前景就给1，其他是0
 
     bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
-    if cfg.TRAIN.RPN_POSITIVE_WEIGHT < 0:  # 暂时使用uniform 权重，也就是正样本是1，负样本是0
+    if cfg.RPN_POSITIVE_WEIGHT < 0:  # 暂时使用uniform 权重，也就是正样本是1，负样本是0
         # uniform weighting of examples (given non-uniform sampling)
         num_examples = np.sum(labels >= 0) + 1
         # positive_weights = np.ones((1, 4)) * 1.0 / num_examples
@@ -219,11 +190,11 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
         positive_weights = np.ones((1, 4))
         negative_weights = np.zeros((1, 4))
     else:
-        assert ((cfg.TRAIN.RPN_POSITIVE_WEIGHT > 0) &
-                (cfg.TRAIN.RPN_POSITIVE_WEIGHT < 1))
-        positive_weights = (cfg.TRAIN.RPN_POSITIVE_WEIGHT /
+        assert ((cfg.RPN_POSITIVE_WEIGHT > 0) &
+                (cfg.RPN_POSITIVE_WEIGHT < 1))
+        positive_weights = (cfg.RPN_POSITIVE_WEIGHT /
                             (np.sum(labels == 1)) + 1)
-        negative_weights = ((1.0 - cfg.TRAIN.RPN_POSITIVE_WEIGHT) /
+        negative_weights = ((1.0 - cfg.RPN_POSITIVE_WEIGHT) /
                             (np.sum(labels == 0)) + 1)
     bbox_outside_weights[labels == 1, :] = positive_weights  # 外部权重，前景是1，背景是0
     bbox_outside_weights[labels == 0, :] = negative_weights
@@ -276,6 +247,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, gt_ishard, dontcare_areas, im_i
         .reshape((1, height, width, A * 4))
     rpn_bbox_outside_weights = bbox_outside_weights
 
+    if DEBUG:
+        print("anchor target set")
     return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
 
 

@@ -4,11 +4,12 @@ cache/
 pretrain/
 VOCdevkit2007/
 logs/
-logs*/
+logs_*/
 output/
 build/
 dist/
 checkpoints/
+checkpoints_*/
 .idea/
 *.py[cod]
 *.c[cod]

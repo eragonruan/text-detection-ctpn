@@ -2,13 +2,15 @@ import datetime
 import os
 import sys
 import time
-
+import numpy as np
 import tensorflow as tf
 
 sys.path.append(os.getcwd())
 from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
+from utils.rpn_msr.anchor_target_layer import anchor_target_layer
+
 
 tf.app.flags.DEFINE_float('learning_rate', 0.001, '')
 tf.app.flags.DEFINE_integer('max_steps', 100000, '')
@@ -25,20 +27,6 @@ tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')
 FLAGS = tf.app.flags.FLAGS
 
 
-def build_loss(image, bbox, im_info):
-    with tf.variable_scope(tf.get_variable_scope()):
-        bbox_pred, cls_pred = model.model(image, bbox, im_info)
-
-    model_loss = model.loss()
-    total_loss = tf.add_n([model_loss] + tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-
-    # add summary
-    tf.summary.scalar('model_loss', model_loss)
-    tf.summary.scalar('total_loss', total_loss)
-
-    return total_loss, model_loss, bbox_pred, cls_pred
-
-
 def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
     now = datetime.datetime.now()
@@ -48,7 +36,7 @@ def main(argv=None):
         os.makedirs(FLAGS.checkpoint_path)
 
     input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
-    input_bbox = tf.placeholder(tf.float32, shape=[None, 4], name='input_bbox')
+    input_bbox = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox')
     input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
@@ -60,7 +48,8 @@ def main(argv=None):
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
         with tf.name_scope('model_%d' % gpu_id) as scope:
-            total_loss, model_loss, bbox_pred, cls_pred = build_loss(input_image, input_bbox, input_im_info)
+            bbox_pred, cls_pred, cls_prob = model.model(input_image)
+            total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox, input_im_info)
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = opt.compute_gradients(total_loss)
 
@@ -107,9 +96,10 @@ def main(argv=None):
         for step in range(restore_step, FLAGS.max_steps):
             data = next(data_generator)
 
-            bbox_pred_val, cls_pred_val = sess.run([bbox_pred,cls_pred],feed_dict={input_image: data[0],
+            bbox_pred_val, cls_pred_val,cls_prob_val = sess.run([bbox_pred,cls_pred,cls_prob],feed_dict={input_image: data[0],
                                                       input_bbox: data[1],
                                                       input_im_info: data[2]})
+            #rpn_data = anchor_target_layer(cls_pred_val, np.array(data[1]).reshape([-1,4]), data[2], _feat_stride=[16, ],anchor_scales=[16, ])
 
             ml, tl, _, summary_str = sess.run([model_loss, total_loss, train_op, summary_op],
                                               feed_dict={input_image: data[0],
