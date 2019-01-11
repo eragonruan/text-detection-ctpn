@@ -4,6 +4,7 @@ cache/
 pretrain/
 VOCdevkit2007/
 logs/
+logs*/
 output/
 build/
 dist/

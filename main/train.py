@@ -27,7 +27,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def build_loss(image, bbox, im_info):
     with tf.variable_scope(tf.get_variable_scope()):
-        conv5_3 = model.model(image, bbox, im_info)
+        bbox_pred, cls_pred = model.model(image, bbox, im_info)
 
     model_loss = model.loss()
     total_loss = tf.add_n([model_loss] + tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
@@ -36,7 +36,7 @@ def build_loss(image, bbox, im_info):
     tf.summary.scalar('model_loss', model_loss)
     tf.summary.scalar('total_loss', total_loss)
 
-    return total_loss, model_loss, conv5_3
+    return total_loss, model_loss, bbox_pred, cls_pred
 
 
 def main(argv=None):
@@ -60,7 +60,7 @@ def main(argv=None):
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
         with tf.name_scope('model_%d' % gpu_id) as scope:
-            total_loss, model_loss, output = build_loss(input_image, input_bbox, input_im_info)
+            total_loss, model_loss, bbox_pred, cls_pred = build_loss(input_image, input_bbox, input_im_info)
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = opt.compute_gradients(total_loss)
 
@@ -107,7 +107,7 @@ def main(argv=None):
         for step in range(restore_step, FLAGS.max_steps):
             data = next(data_generator)
 
-            output_val = sess.run([output],feed_dict={input_image: data[0],
+            bbox_pred_val, cls_pred_val = sess.run([bbox_pred,cls_pred],feed_dict={input_image: data[0],
                                                       input_bbox: data[1],
                                                       input_im_info: data[2]})
 
