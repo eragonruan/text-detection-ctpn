@@ -1,7 +1,6 @@
 # coding:utf-8
 import numpy as np
-from lib.fast_rcnn.config import cfg
-from lib.fast_rcnn.nms_wrapper import nms
+from utils.bbox.nms import nms
 
 from .text_connect_cfg import Config as TextLineCfg
 from .text_proposal_connector import TextProposalConnector
@@ -9,8 +8,8 @@ from .text_proposal_connector_oriented import TextProposalConnector as TextPropo
 
 
 class TextDetector:
-    def __init__(self):
-        self.mode = cfg.TEST.DETECT_MODE
+    def __init__(self, DETECT_MODE = "H"):
+        self.mode = DETECT_MODE
         if self.mode == "H":
             self.text_proposal_connector = TextProposalConnector()
         elif self.mode == "O":

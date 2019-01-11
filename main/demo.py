@@ -2,14 +2,14 @@
 import os
 import shutil
 import sys
-
 import cv2
 import numpy as np
 import tensorflow as tf
-
 sys.path.append(os.getcwd())
 from nets import model_train as model
 from utils.rpn_msr.proposal_layer import proposal_layer
+from utils.text_connector.detectors import TextDetector
+
 
 tf.app.flags.DEFINE_string('test_data_path', 'data/demo/', '')
 tf.app.flags.DEFINE_string('output_path', 'data/res/', '')
@@ -95,17 +95,18 @@ def main(argv=None):
                 scores = rois[:, 0]
                 boxes = rois[:, 1:5]
 
-                # textdetector = TextDetector()
-                # boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
+                textdetector = TextDetector()
+                boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
+                boxes = np.array(boxes,dtype=np.int)
 
                 for i, box in enumerate(boxes):
-                    if scores[i] >= 0.98:
+                    if scores[i] >= 0.9:
                         color = (0, 255, 0)
                     #elif scores[i] >= 0.95:
                     #    color = (255, 0, 0)
                     else:
                         continue
-                    cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), color=color, thickness=2)
+                    cv2.rectangle(img, (box[0], box[1]), (box[6], box[7]), color=color, thickness=2)
                 img = cv2.resize(img, None, None, fx=1.0 / rh, fy=1.0 / rw, interpolation=cv2.INTER_LINEAR)
                 cv2.imwrite(os.path.join(FLAGS.output_path, os.path.basename(im_fn)), img[:,:,::-1])
 
