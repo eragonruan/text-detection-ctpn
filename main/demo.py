@@ -1,14 +1,12 @@
 # coding=utf-8
-import math
 import os
 import shutil
-import sys
-from functools import cmp_to_key
+
 import cv2
 import numpy as np
 import tensorflow as tf
-from nets import model as model
 
+from nets import model as model
 
 tf.app.flags.DEFINE_string('test_data_path', 'data/demo/', '')
 tf.app.flags.DEFINE_string('output_path', 'data/res/', '')
@@ -95,10 +93,10 @@ def main(argv=None):
                     print("Error reading image!")
                     continue
 
-                #scale = [0.3, 1.0]
-                #im_list, h_list, w_list = multi_resize_image(im, max_side_len=2400, scale=scale)
+                # scale = [0.3, 1.0]
+                # im_list, h_list, w_list = multi_resize_image(im, max_side_len=2400, scale=scale)
 
-                im_list, h_list, w_list = multi_resize_by_long_side(im,32,[512])
+                im_list, h_list, w_list = multi_resize_by_long_side(im, 32, [512])
                 boxes_list = []
                 timer.tic()
                 for i, img in enumerate(im_list):

@@ -3,13 +3,13 @@ from shapely.geometry import Polygon
 
 
 def pickTopLeft(poly):
-    idx = np.argsort(poly[:,0])
-    if poly[idx[0],1] < poly[idx[1],1]:
+    idx = np.argsort(poly[:, 0])
+    if poly[idx[0], 1] < poly[idx[1], 1]:
         s = idx[0]
     else:
         s = idx[1]
 
-    return poly[(s, (s+1)%4, (s+2)%4, (s+3)%4),:]
+    return poly[(s, (s + 1) % 4, (s + 2) % 4, (s + 3) % 4), :]
 
 
 def orderConvex(p):

@@ -46,7 +46,7 @@ def generator(vis=False):
                 im_fn = image_list[i]
                 im = cv2.imread(im_fn)
                 h, w, c = im.shape
-                im_info = np.array([h,w,c]).reshape(-1)
+                im_info = np.array([h, w, c]).reshape([1,3])
 
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)
@@ -57,7 +57,7 @@ def generator(vis=False):
 
                 if vis:
                     for p in bbox:
-                        cv2.rectangle(im,(p[0],p[1]),(p[2],p[3]),color=(0,0,255),thickness=1)
+                        cv2.rectangle(im, (p[0], p[1]), (p[2], p[3]), color=(0, 0, 255), thickness=1)
                     fig, axs = plt.subplots(1, 1, figsize=(30, 30))
                     axs.imshow(im[:, :, ::-1])
                     axs.set_xticks([])
@@ -65,7 +65,7 @@ def generator(vis=False):
                     plt.tight_layout()
                     plt.show()
                     plt.close()
-                yield im, bbox, im_info
+                yield [im], bbox, im_info
 
             except Exception as e:
                 print(e)
@@ -92,7 +92,7 @@ def get_batch(num_workers, **kwargs):
 
 
 if __name__ == '__main__':
-    gen = get_batch(num_workers=2,vis=True)
+    gen = get_batch(num_workers=2, vis=True)
     while True:
         image, bbox, im_info = next(gen)
         print('done')

@@ -1,7 +1,9 @@
-import time
-import numpy as np
-import threading
 import multiprocessing
+import threading
+import time
+
+import numpy as np
+
 try:
     import queue
 except ImportError:

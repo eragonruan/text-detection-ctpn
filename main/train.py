@@ -13,11 +13,12 @@ from utils.dataset import data_provider as data_provider
 tf.app.flags.DEFINE_float('learning_rate', 0.001, '')
 tf.app.flags.DEFINE_integer('max_steps', 100000, '')
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
-tf.app.flags.DEFINE_integer('num_readers', 8, '')
+tf.app.flags.DEFINE_integer('num_readers', 2, '')
 tf.app.flags.DEFINE_string('gpu', '0', '')
 tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
-tf.app.flags.DEFINE_boolean('restore', True, '')
+tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')
+tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 5000, '')
 tf.app.flags.DEFINE_integer('decay_steps', 40000, '')
 tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')
@@ -26,7 +27,7 @@ FLAGS = tf.app.flags.FLAGS
 
 def build_loss(image, bbox, im_info):
     with tf.variable_scope(tf.get_variable_scope()):
-        conv5_3 = model.model(image)
+        conv5_3 = model.model(image, bbox, im_info)
 
     model_loss = model.loss()
     total_loss = tf.add_n([model_loss] + tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
@@ -35,12 +36,11 @@ def build_loss(image, bbox, im_info):
     tf.summary.scalar('model_loss', model_loss)
     tf.summary.scalar('total_loss', total_loss)
 
-    return total_loss, model_loss
+    return total_loss, model_loss, conv5_3
 
 
 def main(argv=None):
-    gpus = range(len(FLAGS.gpu_list.split(',')))
-    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu_list
+    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
     now = datetime.datetime.now()
     StyleTime = now.strftime("%Y-%m-%d-%H-%M-%S")
     os.makedirs(FLAGS.logs_path + StyleTime)
@@ -60,7 +60,7 @@ def main(argv=None):
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
         with tf.name_scope('model_%d' % gpu_id) as scope:
-            total_loss, model_loss, = build_loss(input_image, input_bbox, input_im_info)
+            total_loss, model_loss, output = build_loss(input_image, input_bbox, input_im_info)
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = opt.compute_gradients(total_loss)
 
@@ -105,7 +105,11 @@ def main(argv=None):
 
         start = time.time()
         for step in range(restore_step, FLAGS.max_steps):
-            data = data_generator.next()
+            data = next(data_generator)
+
+            output_val = sess.run([output],feed_dict={input_image: data[0],
+                                                      input_bbox: data[1],
+                                                      input_im_info: data[2]})
 
             ml, tl, _, summary_str = sess.run([model_loss, total_loss, train_op, summary_op],
                                               feed_dict={input_image: data[0],

@@ -14,3 +14,4 @@ checkpoints/
 *.so
 *.swp
 *.pb
+*.ckpt
