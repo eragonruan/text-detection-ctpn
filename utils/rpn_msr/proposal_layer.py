@@ -1,19 +1,13 @@
 # -*- coding:utf-8 -*-
 import numpy as np
-from lib.fast_rcnn.bbox_transform import bbox_transform_inv, clip_boxes
-from lib.fast_rcnn.config import cfg
-from lib.fast_rcnn.nms_wrapper import nms
-
-from .generate_anchors import generate_anchors
+from utils.bbox.bbox_transform import bbox_transform_inv, clip_boxes
+from utils.rpn_msr.config import Config as cfg
+from utils.bbox.nms import nms
+from utils.rpn_msr.generate_anchors import generate_anchors
 
 DEBUG = False
-"""
-Outputs object detection proposals by applying estimated bounding-box
-transformations to a set of regular boxes (called "anchors").
-"""
 
-
-def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_stride=[16, ], anchor_scales=[16, ]):
+def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[16, ], anchor_scales=[16, ]):
     """
     Parameters
     ----------
@@ -21,14 +15,12 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
                          NOTICE: the old version is ordered by (1, H, W, 2, A) !!!!
     rpn_bbox_pred: (1 , H , W , Ax4), rgs boxes output of RPN
     im_info: a list of [image_height, image_width, scale_ratios]
-    cfg_key: 'TRAIN' or 'TEST'
     _feat_stride: the downsampling ratio of feature map to the original input image
     anchor_scales: the scales to the basic_anchor (basic anchor is [16, 16])
     ----------
     Returns
     ----------
     rpn_rois : (1 x H x W x A, 5) e.g. [0, x1, y1, x2, y2]
-
     # Algorithm:
     #
     # for each (H, W) location i
@@ -42,9 +34,8 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     # take after_nms_topN proposals after NMS
     # return the top proposals (-> RoIs top, scores top)
     #layer_params = yaml.load(self.param_str_)
-
     """
-    # cfg_key=cfg_key.decode('ascii')
+
     _anchors = generate_anchors(scales=np.array(anchor_scales))  # 生成基本的9个anchor
     _num_anchors = _anchors.shape[0]  # 9个anchor
 
@@ -53,13 +44,13 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     assert rpn_cls_prob_reshape.shape[0] == 1, \
         'Only single item batches are supported'
 
-    pre_nms_topN = cfg[cfg_key].RPN_PRE_NMS_TOP_N  # 12000,在做nms之前，最多保留的候选box数目
-    post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N  # 2000，做完nms之后，最多保留的box的数目
-    nms_thresh = cfg[cfg_key].RPN_NMS_THRESH  # nms用参数，阈值是0.7
-    min_size = cfg[cfg_key].RPN_MIN_SIZE  # 候选box的最小尺寸，目前是16，高宽均要大于16
-    # TODO 后期需要修改这个最小尺寸，改为8？
+    pre_nms_topN = cfg.RPN_PRE_NMS_TOP_N  # 12000,在做nms之前，最多保留的候选box数目
+    post_nms_topN = cfg.RPN_POST_NMS_TOP_N  # 2000，做完nms之后，最多保留的box的数目
+    nms_thresh = cfg.RPN_NMS_THRESH  # nms用参数，阈值是0.7
+    min_size = cfg.RPN_MIN_SIZE  # 候选box的最小尺寸，目前是16，高宽均要大于16
 
     height, width = rpn_cls_prob_reshape.shape[1:3]  # feature-map的高宽
+    width = width//10
 
     # the first set of _num_anchors channels are bg probs
     # the second set are the fg probs, which we want
@@ -67,7 +58,6 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     scores = np.reshape(np.reshape(rpn_cls_prob_reshape, [1, height, width, _num_anchors, 2])[:, :, :, :, 1],
                         [1, height, width, _num_anchors])
     # 提取到object的分数，non-object的我们不关心
-    # 并reshape到1*H*W*9
 
     bbox_deltas = rpn_bbox_pred  # 模型输出的pred是相对值，需要进一步处理成真实图像中的坐标
     # im_info = bottom[2].data[0, :]
@@ -119,7 +109,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
 
     # 3. remove predicted boxes with either height or width < threshold
     # (NOTE: convert min_size to input image scale stored in im_info[2])
-    keep = _filter_boxes(proposals, min_size * im_info[2])  # 移除那些proposal小于一定尺寸的proposal
+    keep = _filter_boxes(proposals, min_size)  # 移除那些proposal小于一定尺寸的proposal
     proposals = proposals[keep, :]  # 保留剩下的proposal
     scores = scores[keep]
     bbox_deltas = bbox_deltas[keep, :]

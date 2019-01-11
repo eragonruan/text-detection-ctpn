@@ -1,17 +1,20 @@
 # coding=utf-8
 import os
 import shutil
+import sys
 
 import cv2
 import numpy as np
 import tensorflow as tf
 
-from nets import model as model
+sys.path.append(os.getcwd())
+from nets import model_train as model
+from utils.rpn_msr.proposal_layer import proposal_layer
 
 tf.app.flags.DEFINE_string('test_data_path', 'data/demo/', '')
 tf.app.flags.DEFINE_string('output_path', 'data/res/', '')
-tf.app.flags.DEFINE_string('gpu_list', '0', '')
-tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_rctw/', '')
+tf.app.flags.DEFINE_string('gpu', '0', '')
+tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
 tf.app.flags.DEFINE_integer('output_mode', 8, '')
 FLAGS = tf.app.flags.FLAGS
 
@@ -29,34 +32,22 @@ def get_images():
     return files
 
 
-def resize_image(im, size=32, max_side_len=2400):
-    h, w, _ = im.shape
+def resize_image(img):
+    img_size = img.shape
+    im_size_min = np.min(img_size[0:2])
+    im_size_max = np.max(img_size[0:2])
 
-    resize_w = w
-    resize_h = h
+    im_scale = float(600) / float(im_size_min)
+    if np.round(im_scale * im_size_max) > 1200:
+        im_scale = float(1200) / float(im_size_max)
+    new_h = int(img_size[0] * im_scale)
+    new_w = int(img_size[1] * im_scale)
 
-    # limit the max side
-    if max(resize_h, resize_w) > max_side_len:
-        ratio = float(max_side_len) / resize_h if resize_h > resize_w else float(max_side_len) / resize_w
-    else:
-        ratio = 1.
-    resize_h = int(resize_h * ratio)
-    resize_w = int(resize_w * ratio)
+    new_h = new_h if new_h // 16 == 0 else (new_h // 16 + 1) * 16
+    new_w = new_w if new_w // 16 == 0 else (new_w // 16 + 1) * 16
 
-    resize_h = resize_h if resize_h % size == 0 else (resize_h // size) * size
-    resize_w = resize_w if resize_w % size == 0 else (resize_w // size) * size
-
-    if resize_w < 32:
-        resize_w = 32
-    if resize_h < 32:
-        resize_h = 32
-
-    im = cv2.resize(im, (int(resize_w), int(resize_h)))
-
-    ratio_h = resize_h / float(h)
-    ratio_w = resize_w / float(w)
-
-    return im, (ratio_h, ratio_w)
+    re_im = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+    return re_im, (new_h / img_size[0], new_w / img_size[1])
 
 
 def main(argv=None):
@@ -64,13 +55,15 @@ def main(argv=None):
     if os.path.exists(FLAGS.output_path):
         shutil.rmtree(FLAGS.output_path)
     os.makedirs(FLAGS.output_path)
-    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu_list
+    os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
 
     with tf.get_default_graph().as_default():
-        input_images = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_images')
+        input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
+        input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
+
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-        f_score, f_vertex, f_geometry = model.model(input_images, is_training=False)
+        bbox_pred, cls_pred, cls_prob = model.model(input_image)
 
         variable_averages = tf.train.ExponentialMovingAverage(0.997, global_step)
         saver = tf.train.Saver(variable_averages.variables_to_restore())
@@ -80,9 +73,7 @@ def main(argv=None):
             model_path = os.path.join(FLAGS.checkpoint_path, os.path.basename(ckpt_state.model_checkpoint_path))
             print('Restore from {}'.format(model_path))
             saver.restore(sess, model_path)
-            timer = Timer()
 
-            total_time = 0.0
             im_fn_list = get_images()
             for im_fn in im_fn_list:
                 print('===============')
@@ -93,45 +84,30 @@ def main(argv=None):
                     print("Error reading image!")
                     continue
 
-                # scale = [0.3, 1.0]
-                # im_list, h_list, w_list = multi_resize_image(im, max_side_len=2400, scale=scale)
+                img, (rh, rw) = resize_image(im)
+                h, w, c = img.shape
+                im_info = np.array([h, w, c]).reshape([1, 3])
+                bbox_pred_val, cls_prob_val = sess.run([bbox_pred, cls_prob],
+                                                       feed_dict={input_image: [img],
+                                                                  input_im_info: im_info})
 
-                im_list, h_list, w_list = multi_resize_by_long_side(im, 32, [512])
-                boxes_list = []
-                timer.tic()
-                for i, img in enumerate(im_list):
-                    score, vertex, geometry = sess.run([f_score, f_vertex, f_geometry], feed_dict={input_images: [img]})
-                    boxes = post_line(img, score, vertex, geometry, score_map_thresh=0.8, box_thresh=0.12)
+                rois, _ = proposal_layer(cls_prob_val, bbox_pred_val, im_info)
+                scores = rois[:, 0]
+                boxes = rois[:, 1:5]
 
-                    # 恢复到原图大小
-                    if len(boxes):
-                        bb = boxes[:, :8].reshape((-1, 4, 2))
-                        bb[:, :, 0] /= w_list[i]
-                        bb[:, :, 1] /= h_list[i]
-                        bb = bb.reshape((-1, 8))
-                        boxes[:, :8] = bb
+                # textdetector = TextDetector()
+                # boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
 
-                    boxes_list.extend(boxes)
-
-                boxes = np.array(boxes_list, dtype=np.float).reshape([-1, 9])
-                boxes = standard_nms(boxes, 0.2)
-
-                # 存结果
-                if len(boxes):
-                    with open(FLAGS.output_path + '{}.txt'.format(os.path.basename(im_fn).split('.')[0]),
-                              'w') as f:
-                        for box in boxes:
-                            score = box[8]
-                            box = box[:8].reshape([4, 2])
-                            box = orderConvex(box.astype(np.int32))
-                            if np.linalg.norm(box[0] - box[1]) < 5 or np.linalg.norm(box[3] - box[0]) < 5:
-                                continue
-                            cv2.polylines(im[:, :, ::-1], [box.astype(np.int32).reshape((-1, 1, 2))], True,
-                                          color=(0, 255, 0), thickness=2)
-
-                cv2.imwrite(os.path.join(FLAGS.output_path, os.path.basename(im_fn)), im[:, :, ::-1])
-
-            print("totl time: {}".format(total_time))
+                for i, box in enumerate(boxes):
+                    if scores[i] >= 0.98:
+                        color = (0, 255, 0)
+                    #elif scores[i] >= 0.95:
+                    #    color = (255, 0, 0)
+                    else:
+                        continue
+                    cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), color=color, thickness=2)
+                img = cv2.resize(img, None, None, fx=1.0 / rh, fy=1.0 / rw, interpolation=cv2.INTER_LINEAR)
+                cv2.imwrite(os.path.join(FLAGS.output_path, os.path.basename(im_fn)), img[:,:,::-1])
 
 
 if __name__ == '__main__':

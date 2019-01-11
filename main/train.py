@@ -2,28 +2,26 @@ import datetime
 import os
 import sys
 import time
-import numpy as np
+
 import tensorflow as tf
 
 sys.path.append(os.getcwd())
 from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
-from utils.rpn_msr.anchor_target_layer import anchor_target_layer
 
-
-tf.app.flags.DEFINE_float('learning_rate', 0.001, '')
-tf.app.flags.DEFINE_integer('max_steps', 100000, '')
+tf.app.flags.DEFINE_float('learning_rate', 1e-5, '')
+tf.app.flags.DEFINE_integer('max_steps', 50000, '')
+tf.app.flags.DEFINE_integer('decay_steps', 30000, '')
+tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
-tf.app.flags.DEFINE_integer('num_readers', 2, '')
+tf.app.flags.DEFINE_integer('num_readers', 4, '')
 tf.app.flags.DEFINE_string('gpu', '0', '')
 tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')
-tf.app.flags.DEFINE_boolean('restore', False, '')
-tf.app.flags.DEFINE_integer('save_checkpoint_steps', 5000, '')
-tf.app.flags.DEFINE_integer('decay_steps', 40000, '')
-tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')
+tf.app.flags.DEFINE_boolean('restore', True, '')
+tf.app.flags.DEFINE_integer('save_checkpoint_steps', 1000, '')
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -49,7 +47,8 @@ def main(argv=None):
     with tf.device('/gpu:%d' % gpu_id):
         with tf.name_scope('model_%d' % gpu_id) as scope:
             bbox_pred, cls_pred, cls_prob = model.model(input_image)
-            total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox, input_im_info)
+            total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox,
+                                                                                 input_im_info)
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = opt.compute_gradients(total_loss)
 
@@ -96,10 +95,9 @@ def main(argv=None):
         for step in range(restore_step, FLAGS.max_steps):
             data = next(data_generator)
 
-            bbox_pred_val, cls_pred_val,cls_prob_val = sess.run([bbox_pred,cls_pred,cls_prob],feed_dict={input_image: data[0],
-                                                      input_bbox: data[1],
-                                                      input_im_info: data[2]})
-            #rpn_data = anchor_target_layer(cls_pred_val, np.array(data[1]).reshape([-1,4]), data[2], _feat_stride=[16, ],anchor_scales=[16, ])
+            # bbox_pred_val, cls_pred_val,cls_prob_val = sess.run([bbox_pred,cls_pred,cls_prob],feed_dict={input_image: data[0],
+            #                                          input_bbox: data[1],
+            #                                          input_im_info: data[2]})
 
             ml, tl, _, summary_str = sess.run([model_loss, total_loss, train_op, summary_op],
                                               feed_dict={input_image: data[0],

@@ -54,6 +54,8 @@ def generator(vis=False):
                 if not os.path.exists(txt_fn):
                     continue
                 bbox = load_annoataion(txt_fn)
+                if len(bbox) == 0:
+                    continue
 
                 if vis:
                     for p in bbox:
