@@ -45,7 +45,9 @@ def generator(vis=False):
             try:
                 im_fn = image_list[i]
                 im = cv2.imread(im_fn)
-                h, w, _ = im.shape
+                h, w, c = im.shape
+                im_info = np.array([h,w,c]).reshape(-1)
+
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)
                 txt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
@@ -63,7 +65,7 @@ def generator(vis=False):
                     plt.tight_layout()
                     plt.show()
                     plt.close()
-                yield im, bbox
+                yield im, bbox, im_info
 
             except Exception as e:
                 print(e)
@@ -92,5 +94,5 @@ def get_batch(num_workers, **kwargs):
 if __name__ == '__main__':
     gen = get_batch(num_workers=2,vis=True)
     while True:
-        image, bbox = next(gen)
+        image, bbox, im_info = next(gen)
         print('done')
