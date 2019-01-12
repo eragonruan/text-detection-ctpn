@@ -22,7 +22,7 @@ It will generate a nms.so and a bbox.so in current folder.
 ***
 # demo
 - follow setup to build the library 
-- download the ckpt file from [release](https://github.com/eragonruan/text-detection-ctpn/releases)
+- download the ckpt file from [googl drive](https://drive.google.com/file/d/1HcZuB_MHqsKhKEKpfF1pEU85CYy4OlWO/view?usp=sharing) or [baidu yun](https://pan.baidu.com/s/1BNHt_9fiqRPGmEXPaxaFXw)
 - put checkpoints_mlt/ in text-detection-ctpn/
 - put your images in data/demo, the results will be saved in data/res, and run demo in the root 
 ```shell
