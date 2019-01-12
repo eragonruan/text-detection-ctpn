@@ -12,8 +12,3 @@ class Config:
     RPN_POST_NMS_TOP_N = 1000
     RPN_NMS_THRESH = 0.7
     RPN_MIN_SIZE = 8
-
-
-
-
-

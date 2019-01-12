@@ -8,7 +8,7 @@ from .text_proposal_connector_oriented import TextProposalConnector as TextPropo
 
 
 class TextDetector:
-    def __init__(self, DETECT_MODE = "H"):
+    def __init__(self, DETECT_MODE="H"):
         self.mode = DETECT_MODE
         if self.mode == "H":
             self.text_proposal_connector = TextProposalConnector()

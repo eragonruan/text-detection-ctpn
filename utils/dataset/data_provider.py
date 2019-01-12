@@ -46,7 +46,7 @@ def generator(vis=False):
                 im_fn = image_list[i]
                 im = cv2.imread(im_fn)
                 h, w, c = im.shape
-                im_info = np.array([h, w, c]).reshape([1,3])
+                im_info = np.array([h, w, c]).reshape([1, 3])
 
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)

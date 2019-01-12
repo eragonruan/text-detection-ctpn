@@ -1,16 +1,16 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import numpy.random as npr
+from utils.bbox.bbox import bbox_overlaps
+
+from utils.bbox.bbox_transform import bbox_transform
 from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
-from utils.bbox.bbox_transform import bbox_transform
-from utils.bbox.bbox import bbox_overlaps, bbox_intersections
-
 
 DEBUG = False
 
 
-def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ],anchor_scales=[16, ]):
+def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ]):
     """
     Assign anchors to ground-truth targets. Produces anchor classification
     labels and bounding-box regression targets.
@@ -148,7 +148,6 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ],an
     if cfg.RPN_CLOBBER_POSITIVES:
         # assign bg labels last so that negative labels can clobber positives
         labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0
-
 
     # subsample positive labels if we have too many
     # 对正样本进行采样，如果正样本的数量太多的话

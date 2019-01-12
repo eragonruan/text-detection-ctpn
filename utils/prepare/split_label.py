@@ -6,19 +6,16 @@ import numpy as np
 from tqdm import tqdm
 
 sys.path.append(os.getcwd())
-from utils.utils import orderConvex, shrink_poly
+from utils.prepare.utils import orderConvex, shrink_poly
 
 DATA_FOLDER = "/media/D/DataSet/mlt_selected/"
 OUTPUT = "data/dataset/mlt/"
 MAX_LEN = 1200
 MIN_LEN = 600
 
-# get image fns
 im_fns = os.listdir(os.path.join(DATA_FOLDER, "image"))
 im_fns.sort()
-# im_fns = im_fns[507:]
 
-# create output folder
 if not os.path.exists(os.path.join(OUTPUT, "image")):
     os.makedirs(os.path.join(OUTPUT, "image"))
 if not os.path.exists(os.path.join(OUTPUT, "label")):

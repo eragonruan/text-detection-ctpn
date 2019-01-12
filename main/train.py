@@ -21,7 +21,7 @@ tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')
 tf.app.flags.DEFINE_boolean('restore', True, '')
-tf.app.flags.DEFINE_integer('save_checkpoint_steps', 1000, '')
+tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -39,7 +39,6 @@ def main(argv=None):
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
     learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
-    # add summary
     tf.summary.scalar('learning_rate', learning_rate)
     opt = tf.train.AdamOptimizer(learning_rate)
 
@@ -55,11 +54,9 @@ def main(argv=None):
     apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
 
     summary_op = tf.summary.merge_all()
-    # save moving average
     variable_averages = tf.train.ExponentialMovingAverage(
         FLAGS.moving_average_decay, global_step)
     variables_averages_op = variable_averages.apply(tf.trainable_variables())
-    # batch norm updates
     with tf.control_dependencies([variables_averages_op, apply_gradient_op, batch_norm_updates_op]):
         train_op = tf.no_op(name='train_op')
 
@@ -79,9 +76,9 @@ def main(argv=None):
     config.allow_soft_placement = True
     with tf.Session(config=config) as sess:
         if FLAGS.restore:
-            print('continue training from previous checkpoint')
             ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
             restore_step = int(ckpt.split('.')[0].split('_')[-1])
+            print("continue training from previous checkpoint {}".format(restore_step))
             saver.restore(sess, ckpt)
         else:
             sess.run(init)
@@ -90,15 +87,9 @@ def main(argv=None):
                 variable_restore_op(sess)
 
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers)
-
         start = time.time()
         for step in range(restore_step, FLAGS.max_steps):
             data = next(data_generator)
-
-            # bbox_pred_val, cls_pred_val,cls_prob_val = sess.run([bbox_pred,cls_pred,cls_prob],feed_dict={input_image: data[0],
-            #                                          input_bbox: data[1],
-            #                                          input_im_info: data[2]})
-
             ml, tl, _, summary_str = sess.run([model_loss, total_loss, train_op, summary_op],
                                               feed_dict={input_image: data[0],
                                                          input_bbox: data[1],

@@ -11,18 +11,6 @@ except ImportError:
 
 
 class GeneratorEnqueuer():
-    """Builds a queue out of a data generator.
-
-    Used in `fit_generator`, `evaluate_generator`, `predict_generator`.
-
-    # Arguments
-        generator: a generator function which endlessly yields data
-        use_multiprocessing: use multiprocessing if True, otherwise threading
-        wait_time: time to sleep in-between calls to `put()`
-        random_seed: Initial seed for workers,
-            will be incremented by one for each workers.
-    """
-
     def __init__(self, generator,
                  use_multiprocessing=False,
                  wait_time=0.05,
@@ -36,14 +24,6 @@ class GeneratorEnqueuer():
         self.random_seed = random_seed
 
     def start(self, workers=1, max_queue_size=10):
-        """Kicks off threads which add data from the generator into the queue.
-
-        # Arguments
-            workers: number of worker threads
-            max_queue_size: queue size
-                (when full, threads could block on `put()`)
-        """
-
         def data_generator_task():
             while not self._stop_event.is_set():
                 try:
@@ -85,13 +65,6 @@ class GeneratorEnqueuer():
         return self._stop_event is not None and not self._stop_event.is_set()
 
     def stop(self, timeout=None):
-        """Stops running threads and wait for them to exit, if necessary.
-
-        Should be called by the same thread which called `start()`.
-
-        # Arguments
-            timeout: maximum time to wait on `thread.join()`.
-        """
         if self.is_running():
             self._stop_event.set()
 
@@ -111,13 +84,6 @@ class GeneratorEnqueuer():
         self.queue = None
 
     def get(self):
-        """Creates a generator to extract data from the queue.
-
-        Skip the data if it is `None`.
-
-        # Returns
-            A generator
-        """
         while self.is_running():
             if not self.queue.empty():
                 inputs = self.queue.get()
