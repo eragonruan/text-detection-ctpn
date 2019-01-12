@@ -56,9 +56,9 @@ class TextProposalConnector:
             text_recs[index, 1] = ymin
             text_recs[index, 2] = xmax
             text_recs[index, 3] = ymin
-            text_recs[index, 4] = xmin
+            text_recs[index, 4] = xmax
             text_recs[index, 5] = ymax
-            text_recs[index, 6] = xmax
+            text_recs[index, 6] = xmin
             text_recs[index, 7] = ymax
             text_recs[index, 8] = line[4]
             index = index + 1

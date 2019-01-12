@@ -97,10 +97,10 @@ class TextProposalConnector:
             text_recs[index, 1] = y1
             text_recs[index, 2] = x2
             text_recs[index, 3] = y2
-            text_recs[index, 4] = x3
-            text_recs[index, 5] = y3
-            text_recs[index, 6] = x4
-            text_recs[index, 7] = y4
+            text_recs[index, 4] = x4
+            text_recs[index, 5] = y4
+            text_recs[index, 6] = x3
+            text_recs[index, 7] = y3
             text_recs[index, 8] = line[4]
             index = index + 1
 

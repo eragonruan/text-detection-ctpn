@@ -95,7 +95,7 @@ def main(argv=None):
                 scores = rois[:, 0]
                 boxes = rois[:, 1:5]
 
-                textdetector = TextDetector()
+                textdetector = TextDetector(DETECT_MODE='H')
                 boxes = textdetector.detect(boxes, scores[:, np.newaxis], img.shape[:2])
                 boxes = np.array(boxes,dtype=np.int)
 
@@ -106,7 +106,8 @@ def main(argv=None):
                     #    color = (255, 0, 0)
                     else:
                         continue
-                    cv2.rectangle(img, (box[0], box[1]), (box[6], box[7]), color=color, thickness=2)
+                    cv2.polylines(img, [box[:8].astype(np.int32).reshape((-1, 1, 2))], True, color=(0, 255, 0),thickness=2)
+                    # cv2.rectangle(img, (box[0], box[1]), (box[6], box[7]), color=color, thickness=2)
                 img = cv2.resize(img, None, None, fx=1.0 / rh, fy=1.0 / rw, interpolation=cv2.INTER_LINEAR)
                 cv2.imwrite(os.path.join(FLAGS.output_path, os.path.basename(im_fn)), img[:,:,::-1])
 
