@@ -31,7 +31,7 @@ python ./main/demo.py
 ***
 # training
 ## prepare data
-- First, download the pre-trained model of VGG net and put it in data/vgg_16.ckpt. you can download it from [google drive](https://drive.google.com/open?id=0B_WmJoEtfQhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). 
+- First, download the pre-trained model of VGG net and put it in data/vgg_16.ckpt. you can download it from [tensorflow/models](https://github.com/tensorflow/models/tree/1af55e018eebce03fb61bba9959a04672536107d/research/slim)
 - Second, prepare the training data according to the following steps. 
 - Modify the DATA_FOLDER and OUTPUT in utils/prepare/split_label.py according to your dataset. And run split_label.py in the root
 ```shell
