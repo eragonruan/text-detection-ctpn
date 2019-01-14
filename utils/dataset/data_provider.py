@@ -52,9 +52,11 @@ def generator(vis=False):
                 fn, _ = os.path.splitext(fn)
                 txt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
                 if not os.path.exists(txt_fn):
+                    print("Ground truth for image {} not exist!".format(im_fn))
                     continue
                 bbox = load_annoataion(txt_fn)
                 if len(bbox) == 0:
+                    print("Ground truth for image {} empty!".format(im_fn))
                     continue
 
                 if vis:
