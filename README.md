@@ -39,6 +39,10 @@ python ./main/demo.py
 python ./utils/prepare/split_label.py
 ```
 - it will generate the prepared data in data/dataset/
+- The input file format demo of split_label.py can be found in [gt_img_859.txt](https://github.com/eragonruan/text-detection-ctpn/blob/banjin-dev/data/readme/gt_img_859.txt). And the output file of split_label.py is [img_859.txt](https://github.com/eragonruan/text-detection-ctpn/blob/banjin-dev/data/readme/img_859.txt). A demo image of the prepared data is shown below.
+<img src="/data/readme/demo_split.png" width=640 height=480 />
+
+***
 ## train 
 Simplely run
 ```shell
