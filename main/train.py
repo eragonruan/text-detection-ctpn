@@ -13,7 +13,7 @@ from utils.dataset import data_provider as data_provider
 tf.app.flags.DEFINE_float('learning_rate', 1e-5, '')
 tf.app.flags.DEFINE_integer('max_steps', 50000, '')
 tf.app.flags.DEFINE_integer('decay_steps', 30000, '')
-tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')
+tf.app.flags.DEFINE_float('decay_rate', 0.1, '')
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
 tf.app.flags.DEFINE_integer('num_readers', 4, '')
 tf.app.flags.DEFINE_string('gpu', '0', '')
