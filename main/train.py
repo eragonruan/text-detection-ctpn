@@ -10,16 +10,16 @@ from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
 
-tf.app.flags.DEFINE_float('learning_rate', 1e-5, '')
-tf.app.flags.DEFINE_integer('max_steps', 50000, '')
-tf.app.flags.DEFINE_integer('decay_steps', 30000, '')
-tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')
-tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
-tf.app.flags.DEFINE_integer('num_readers', 4, '')
-tf.app.flags.DEFINE_string('gpu', '0', '')
+tf.app.flags.DEFINE_float('learning_rate', 1e-5, '') #学习率
+tf.app.flags.DEFINE_integer('max_steps', 50000, '') #？？？
+tf.app.flags.DEFINE_integer('decay_steps', 30000, '')#？？？
+tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')#？？？
+tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
+tf.app.flags.DEFINE_integer('num_readers', 4, '')#？？？
+tf.app.flags.DEFINE_string('gpu', '0', '')#使用CPU还是GPU
 tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
-tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')
+tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', True, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
@@ -33,8 +33,11 @@ def main(argv=None):
     if not os.path.exists(FLAGS.checkpoint_path):
         os.makedirs(FLAGS.checkpoint_path)
 
+    #                               输入图像数据的维度[批次,  高度,  宽度,  3通道]
     input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
+    #？？？
     input_bbox = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox')
+    #？？？
     input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
@@ -46,6 +49,10 @@ def main(argv=None):
     with tf.device('/gpu:%d' % gpu_id):
         with tf.name_scope('model_%d' % gpu_id) as scope:
             bbox_pred, cls_pred, cls_prob = model.model(input_image)
+            # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16  h原图高    w原图宽
+            # cls_pred   ( N , H , W*10 , 2 )
+            # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
+
             total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox,
                                                                                  input_im_info)
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
