@@ -8,12 +8,14 @@ import numpy as np
 
 from utils.dataset.data_util import GeneratorEnqueuer
 
-DATA_FOLDER = "data/dataset/mlt/"
+DATA_FOLDER = "data/dataset/"
 
 
 def get_training_data():
     img_files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
+    print(os.path.join(DATA_FOLDER, "image"))
+
     for parent, dirnames, filenames in os.walk(os.path.join(DATA_FOLDER, "image")):
         for filename in filenames:
             for ext in exts:
@@ -24,13 +26,6 @@ def get_training_data():
     return img_files
 
 
-# 这个很重要，去寻找这张图片对应的标注
-# https://github.com/eragonruan/text-detection-ctpn/blob/banjin-dev/data/readme/
-#
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# 1192, 1862, 2424, 1895
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-#
 def load_annoataion(p):
     bbox = []
     with open(p, "r") as f:
@@ -42,7 +37,8 @@ def load_annoataion(p):
     return bbox
 
 
-def generator(vis=False):
+def go(vis=False):
+    print ("xxxxx")
     image_list = np.array(get_training_data())
     print('{} training images in {}'.format(image_list.shape[0], DATA_FOLDER))
     index = np.arange(0, image_list.shape[0])
@@ -58,14 +54,6 @@ def generator(vis=False):
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)
 
-                # 这个很重要，去寻找这张图片对应的标注
-                # https://github.com/eragonruan/text-detection-ctpn/blob/banjin-dev/data/readme/
-                #
-                # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                # 1192, 1862, 2424, 1895
-                # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                #
-                #
                 txt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
 
                 if not os.path.exists(txt_fn):
@@ -77,8 +65,13 @@ def generator(vis=False):
                     continue
 
                 if vis:
+                    print ("show image")
                     for p in bbox:
                         cv2.rectangle(im, (p[0], p[1]), (p[2], p[3]), color=(0, 0, 255), thickness=1)
+                    cv2.imshow('image', im)
+                    # cv2.waitKey(0)
+                    # cv2.destroyAllWindows()
+
                     fig, axs = plt.subplots(1, 1, figsize=(30, 30))
                     axs.imshow(im[:, :, ::-1])
                     axs.set_xticks([])
@@ -86,7 +79,7 @@ def generator(vis=False):
                     plt.tight_layout()
                     plt.show()
                     plt.close()
-                yield [im], bbox, im_info
+                # yield [im], bbox, im_info
 
             except Exception as e:
                 print(e)
@@ -113,7 +106,10 @@ def get_batch(num_workers, **kwargs):
 
 
 if __name__ == '__main__':
-    gen = get_batch(num_workers=2, vis=True)
-    while True:
-        image, bbox, im_info = next(gen)
-        print('done')
+    # gen = get_batch(num_workers=1, vis=True)
+    # while True:
+    #     image, bbox, im_info = next(gen)
+    #     print('done')
+    print("xxx")
+    go(True)
+    print("yyy")

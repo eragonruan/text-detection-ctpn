@@ -233,13 +233,13 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
     rpn_bbox_outside_weights = tf.gather(tf.reshape(rpn_bbox_outside_weights, [-1, 4]), rpn_keep)
 
     # loss2222222222222222222，用的叫smooth l1，说防止梯度爆炸之类的，
-    # https://zhuanlan.zhihu.com/p/32230004
+    # <https://zhuanlan.zhihu.com/p/32230004>
     # "论文提到的 _smooth_l1_loss 相当于一个二次方函数和直线函数的结合，但是为什么要这样呢？不太懂，论文说它比较鲁棒，没有rcnn中使用的L2 loss 那么对异常值敏感，当回归目标不受控制时候，使用L2 loss 会需要更加细心的调整学习率以避免梯度爆炸？_smooth_l1_loss消除了这个敏感性。"
     rpn_loss_box_n = tf.reduce_sum(
         rpn_bbox_outside_weights * smooth_l1_dist(
             rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),
             reduction_indices=[1])
-
+    # reduce_sum 求个均值
     rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
     rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)
 
