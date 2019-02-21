@@ -49,10 +49,11 @@ def main(argv=None):
     with tf.device('/gpu:%d' % gpu_id):
         with tf.name_scope('model_%d' % gpu_id) as scope:
             bbox_pred, cls_pred, cls_prob = model.model(input_image)
-            # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16  h原图高    w原图宽
-            # cls_pred   ( N , H , W*10 , 2 )
+            # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
+            # cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）
             # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
 
+            # input_bbox，就是GT，就是样本、标签
             total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox,
                                                                                  input_im_info)
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))

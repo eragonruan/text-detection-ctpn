@@ -42,11 +42,16 @@ def Bilstm(net, input_channel, hidden_unit_num, output_channel, scope_name):
 
         lstm_out, last_state = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell, lstm_bw_cell, net, dtype=tf.float32)
         lstm_out = tf.concat(lstm_out, axis=-1) #双向的出来的结果是隐含层128的维度，concat就是256维度了
+        # Bi-LSTM的输出是： [batch_size, max_time, cell_fw.output_size]
+        # 对应到我们这里就是：[N*H,        W       , 512  ],恰好输出还是512
+        # 这么理解的话，LSTM输出是所有的时间片上的都输出，而不是最后一个，这是我想搞明白的
 
-        #所以出来的LSTM的维度就变成了这个，256维度的，
-        #这里需要澄清一下，应该是一次都出来，这个一次包含两个概念，一个是RNN的时间片个数，一个是之前的批次(N*H)
-        #所以一起输出出来，应该是 （N*H, W, 256)的，
-        #但是这里给变成了2维度的，这个细节要稍微注意一下，不知道目的，继续往后看
+
+        # 所以出来的LSTM的维度就变成了这个，256维度的，
+        # 这里需要澄清一下，应该是一次都出来，这个一次包含两个概念，
+        # 一个是RNN的时间片个数，一个是之前的批次(N*H)
+        # 所以一起输出出来，应该是 （N*H, W, 256)的，
+        # 但是这里给变成了2维度的，这个细节要稍微注意一下，不知道目的，继续往后看
         lstm_out = tf.reshape(lstm_out, [N * H * W, 2 * hidden_unit_num])
 
         init_weights = tf.contrib.layers.variance_scaling_initializer(factor=0.01, mode='FAN_AVG', uniform=False)
@@ -71,17 +76,22 @@ def lstm_fc(net,   input_channel, output_channel, scope_name):
         shape = tf.shape(net)
         N, H, W, C = shape[0], shape[1], shape[2], shape[3]
         net = tf.reshape(net, [N * H * W, C])#又给reshape了，变态啊
+        #注意一个细节，维度只是C，也就是512，其他的都变成批次了
 
         init_weights = tf.contrib.layers.variance_scaling_initializer(factor=0.01, mode='FAN_AVG', uniform=False)
         init_biases = tf.constant_initializer(0.0)
+
+        #weight有是一个矩阵[input_channel x output_channel]，
+        #对于bbox预测：input_channel=512, output_channel=10 * 4
+        #对于cls分类预测：input_channel=512, output_channel=10 * 2
         weights = make_var('weights', [input_channel, output_channel], init_weights)
         biases = make_var('biases', [output_channel], init_biases)
 
-        #[N*(h/16)*(w/16),512] * [512,40/20] = [ N*H*W, 40],最后变成40维度，或者20个维度的东西了
-        #为是40，或者20呢？
-        #40：bbox，那就是10的anchor的y和h（y坐标和高度）
-        #这篇文章：https://zhuanlan.zhihu.com/p/34757009 说的都应该是20，我还可以理解
-        #可是，代码里面的bbox，居然是40，诡异？继续看吧，看后面到底有啥用途？
+        # [N*(h/16)*(w/16),512] * [512,40/20] = [ N*H*W, 40],最后变成40维度，或者20个维度的东西了
+        # 为什么是40，或者20呢？
+        # 40：bbox，那就是10的anchor的y和h（y坐标和高度）
+        # 这篇文章：https://zhuanlan.zhihu.com/p/34757009 说的都应该是20，我还可以理解
+        # 可是，代码里面的bbox，居然是40，诡异？继续看吧，看后面到底有啥用途？
         output = tf.matmul(net, weights) + biases#<-----这就是一个全连接网络啊
 
         #输出[ N*H*W, 40/20],然后再分开 [ N,H,W,40/20]
@@ -96,46 +106,62 @@ def model(image):
 
     rpn_conv = slim.conv2d(conv5_3, 512, 3)#最后的3，其实就是[3,3]的核定义，卧槽，又做了一个512卷积，干，
 
-    #理清思路，rpn_conv现在还是 h/16 x w/16 x 512的张量
-    #Bilstm(net,                   input_channel, hidden_unit_num, output_channel, scope_name):
-    lstm_output = Bilstm(rpn_conv, 512,           128,             512, scope_name='BiLSTM')
+    # 理清思路，rpn_conv现在还是 h/16 x w/16 x 512的张量
+    # Bilstm(net,                   input_channel, hidden_unit_num, output_channel, scope_name):
+    lstm_output = Bilstm(rpn_conv, 512,            128,             512, scope_name='BiLSTM')
 
-    #好，理清一下思路，现在lstm_output是啥呢？
-    #是 N x h/16 x w/16 x 512的向量，
-    #但是这512，已经浓缩了关于顺序的抽象语义在里面了，另外，这一个点可是表示至少50个像素的"感受野"
+    # 好，理清一下思路，现在lstm_output是啥呢？
+    # 是 N x h/16 x w/16 x 512的向量，
+    # 但是这512，已经浓缩了关于顺序的抽象语义在里面了，另外，这一个点可是表示至少50个像素的"感受野"
 
-    #lstm_fc(net,                    input_channel, output_channel, scope_name):
-    #LSTM出来的东西，灌到一个全连接FC网络里，得出回归的框的坐标
+    #  lstm_fc(net,                    input_channel, output_channel, scope_name):
+    #  LSTM出来的东西，灌到一个全连接FC网络里，得出回归的框的坐标
     bbox_pred = lstm_fc(lstm_output, 512,           10 * 4, scope_name="bbox_pred")
-    #输出的bbox_pred [N,H,W,40]，bbox_pred
+    # 输出的bbox_pred [N,H,W,40]，bbox_pred
+    # 为何全链接，也就是bbox_pred输出是 10 * 4？？？
+    #
 
-    # LSTM出来的东西，灌到一个全连接FC网络里，得出是否包含文字的概率
+    #  LSTM出来的东西，灌到一个全连接FC网络里，得出是否包含文字的概率
     cls_pred = lstm_fc(lstm_output, 512, 10 * 2, scope_name="cls_pred")
-    #输出的cls_pred [N,H,W,20]，20个是10个anchor的对于是/不是置信概率
+    # 输出的cls_pred [N,H,W,20]，20个是10个anchor的对于是/不是置信概率
+    # 未做softmax归一化之前的隐含层输出
 
-    # transpose: (1, H, W, A x d) -> (1, H, WxA, d)
+    #  transpose: (1, H, W, A x d) -> (1, H, WxA, d)
     cls_pred_shape = tf.shape(cls_pred)
 
-    #卧槽，reshape成哪样啊，这是要？
-    #懂了，就是拆成每个anchor的，[N,H,W,20] => [N,H,W*10,2]
+    # 卧槽，reshape成哪样啊，这是要？
+    # 懂了，就是拆成每个anchor的，[N,H,W,20] => [N,H,W*10,2]
     cls_pred_reshape = tf.reshape(cls_pred, [cls_pred_shape[0], cls_pred_shape[1], -1, 2])
 
     cls_pred_reshape_shape = tf.shape(cls_pred_reshape)
-    #cls_pred_reshape_shape=( N , H , W*10 , 2 )
+    # cls_pred_reshape_shape=( N , H , W*10 , 2 )
 
     cls_prob = tf.reshape(
-        #干嘛呢？把10个anchor的概率值，做了归一化，比如说，10个框里面包含东西的概率是xxx,然后
-        #就又做了一个归一化，把这10个都包含的概率在做了一个归一化的概率分布出来，
+        # 干嘛呢？把10个anchor的概率值，做了归一化，比如说，10个框里面包含东西的概率是xxx,然后
+        # 就又做了一个归一化，把这10个都包含的概率在做了一个归一化的概率分布出来，
         tf.nn.softmax(tf.reshape(cls_pred_reshape, [-1, cls_pred_reshape_shape[3]])),
         [-1, cls_pred_reshape_shape[1], cls_pred_reshape_shape[2], cls_pred_reshape_shape[3]],
         name="cls_prob")#然后再给reshape回来，折腾啊！
 
     return bbox_pred, cls_pred, cls_prob#<----记住，这厮是归一化的
-    #bbox_pred  ( N , H , W , 40 )
-    #cls_pred   ( N , H , W*10 , 2 )
+    # bbox_pred  ( N , H , W , 40 )
+    # cls_pred   ( N , H , W*10 , 2 )
     # cls_prob  ( N , H , W*10 , 2 ), 但是，二分类，对是、不是，又做了一个归一化
 
 
+# bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
+# cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）
+# cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
+#
+# _anchor_target_layer 主要功能是计算获得属于rpn网络的label。
+# https://zhuanlan.zhihu.com/p/32230004
+# 通过对所有的anchor与所有的GT计算IOU，
+# 由此得到 rpn_labels, rpn_bbox_targets,
+# rpn_bbox_inside_weights, rpn_bbox_outside_weights
+# 这4个比较重要的第一次目标label，通过消除在图像外部的 anchor，
+# 计算IOU >=0.7 为正样本，IOU <0.3为负样本，
+# 得到在理想情况下应该各自一半的256个正负样本
+# （实际上正样本大多只有10-100个之间，相对负样本偏少）。
 def anchor_target_layer(cls_pred, bbox, im_info, scope_name):
     with tf.variable_scope(scope_name) as scope:
         # 'rpn_cls_score', 'gt_boxes', 'im_info'
@@ -152,7 +178,7 @@ def anchor_target_layer(cls_pred, bbox, im_info, scope_name):
                                                        name='rpn_bbox_inside_weights')
         rpn_bbox_outside_weights = tf.convert_to_tensor(rpn_bbox_outside_weights,
                                                         name='rpn_bbox_outside_weights')
-
+        # rpn_labels : (HxWxA, 1), for each anchor, 0 denotes bg, 1 fg, -1 dontcare，是不是包含前景
         return [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
 
 #Smooth_L1：
@@ -168,20 +194,31 @@ def smooth_l1_dist(deltas, sigma2=9.0, name='smooth_l1_dist'):
 # cls_pred,
 # bbox,
 # im_info
+# bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
+# cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）
+# cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
 def loss(bbox_pred, cls_pred, bbox, im_info):
+
+    #返回 [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
+    #rpn_labels anchor是否包含前景
+    #rpn_bbox_targets 所有的anchor对应的4个标签回归值，所有对应在图像内的anchors
     rpn_data = anchor_target_layer(cls_pred, bbox, im_info, "anchor_target_layer")
 
     # classification loss
     # transpose: (1, H, W, A x d) -> (1, H, WxA, d)
     cls_pred_shape = tf.shape(cls_pred)
-    cls_pred_reshape = tf.reshape(cls_pred, [cls_pred_shape[0], cls_pred_shape[1], -1, 2])
-    rpn_cls_score = tf.reshape(cls_pred_reshape, [-1, 2])
-    rpn_label = tf.reshape(rpn_data[0], [-1])
+    cls_pred_reshape = tf.reshape(cls_pred, [cls_pred_shape[0], cls_pred_shape[1], -1, 2]) #2是指两个概率值，(1, H, WxA, 2)
+    rpn_cls_score = tf.reshape(cls_pred_reshape, [-1, 2]) #(HxWxA, d)
+    rpn_label = tf.reshape(rpn_data[0], [-1]) #rpn_labels : (HxWxA, 1), for each anchor, 0 denotes bg, 1 fg, -1 dontcare，是不是包含前景
     # ignore_label(-1)
-    fg_keep = tf.equal(rpn_label, 1)
+    fg_keep = tf.equal(rpn_label, 1) # 所有前景
     rpn_keep = tf.where(tf.not_equal(rpn_label, -1))
-    rpn_cls_score = tf.gather(rpn_cls_score, rpn_keep)
-    rpn_label = tf.gather(rpn_label, rpn_keep)
+    # tf.gather 类似于数组的索引，可以把向量中某些索引值提取出来，得到新的向量，适用于要提取的索引为不连续的情况。这个函数似乎只适合在一维的情况下使用。
+    # https://blog.csdn.net/Cyiano/article/details/76087747
+    rpn_cls_score = tf.gather(rpn_cls_score, rpn_keep) # 把对应的前景的概率取出来
+    rpn_label = tf.gather(rpn_label, rpn_keep) # 把对应的label取出来
+    # 做交叉熵，1那个是通过IoU算出来的，而rpn_cls_score是通过卷积网络算出来的
+    # loss1111111111111111111111
     rpn_cross_entropy_n = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=rpn_label, logits=rpn_cls_score)
 
     # box loss
@@ -190,13 +227,18 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
     rpn_bbox_inside_weights = rpn_data[2]
     rpn_bbox_outside_weights = rpn_data[3]
 
-    rpn_bbox_pred = tf.gather(tf.reshape(rpn_bbox_pred, [-1, 4]), rpn_keep)  # shape (N, 4)
+    rpn_bbox_pred = tf.gather(tf.reshape(rpn_bbox_pred, [-1, 4]), rpn_keep)  # shape (N, 4) #256个，好像是，anchor_target_layer完成了采样，不过这块需要回头再看看
     rpn_bbox_targets = tf.gather(tf.reshape(rpn_bbox_targets, [-1, 4]), rpn_keep)
     rpn_bbox_inside_weights = tf.gather(tf.reshape(rpn_bbox_inside_weights, [-1, 4]), rpn_keep)
     rpn_bbox_outside_weights = tf.gather(tf.reshape(rpn_bbox_outside_weights, [-1, 4]), rpn_keep)
 
-    rpn_loss_box_n = tf.reduce_sum(rpn_bbox_outside_weights * smooth_l1_dist(
-        rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)), reduction_indices=[1])
+    # loss2222222222222222222，用的叫smooth l1，说防止梯度爆炸之类的，
+    # https://zhuanlan.zhihu.com/p/32230004
+    # "论文提到的 _smooth_l1_loss 相当于一个二次方函数和直线函数的结合，但是为什么要这样呢？不太懂，论文说它比较鲁棒，没有rcnn中使用的L2 loss 那么对异常值敏感，当回归目标不受控制时候，使用L2 loss 会需要更加细心的调整学习率以避免梯度爆炸？_smooth_l1_loss消除了这个敏感性。"
+    rpn_loss_box_n = tf.reduce_sum(
+        rpn_bbox_outside_weights * smooth_l1_dist(
+            rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),
+            reduction_indices=[1])
 
     rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
     rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)
