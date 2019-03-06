@@ -1,3 +1,12 @@
+# 修改说明
+
+- 增加了样本生成
+- 
+
+生成样本用的背景、字体还有语料，太大，放到了百度云盘上：
+
+链接: https://pan.baidu.com/s/1CSJYUbsilRqm4zSfhxjZtQ 提取码: 76j5 复制这段内容后打开百度网盘手机App，操作更方便哦
+
 # text-detection-ctpn
 
 Scene text detection based on ctpn (connectionist text proposal network). It is implemented in tensorflow. The origin paper can be found [here](https://arxiv.org/abs/1609.03605). Also, the origin repo in caffe can be found in [here](https://github.com/tianzhi0549/CTPN). For more detail about the paper and code, see this [blog](http://slade-ruan.me/2017/10/22/text-detection-ctpn/). If you got any questions, check the issue first, if the problem persists, open a new issue.
