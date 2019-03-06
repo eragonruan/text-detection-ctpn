@@ -17,10 +17,10 @@ tf.app.flags.DEFINE_integer('decay_rate', 0.1, '')#？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#？？？
 tf.app.flags.DEFINE_string('gpu', '0', '')#使用CPU还是GPU
-tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
+tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
-tf.app.flags.DEFINE_boolean('restore', True, '')
+tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
 
@@ -33,11 +33,11 @@ def main(argv=None):
     if not os.path.exists(FLAGS.checkpoint_path):
         os.makedirs(FLAGS.checkpoint_path)
 
-    #                               输入图像数据的维度[批次,  高度,  宽度,  3通道]
+    # 输入图像数据的维度[批次,  高度,  宽度,  3通道]
     input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
-    #？？？
+    # ？？？
     input_bbox = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox')
-    #？？？
+    # ？？？
     input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
@@ -97,7 +97,10 @@ def main(argv=None):
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers)
         start = time.time()
         for step in range(restore_step, FLAGS.max_steps):
-            data = next(data_generator)
+            data = next(data_generator) # next(<迭代器>）来返回下一个结果
+            # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
+            # im_info是[w,h,c]
+
             ml, tl, _, summary_str = sess.run([model_loss, total_loss, train_op, summary_op],
                                               feed_dict={input_image: data[0],
                                                          input_bbox: data[1],

@@ -8,13 +8,13 @@ import numpy as np
 
 from utils.dataset.data_util import GeneratorEnqueuer
 
-DATA_FOLDER = "data/dataset/mlt/"
+DATA_FOLDER = "data/train/"
 
-
+# 扎到image目录下所有的图片文件，返回的是一个文件列表
 def get_training_data():
     img_files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for parent, dirnames, filenames in os.walk(os.path.join(DATA_FOLDER, "image")):
+    for parent, dirnames, filenames in os.walk(os.path.join(DATA_FOLDER, "images")):
         for filename in filenames:
             for ext in exts:
                 if filename.endswith(ext):
@@ -39,7 +39,7 @@ def load_annoataion(p):
         line = line.strip().split(",")
         x_min, y_min, x_max, y_max = map(int, line) # 用map自动做int转型
         bbox.append([x_min, y_min, x_max, y_max, 1])
-    return bbox
+    return bbox # 返回四个坐标的数组
 
 
 def generator(vis=False):
@@ -48,12 +48,12 @@ def generator(vis=False):
     index = np.arange(0, image_list.shape[0])
     while True:
         np.random.shuffle(index)
-        for i in index:
+        for i in index: # 遍历所有的图片文件
             try:
                 im_fn = image_list[i] # fn file name，文件名
                 im = cv2.imread(im_fn)
                 h, w, c = im.shape
-                im_info = np.array([h, w, c]).reshape([1, 3])
+                im_info = np.array([h, w, c]).reshape([1, 3]) # 变成1行，3列，在这个是shape啊，不是数据
 
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)
@@ -66,7 +66,7 @@ def generator(vis=False):
                 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 #
                 #
-                txt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
+                txt_fn = os.path.join(DATA_FOLDER, "split", fn + '.txt')
 
                 if not os.path.exists(txt_fn):
                     print("Ground truth for image {} not exist!".format(im_fn))
@@ -76,7 +76,7 @@ def generator(vis=False):
                     print("Ground truth for image {} empty!".format(im_fn))
                     continue
 
-                if vis:
+                if vis: # 给丫画出来
                     for p in bbox:
                         cv2.rectangle(im, (p[0], p[1]), (p[2], p[3]), color=(0, 0, 255), thickness=1)
                     fig, axs = plt.subplots(1, 1, figsize=(30, 30))
@@ -86,7 +86,7 @@ def generator(vis=False):
                     plt.tight_layout()
                     plt.show()
                     plt.close()
-                yield [im], bbox, im_info
+                yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
 
             except Exception as e:
                 print(e)
