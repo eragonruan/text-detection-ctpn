@@ -44,6 +44,8 @@ __imdraw.sh__
 维度是40，不是应该20么？也就是[d_y,d_h]么？这个还有些疑惑。至于为何是20，是因为需要分别预测10个anchor的前后景的概率。
 - 总而言之，通过神经网络算出pred值，通过anchor_target_layer得到bbox/cls两者label值，然后做损失函数，酱紫
 
+对于CTPN的整体理解，可以参考我的博客：["单据识别学习笔记"](http://www.piginzoo.com/machine-learning/2019/01/21/ocr)
+
 # 运行日志
 
 我打印了很多运行时候的日志，这样可以观察出整个一次的运行细节：
