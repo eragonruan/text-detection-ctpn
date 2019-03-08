@@ -46,6 +46,8 @@ __imdraw.sh__
 
 对于CTPN的整体理解，可以参考我的博客：["单据识别学习笔记"](http://www.piginzoo.com/machine-learning/2019/01/21/ocr)
 
+对于CRNN的代码，可以参考我fork的[@MaybeShewill-CV君](https://github.com/MaybeShewill-CV)的[CRNN的代码](https://github.com/piginzoo/CRNN_Tensorflow)
+
 # 运行日志
 
 我打印了很多运行时候的日志，这样可以观察出整个一次的运行细节：
