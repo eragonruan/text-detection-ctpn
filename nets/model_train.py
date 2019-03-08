@@ -1,26 +1,39 @@
 import tensorflow as tf
 from tensorflow.contrib import slim
-
+import logging
 from nets import vgg
 from utils.rpn_msr.anchor_target_layer import anchor_target_layer as anchor_target_layer_py
 
+logger = logging.getLogger('model_train')
 
 def mean_image_subtraction(images, means=[123.68, 116.78, 103.94]):
-    num_channels = images.get_shape().as_list()[-1]
+    num_channels = images.get_shape().as_list()[-1] # 通道数
     if len(means) != num_channels:
         raise ValueError('len(means) must match the number of channels')
+    # 干啥呢？ 按通道，多分出一个维度么？
     channels = tf.split(axis=3, num_or_size_splits=num_channels, value=images)
     for i in range(num_channels):
         channels[i] -= means[i]
-    return tf.concat(axis=3, values=channels)
+        # 每个通道感觉都减去了一个数，貌似标准化一样
+        # 不过这个 means 是如何决定的呢？
+
+    return tf.concat(axis=3, values=channels) # 然后把图片再合并回来
 
 
 def make_var(name, shape, initializer=None):
     return tf.get_variable(name, shape, initializer=initializer)
 
+
+def _p_shape(tensor,msg):
+    # return tensor
+    return tf.Print(tensor, [tf.shape(tensor)], msg,summarize= 100)
+
 #net：h/16 x w/16 x 512
 #               512,           128,             512
 def Bilstm(net, input_channel, hidden_unit_num, output_channel, scope_name):
+
+    net = _p_shape(net, "LSTM输入")
+
     # width--->time step
     with tf.variable_scope(scope_name) as scope:
         shape = tf.shape(net)
@@ -67,11 +80,15 @@ def Bilstm(net, input_channel, hidden_unit_num, output_channel, scope_name):
         #上面刚说完，果然，这里又给恢复回去了，变成了N，H，W，512，
         #具体是多少呢：N, h/16, w/16, 512了，N是批次
         outputs = tf.reshape(outputs, [N, H, W, output_channel])
+
+        outputs = _p_shape(outputs,"LSTM输出")
+
         return outputs
 
 #[N,h/16,w/16,512] 512            40或20 40:bbox_pred, 20:cls_pred
 #这个函数在干嘛？他是一个全链接网络，输出rpn_bbox_pred（文字框大小），或者是rpn_cls_score(分类概率，是否包含文字）
 def lstm_fc(net,   input_channel, output_channel, scope_name):
+    net =  _p_shape(net, "LSTM后的FC输入")
     with tf.variable_scope(scope_name) as scope:
         shape = tf.shape(net)
         N, H, W, C = shape[0], shape[1], shape[2], shape[3]
@@ -96,19 +113,28 @@ def lstm_fc(net,   input_channel, output_channel, scope_name):
 
         #输出[ N*H*W, 40/20],然后再分开 [ N,H,W,40/20]
         output = tf.reshape(output, [N, H, W, output_channel])
-    return output
+
+    return _p_shape(output, "LSTM后的FC输出")
 
 
 def model(image):
+    image = _p_shape(image, "最开始输入")
+
     image = mean_image_subtraction(image)
+
     with slim.arg_scope(vgg.vgg_arg_scope()):
         conv5_3 = vgg.vgg_16(image)
 
+        conv5_3 = _p_shape(conv5_3, "VGG的5-3卷基层输出")
+
+    # 再做 512个卷积核[3x3]
     rpn_conv = slim.conv2d(conv5_3, 512, 3)#最后的3，其实就是[3,3]的核定义，卧槽，又做了一个512卷积，干，
+    logger.debug("rpn_conv的维度:%r",rpn_conv.get_shape())
 
     # 理清思路，rpn_conv现在还是 h/16 x w/16 x 512的张量
     # Bilstm(net,                   input_channel, hidden_unit_num, output_channel, scope_name):
     lstm_output = Bilstm(rpn_conv, 512,            128,             512, scope_name='BiLSTM')
+    logger.debug("lstm_output输出的维度:%r", lstm_output.get_shape())
 
     # 好，理清一下思路，现在lstm_output是啥呢？
     # 是 N x h/16 x w/16 x 512的向量，
@@ -119,12 +145,13 @@ def model(image):
     bbox_pred = lstm_fc(lstm_output, 512,           10 * 4, scope_name="bbox_pred")
     # 输出的bbox_pred [N,H,W,40]，bbox_pred
     # 为何全链接，也就是bbox_pred输出是 10 * 4？？？
-    #
+    logger.debug("lstm之后又做了一个FC(bbox_pred)，输出的维度:%r", bbox_pred.get_shape())
 
     #  LSTM出来的东西，灌到一个全连接FC网络里，得出是否包含文字的概率
     cls_pred = lstm_fc(lstm_output, 512, 10 * 2, scope_name="cls_pred")
     # 输出的cls_pred [N,H,W,20]，20个是10个anchor的对于是/不是置信概率
     # 未做softmax归一化之前的隐含层输出
+    logger.debug("lstm之后另一分支也做了一个FC(cls_pred)，输出的维度:%r", cls_pred.get_shape())
 
     #  transpose: (1, H, W, A x d) -> (1, H, WxA, d)
     cls_pred_shape = tf.shape(cls_pred)
@@ -143,7 +170,10 @@ def model(image):
         [-1, cls_pred_reshape_shape[1], cls_pred_reshape_shape[2], cls_pred_reshape_shape[3]],
         name="cls_prob")#然后再给reshape回来，折腾啊！
 
-    return bbox_pred, cls_pred, cls_prob#<----记住，这厮是归一化的
+    # return bbox_pred, cls_pred, cls_prob#<----记住，这厮是归一化的
+    return _p_shape(bbox_pred, "bbox_pred"), \
+            _p_shape(cls_pred, "cls_pred"), \
+            _p_shape(cls_prob, "cls_prob")
     # bbox_pred  ( N , H , W , 40 )
     # cls_pred   ( N , H , W*10 , 2 )
     # cls_prob  ( N , H , W*10 , 2 ), 但是，二分类，对是、不是，又做了一个归一化
@@ -165,6 +195,9 @@ def model(image):
 def anchor_target_layer(cls_pred, bbox, im_info, scope_name):
     with tf.variable_scope(scope_name) as scope:
         # 'rpn_cls_score', 'gt_boxes', 'im_info'
+        # tf.py_func是把普通函数改造成TF运行用的函数：包装一个普通的 Python 函数，这个函数接受 numpy 的数组作为输入和输出，
+        # 让这个函数可以作为 TensorFlow 计算图上的计算节点 OP 来使用。
+        # https://zhuanlan.zhihu.com/p/32970370
         rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights = \
             tf.py_func(anchor_target_layer_py,
                        [cls_pred, bbox, im_info, [16, ], [16]],
@@ -179,6 +212,12 @@ def anchor_target_layer(cls_pred, bbox, im_info, scope_name):
         rpn_bbox_outside_weights = tf.convert_to_tensor(rpn_bbox_outside_weights,
                                                         name='rpn_bbox_outside_weights')
         # rpn_labels : (HxWxA, 1), for each anchor, 0 denotes bg, 1 fg, -1 dontcare，是不是包含前景
+
+        rpn_labels = _p_shape(rpn_labels,"rpn_labels tensor")
+        rpn_bbox_targets  = _p_shape(rpn_bbox_targets,"rpn_bbox_targets tensor")
+        rpn_bbox_inside_weights = _p_shape(rpn_bbox_inside_weights,"rpn_bbox_inside_weights tensor")
+        rpn_bbox_outside_weights = _p_shape(rpn_bbox_outside_weights,"rpn_bbox_outside_weights tensor")
+
         return [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
 
 #Smooth_L1：
@@ -199,6 +238,8 @@ def smooth_l1_dist(deltas, sigma2=9.0, name='smooth_l1_dist'):
 # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
 def loss(bbox_pred, cls_pred, bbox, im_info):
 
+    bbox_pred = _p_shape(bbox_pred,"Loss输入：bbox_pred")
+
     #返回 [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
     #rpn_labels anchor是否包含前景
     #rpn_bbox_targets 所有的anchor对应的4个标签回归值，所有对应在图像内的anchors
@@ -211,14 +252,25 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
     rpn_cls_score = tf.reshape(cls_pred_reshape, [-1, 2]) #(HxWxA, d)
     rpn_label = tf.reshape(rpn_data[0], [-1]) #rpn_labels : (HxWxA, 1), for each anchor, 0 denotes bg, 1 fg, -1 dontcare，是不是包含前景
     # ignore_label(-1)
-    fg_keep = tf.equal(rpn_label, 1) # 所有前景
-    rpn_keep = tf.where(tf.not_equal(rpn_label, -1))
+
+    ##########
+    # 看！这里很重要，去掉了所有的-1，也就是刨除了那些不用的样本，只保留了300个样本
+    ##########
+    fg_keep = tf.equal(rpn_label, 1) # 所有前景，fg_keep是一个true/false数组,tf.equal返回true/false test结果的数组
+    rpn_keep = tf.where(tf.not_equal(rpn_label, -1)) # rpn只剩下是非-1的那些元素的下标，注意！是位置下标！
+
     # tf.gather 类似于数组的索引，可以把向量中某些索引值提取出来，得到新的向量，适用于要提取的索引为不连续的情况。这个函数似乎只适合在一维的情况下使用。
     # https://blog.csdn.net/Cyiano/article/details/76087747
-    rpn_cls_score = tf.gather(rpn_cls_score, rpn_keep) # 把对应的前景的概率取出来
-    rpn_label = tf.gather(rpn_label, rpn_keep) # 把对应的label取出来
+    rpn_cls_score = tf.gather(rpn_cls_score, rpn_keep) # 把对应的前景的概率取出来，rpn_cls_score是从cls_pred来的(具体自己读代码)
+    rpn_label = tf.gather(rpn_label, rpn_keep) # 把对应的label取出来，这个是label
+
+    logger.debug("我们来看看lstm预测的cls_pred和anchor_target_layer选出来的anchor组成的label的shape：")
+    rpn_cls_score = _p_shape(rpn_cls_score,"rpn_cls_score")
+    rpn_label = _p_shape(rpn_label, "rpn_label")
+
     # 做交叉熵，1那个是通过IoU算出来的，而rpn_cls_score是通过卷积网络算出来的
-    # loss1111111111111111111111
+    # loss11111111111111111
+    rpn_label = _p_shape(rpn_label,"做交叉熵了")
     rpn_cross_entropy_n = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=rpn_label, logits=rpn_cls_score)
 
     # box loss
@@ -231,6 +283,10 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
     rpn_bbox_targets = tf.gather(tf.reshape(rpn_bbox_targets, [-1, 4]), rpn_keep)
     rpn_bbox_inside_weights = tf.gather(tf.reshape(rpn_bbox_inside_weights, [-1, 4]), rpn_keep)
     rpn_bbox_outside_weights = tf.gather(tf.reshape(rpn_bbox_outside_weights, [-1, 4]), rpn_keep)
+
+    rpn_bbox_pred = _p_shape(rpn_bbox_pred,"我们来看看lstm预测的bbox_pred和anchor_target_layer选出来的anchor组成的bbox_targets的shape：")
+    rpn_bbox_pred = _p_shape(rpn_bbox_pred,"rpn_bbox_pred")
+    rpn_bbox_targets = _p_shape(rpn_bbox_targets, "rpn_bbox_targets")
 
     # loss2222222222222222222，用的叫smooth l1，说防止梯度爆炸之类的，
     # <https://zhuanlan.zhihu.com/p/32230004>

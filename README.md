@@ -5,7 +5,7 @@
 
 生成样本用的背景、字体还有语料，太大，放到了百度云盘上：
 
-链接: https://pan.baidu.com/s/1CSJYUbsilRqm4zSfhxjZtQ 提取码: 76j5 复制这段内容后打开百度网盘手机App，操作更方便哦
+[下载链接](https://pan.baidu.com/s/1CSJYUbsilRqm4zSfhxjZtQ) 提取码: 76j5 
 
 # text-detection-ctpn
 

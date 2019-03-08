@@ -1,4 +1,7 @@
 import tensorflow as tf
+import logging
+
+logger = logging.getLogger("vgg")
 
 slim = tf.contrib.slim
 
@@ -11,8 +14,9 @@ def vgg_arg_scope(weight_decay=0.0005):
         with slim.arg_scope([slim.conv2d], padding='SAME') as arg_sc:
             return arg_sc
 
-
+# 把图片扔给VGG16，
 def vgg_16(inputs, scope='vgg_16'):
+    logger.debug("输入数据shape=(%r)",inputs.get_shape())
     with tf.variable_scope(scope, 'vgg_16', [inputs]) as sc:
         with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.max_pool2d]):
             #这里没说，其实核是[3,3,3]，多出来的3是颜色3通道
@@ -36,4 +40,6 @@ def vgg_16(inputs, scope='vgg_16'):
             # 出来的是m/16 x n/16 x 512维度的图像
             # 细节，最后这个单元，并没有再继续到1024个核，而是还是继续用512个核
             #最终，出来的图像是 （m/16 x n/16 x 512）
+            logger.debug("输入数据shape=(%r)", net.get_shape())
+
     return net

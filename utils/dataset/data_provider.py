@@ -46,6 +46,7 @@ def generator(vis=False):
     image_list = np.array(get_training_data())
     print('{} training images in {}'.format(image_list.shape[0], DATA_FOLDER))
     index = np.arange(0, image_list.shape[0])
+
     while True:
         np.random.shuffle(index)
         for i in index: # 遍历所有的图片文件
@@ -86,6 +87,7 @@ def generator(vis=False):
                     plt.tight_layout()
                     plt.show()
                     plt.close()
+                # 卧槽，注意看，这次返回的只有一张图
                 yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
 
             except Exception as e:

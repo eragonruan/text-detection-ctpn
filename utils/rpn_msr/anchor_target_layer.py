@@ -7,7 +7,14 @@ from utils.bbox.bbox_transform import bbox_transform
 from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
 
+import logging
+
+logger = logging.getLogger("anchor")
 DEBUG = False
+
+def _p_shape(tensor,msg):
+    # return tensor
+    return tf.Print(tensor, [tf.shape(tensor)], msg,summarize= 100)
 
 
 # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
@@ -22,15 +29,27 @@ DEBUG = False
 # 计算IOU >=0.7 为正样本，IOU <0.3为负样本，
 # 得到在理想情况下应该各自一半的256个正负样本
 # （实际上正样本大多只有10-100个之间，相对负样本偏少）。
-
+# rpn_cls_score是啥，是神经网络跑出来的一个分类结果，是包含文字，还是不包含文字的一个概率值，
+#       因为有9个框，而且有包含和不包含2个值，所以是(1, H, W, Ax2)维度的，对H,W的含义是，对每一个feature map中的点，都做了预测
+# 另，这个太神奇了，参数本来都是张量
 def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ]):
+    logger.debug("开始调用anchor_target_layer，这个函数是来算anchor们和gt的差距")
+
+    logger.debug("传入的参数：")
+
+    logger.debug("rpn_cls_score:%r",type(rpn_cls_score))
+    logger.debug("rpn_cls_score:%r", rpn_cls_score.shape)
+    logger.debug("gt_boxes:%r", type(gt_boxes))
+    logger.debug("gt_boxes:%r", gt_boxes.shape)
+    logger.debug("im_info:%r", im_info)
+
     """
     ground-truth就是正确的标签的Y的意思，表示的就是正确的标签，错的标签不包含：https://www.zhihu.com/question/22464082
     Assign anchors to ground-truth targets. Produces anchor classification labels
     and bounding-box regression targets.
     Parameters
     ----------
-    rpn_cls_score: (1, H, W, Ax2) bg/fg scores of previous conv layer #这里的A就是文档里面提到的k，F-RNN是9，CTPN是10
+    rpn_cls_score: (1, H, W, Ax2) bg/fg scores of previous conv layer #这里的A就是文档里面提到的k，就是anchor的个数，F-RNN是9，CTPN是10
     gt_boxes: (G, 5) vstack of [x1, y1, x2, y2, class]
     im_info: a list of [image_height, image_width, scale_ratios]
     _feat_stride: the downsampling ratio of feature map to the original input image #这个就是下采样导致的和原图的缩放倍数
@@ -47,7 +66,10 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
                             beacuse the numbers of bgs and fgs mays significiantly different
     """
     _anchors = generate_anchors(scales=np.array(anchor_scales))  # 生成基本的anchor,一共10个，每一个是【x1,y1,y2,y2】坐标形式
-    _num_anchors = _anchors.shape[0]  # 10个anchor，shape=[10,4]
+    logger.debug("得到了所有的anchor了：%r",_anchors.shape)
+
+    _num_anchors = _anchors.shape[0]  # 10个anchor，shape=[10,4]，4是4个坐标，[x1,y1, x2,y2]
+    logger.debug("一共%d个anchors",_num_anchors)
 
     if DEBUG:
         print('anchors:')
@@ -69,6 +91,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # map of shape (..., H, W)
     # height, width = rpn_cls_score.shape[1:3]
 
+    # 图片的高度
     im_info = im_info[0]  # 图像的高宽及通道数,[image_height, image_width, scale_ratios]
     if DEBUG:
         print("im_info: ", im_info)
@@ -83,7 +106,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     assert rpn_cls_score.shape[0] == 1, 'Only single item batches are supported'
 
     # map of shape (..., H, W),就是各个anchor包含前景的概率把(1, H, W, Ax2)
-    height, width = rpn_cls_score.shape[1:3]  # feature-map的高宽，我怎么觉得是[1:2]啊？
+    height, width = rpn_cls_score.shape[1:3]  # feature-map的高宽，我怎么觉得是[1:2]啊？我理解错了，1：3，就是index=1和index=2的那两个值
+    logger.debug("feature map H/W:(%d,%d)",height,width)
 
     if DEBUG:
         print('AnchorTargetLayer: height', height, 'width', width)
@@ -95,23 +119,37 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         print('rpn: gt_boxes', gt_boxes)
 
     # 1. Generate proposals from bbox deltas and shifted anchors
-    # 这句话是得到原图的对应的每个anchor对应的x
+    # 这句话是得到 !!!原图!!! 的对应的每个anchor对应的x
+    # width是feature map的宽
+    # np.arange生成[0,1,2,...width]的数组，然后*_feat_stride，实际上就是还原到原图中的网格的中心点了，酷！
     shift_x = np.arange(0, width) * _feat_stride #_feat_stride是缩放比例，原图和feature map的，这个相当于是得到原图宽
-    # 这句话是得到原图的对应的每个anchor对应的y
+    logger.debug("shift_x %r",shift_x.shape)
+
+    # 这句话是得到 !!!原图!!! 的对应的每个anchor对应的y
+    # height是feature map的高
     shift_y = np.arange(0, height) * _feat_stride
+    logger.debug("shift_y %r", shift_y.shape)
+
     # meshgrid函数用两个坐标轴上的点在平面上画格。[X,Y]=meshgrid(x,y)
     # https://www.cnblogs.com/lemonbit/p/7593898.html
     # meshgrid，就是把x和y分别阔成[|x|,|y|]维度的数组，就是复制多行或者多列
     shift_x, shift_y = np.meshgrid(shift_x, shift_y)  # in W H order
+    logger.debug("变换后shift_x %r", shift_x.shape)
+    logger.debug("变换后shift_y %r", shift_y.shape)
+    # 这个shift_x是每个行对应的中心点的x坐标，是一个矩阵，对应原图，数量是feature map的shape，每个x，都是对应的中心点x坐标
+    # 同理，shift_y是每个列的中心点的x坐标
+
     # K is H x W ， ravel类似于flatten，就是变成一维的，按照行拼接就成
-    shifts = np.vstack((shift_x.ravel(), shift_y.ravel(),
+    shifts = np.vstack((shift_x.ravel(), shift_y.ravel(), # ravel():将多维数组降位一维
                         shift_x.ravel(), shift_y.ravel())).transpose()  # 生成feature-map和真实image上anchor之间的偏移量
+    logger.debug("shift_y,shift_x vstack后 %r", shifts.shape)
     # 得到了啥，是一个矩阵，
-    # 4列，行是W*H个，但是数间隔是_feat_stride，如下：（不过需要转置）
+    # 4列（因为做了transpose），行是W*H个，但是数间隔是_feat_stride，如下：（不过需要转置）
     # 0, 16, 32....57*16, 0, 16, 32....57*16, .... 0, 16, 32....57*16, 0, 16, 32....57*16，<===一共W*H个
     # 0, 16, 32....37*16, 0, 16, 32....37*16, .... 0, 16, 32....37*16, 0, 16, 32....37*16，<===一共W*H个
     # 0, 16, 32....57*16, 0, 16, 32....57*16, .... 0, 16, 32....57*16, 0, 16, 32....57*16，<===一共W*H个
     # 0, 16, 32....37*16, 0, 16, 32....37*16, .... 0, 16, 32....37*16, 0, 16, 32....37*16，<===一共W*H个
+    # 注意，是4列，1，3列是一样的，2，4列是一样的，仔细观察，pls
 
     # add A anchors (1, A, 4) to
     # cell K shifts (K, 1, 4) to get
@@ -120,15 +158,21 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     A = _num_anchors  # 9/10个anchor
     K = shifts.shape[0]  # 50*37，feature-map的宽乘高的大小，对，shitfs矩阵shape现在是[ 50*37, 4 ]
 
-    # anchors是啥来着？shape[ 10,4 ] ,一共10个，每一个是【x1,y1,y2,y2】坐标形式
+    # _anchors是啥来着？shape[ 10,4 ] ,一共10个，每一个是【x1,y1,y2,y2】坐标形式
+    # 看，_anchors和shift加到一起了，我上面就奇怪呢，_anchors是一个0，0开始的相对坐标
+    # 到这里，才明白，位移的坐标是在shifts中实现的。
     all_anchors = (
                     _anchors.reshape((1, A, 4)) +
                     shifts.reshape((1, K, 4)).transpose((1, 0, 2)) #K=50*37
                    )  # 相当于复制宽高的维度，然后相加
+    logger.debug("得到的all_anchors：%r",all_anchors.shape)
     # transpose((1, 0, 2)，就是转置成为新的数据，第1维和第2维掉个，本来是(0,1,2)=>(1,0,2)):https://blog.csdn.net/AnneQiQi/article/details/60866205
     # 真心晕了，不知道到底矩阵长啥样了？直觉上理解，就是所有的anchor，对应原图的坐标。
+    # 今天又看，还是晕，没想清楚，但是一点很清楚：
+    # all_anchors肯定是原图对应的那些anchor的坐标了
 
     all_anchors = all_anchors.reshape((K * A, 4)) # [50*37*10,4]，我理解，就是所有的anchor的坐标
+    logger.debug("reshape后的all_anchors：%r", all_anchors.shape)
     total_anchors = int(K * A)
 
     # only keep anchors inside the image
@@ -139,6 +183,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         (all_anchors[:, 2] < im_info[1] + _allowed_border) &  # width
         (all_anchors[:, 3] < im_info[0] + _allowed_border)  # height
     )[0]
+    logger.debug("图像内的点的索引inds_inside：%r",inds_inside.shape)
 
     if DEBUG:
         print('total_anchors', total_anchors)
@@ -146,6 +191,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     # keep only inside anchors
     anchors = all_anchors[inds_inside, :]  # 保留那些在图像内的anchor
+    logger.debug("图像内部的anchors：%r", anchors.shape)
+
     if DEBUG:
         print('anchors.shape', anchors.shape)
 
@@ -156,26 +203,71 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # labels是一个数据组，长度是所有的在图像内部的anchor的数量，inds_inside是图像内部的anchors
     labels = np.empty((len(inds_inside),), dtype=np.float32)
     labels.fill(-1)  # 初始化label，均为-1
+    logger.debug("labels初始化：%r", labels.shape)
+
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    # 脑子抽了，明天继续看这块，先跳过去看看简单的。
 
     # overlaps between the anchors and the gt boxes
     # overlaps (ex, gt), shape is A x G
     # 计算anchor和gt-box的overlap，用来给anchor上标签
+    """
+    bbox_overlaps(boxes,query_boxes)
+    Parameters
+    ----------
+    boxes: (N, 4) ndarray of float
+    query_boxes: (K, 4) ndarray of float
+    Returns
+    -------
+    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    这个是对一个gt_box，算9个anchor的重叠度
+    """
+    # 这里，anchors是所有原图上的feature map为中心点画出的格子对应的10个anchors们
+    # 这里，gt_boxes是所有的样本框
     overlaps = bbox_overlaps(
         np.ascontiguousarray(anchors, dtype=np.float),   # anchor是[50*37*10,4]
         np.ascontiguousarray(gt_boxes, dtype=np.float))  # 假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
-    # 按照他写的注释，是[50*37*10,|G_t|]的一个数组，大部分都很稀硫啊，这个表示法不好，我理解
+    logger.debug("经过bbox_overlaps处理后的overlops:%r",overlaps.shape)
+    # 按照他写的注释，overlaps是[50*37*10,|G_t|]的一个数组，大部分都很稀硫啊，这个表示法不好，我理解
     # bbox_overlaps函数居然是用c写的，弄啥嘞，是嫌弃python算这种东西太慢么？
 
     # 存放每一个anchor和每一个gtbox之间的overlap
     # argmax_overlaps的shape[|G|,1]
     argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
-    # inds_inside是在图片范围内的anchor的索引
-    max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
+    logger.debug("每行里面，最大的列号argmax_overlaps:%r", argmax_overlaps.shape)
+    # 返回是一维数组，长度是行数，值是每列对应的最大的列号
+    # 是每行里面，最大的列号
 
+    # inds_inside是在图片范围内的anchor的索引，图像内部的anchor的索引
+    # 这里是再做一次图像内部的过滤，去掉那些超范围的anchor的overlap的坐标
+    # 注意，这里得到的是坐标
+    max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
+    logger.debug("每行里面，最大的列号的值max_overlaps:%r", max_overlaps.shape)
+    # 这个的坐标是每行里面交面积最大的gt的坐标 ！！！是一个一维数组中
+    # [Gt坐标，Gt坐标，Gt坐标，...]，一共anchor数量行
+    # sorry,不是坐标，是一个数组，每行和GT最大的交的值
+
+    # 这里是找和某个anchor最交的GT，得到是一个数组，长度是列数，值是行上最大的行号
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
+    logger.debug("每列里面，最大的行号gt_argmax_overlaps:%r", gt_argmax_overlaps.shape)
+    # [行号,行号,行号,行号...] 一共列数个
+
+    # 先挑行gt_argmax_overlaps，那些行，然后选列
     gt_max_overlaps = overlaps[gt_argmax_overlaps,
                                np.arange(overlaps.shape[1])]
+    logger.debug("每列里面，最大的行号的值gt_max_overlaps:%r", gt_max_overlaps.shape)
+    # 得到的是一个一维数组，就是那些最大值
+
+    # np.where得到一个和overlaps一样的true、false矩阵，得到
+    # np.where输出满足条件 (即非0) 元素的坐标
+    logger.debug("np.where(overlaps == gt_max_overlaps):%r",np.where(overlaps == gt_max_overlaps))
     gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]
+    logger.debug("np.where(overlaps == gt_max_overlaps)后得到的gt_argmax_overlaps:%r", gt_argmax_overlaps.shape)
+    # 过滤完的布尔矩阵，为何只取第一行？??????
 
     if not cfg.RPN_CLOBBER_POSITIVES:
         # assign bg labels first so that positive labels can clobber them
@@ -183,11 +275,19 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     # lables是所有在图像内部的anchors，默认值都是-1，也就是不包含前景
     # fg label: for each gt, anchor with highest overlap
-    labels[gt_argmax_overlaps] = 1  # 每个位置上的9个anchor中overlap最大的认为是前景
+    logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
+    logger.debug("gt_argmax_overlaps:%r",gt_argmax_overlaps)
+    labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
+
     # fg label: above threshold IOU，
+    logger.debug("overlap大于0.7的认为是前景")
+    logger.debug("max_overlaps:%r",max_overlaps)
+    # ????
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
 
     if cfg.RPN_CLOBBER_POSITIVES:
+        logger.debug("小于0.3的给打上背景标签0")
+        logger.debug("max_overlaps:%r",max_overlaps)
         # assign bg labels last so that negative labels can clobber positives
         labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0
 
@@ -196,7 +296,12 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # 限制正样本的数量不超过128个
     num_fg = int(cfg.RPN_FG_FRACTION * cfg.RPN_BATCHSIZE)
     fg_inds = np.where(labels == 1)[0] #fg_inds，前景的anchors的数量
+
+    logger.debug("cfg.RPN_FG_FRACTION %d * cfg.RPN_BATCHSIZE %d = %d",cfg.RPN_FG_FRACTION , cfg.RPN_BATCHSIZE,num_fg)
+    logger.debug("fg_inds = %r", fg_inds.shape)
+    logger.debug("只保留num_fg个正样本，剩下的正样本去掉，置成-1")
     if len(fg_inds) > num_fg:
+        # 随机去掉一些样本，去掉就是置为-1，数量是从前景里面去掉要求的数量num_fg，正样本里就只剩下num_fg这么多了
         disable_inds = npr.choice(
             fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
         labels[disable_inds] = -1  # 变为-1
@@ -209,6 +314,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # 如果正样本数量小于128，差的那些就用负样本补上，凑齐256个样本
     num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
     bg_inds = np.where(labels == 0)[0]
+
+
     if len(bg_inds) > num_bg:
         disable_inds = npr.choice(
             bg_inds, size=(len(bg_inds) - num_bg), replace=False)
@@ -216,11 +323,21 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         # print "was %s inds, disabling %s, now %s inds" % (
         # len(bg_inds), len(disable_inds), np.sum(labels == 0))
 
+    # zheli
+
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
     # 至此， 上好标签，开始计算rpn-box的真值
+
+
     # --------------------------------------------------------------
     bbox_targets = np.zeros((len(inds_inside), 4), dtype=np.float32)
     # anchors是所有的剔除了出界（前面处理过）的剩余的anchors，每条都是anchor的x1,y1,x2,y2
     # argmax_overlaps是指每个GT上，和他overlap最大的那个anchor的索引
+    logger.debug("开始计算bbox的差：anchors(图内的)和gt_boxes[argmax_overlaps, :] %r",argmax_overlaps)
     bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
     # 返回的是4个差，应该算了一批把？这块感觉是，一口气都算了
 
@@ -296,12 +413,21 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     if DEBUG:
         print("anchor target set")
+
+    logger.debug("最后的这个超长的anchor_target_layer返回结果为：")
+    logger.debug("rpn_labels:%r",rpn_labels.shape)
+    logger.debug("rpn_bbox_targets:%r", rpn_bbox_targets.shape)
+    logger.debug("rpn_bbox_inside_weights:%r", rpn_bbox_inside_weights.shape)
+    logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
+
+    # 得到一个新的RPN的标签，对比
     return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
 
-
+# 这个函数说白了，就是还原到大矩阵，把那些抛弃的都拿回来
 def _unmap(data, count, inds, fill=0):
     """ Unmap a subset of item (data) back to the original set of items (of
     size count) """
+    # 如果是1维度的
     if len(data.shape) == 1:
         ret = np.empty((count,), dtype=np.float32)
         ret.fill(fill)
@@ -315,6 +441,9 @@ def _unmap(data, count, inds, fill=0):
 
 def _compute_targets(ex_rois, gt_rois):
     """Compute bounding-box regression targets for an image."""
+    logger.debug("_compute_targets")
+    logger.debug("ex_rois:anchors:%r",ex_rois.shape)
+    logger.debug("gt_rois:gts:%r", gt_rois.shape)
 
     assert ex_rois.shape[0] == gt_rois.shape[0]
     assert ex_rois.shape[1] == 4

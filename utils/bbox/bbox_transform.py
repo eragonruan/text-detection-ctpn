@@ -1,5 +1,7 @@
 import numpy as np
+import logging
 
+logger = logging.getLogger("bbox transform")
 
 def bbox_transform(ex_rois, gt_rois):
     """
@@ -31,6 +33,7 @@ def bbox_transform(ex_rois, gt_rois):
     targets = np.vstack(
         (targets_dx, targets_dy, targets_dw, targets_dh)).transpose()
 
+    logger.debug("计算完的bbox regression结果：%r",targets.shape)
     return targets
 
 
