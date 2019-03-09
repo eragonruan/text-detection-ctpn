@@ -7,6 +7,10 @@
 
 [下载链接](https://pan.baidu.com/s/1CSJYUbsilRqm4zSfhxjZtQ) 提取码: 76j5 
 
+VGG16 pre-train model:
+
+[VGG model](http://download.tensorflow.org/models/vgg_16_2016_08_28.tar.gz)
+
 # 样本生成
 
 一共3个脚本：
@@ -228,6 +232,9 @@ libpng warning: iCCP: known incorrect sRGB profile
 2019-03-08 13:14:08.030769: I tensorflow/core/kernels/logging_ops.cc:79] 做交叉熵了[300 1]
 
 ```
+
+
+>以下是原有项目的注释，保留之
 
 
 # text-detection-ctpn
