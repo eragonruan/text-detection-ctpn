@@ -3,6 +3,7 @@ from tensorflow.contrib import slim
 import logging
 from nets import vgg
 from utils.rpn_msr.anchor_target_layer import anchor_target_layer as anchor_target_layer_py
+from utils import _p_shape
 
 logger = logging.getLogger('model_train')
 
@@ -22,11 +23,6 @@ def mean_image_subtraction(images, means=[123.68, 116.78, 103.94]):
 
 def make_var(name, shape, initializer=None):
     return tf.get_variable(name, shape, initializer=initializer)
-
-
-def _p_shape(tensor,msg):
-    # return tensor
-    return tf.Print(tensor, [tf.shape(tensor)], msg,summarize= 100)
 
 #net：h/16 x w/16 x 512
 #               512,           128,             512

@@ -15,12 +15,13 @@ tf.app.flags.DEFINE_integer('max_steps', 50000, '') #？？？
 tf.app.flags.DEFINE_integer('decay_steps', 30000, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.1, '')#？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
-tf.app.flags.DEFINE_integer('num_readers', 4, '')#？？？
+tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
 tf.app.flags.DEFINE_string('gpu', '0', '')#使用CPU还是GPU
 tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', False, '')
+tf.app.flags.DEFINE_boolean('debug_mode', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
 
@@ -31,11 +32,14 @@ import logging
 logger = logging.getLogger("Train")
 
 def init_logger():
+    level = logging.INFO
+    if(FLAGS.debug_mode):
+        level = logging.DEBUG
+
     logging.basicConfig(
         format='%(asctime)s : %(levelname)s : %(message)s',
-        level=logging.DEBUG,
+        level=level,
         handlers=[logging.StreamHandler()])
-
 
 def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
@@ -69,6 +73,7 @@ def main(argv=None):
             # input_bbox，就是GT，就是样本、标签
             total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox,
                                                                                  input_im_info)
+            # 把
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = opt.compute_gradients(total_loss)
 
@@ -107,11 +112,13 @@ def main(argv=None):
             if FLAGS.pretrained_model_path is not None:
                 variable_restore_op(sess)
 
+        # 是的，get_batch返回的是一个generator
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers)
         start = time.time()
         for step in range(restore_step, FLAGS.max_steps):
             # 注意! 这次返回的只有一张图，以及这张图对应的所有的bbox
             data = next(data_generator) # next(<迭代器>）来返回下一个结果
+            logger.debug("在Train中，调用generator从queue中取出一个图片:%r",type(data))
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 
@@ -123,6 +130,7 @@ def main(argv=None):
 
             summary_writer.add_summary(summary_str, global_step=step)
 
+            # 在干什么？Adam的learning rate是自动衰减的呀，这里为何要再调整lr？！
             if step != 0 and step % FLAGS.decay_steps == 0:
                 sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
 

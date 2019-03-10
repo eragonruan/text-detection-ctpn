@@ -2,7 +2,6 @@
 import numpy as np
 import numpy.random as npr
 from utils.bbox.bbox import bbox_overlaps
-
 from utils.bbox.bbox_transform import bbox_transform
 from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
@@ -11,11 +10,6 @@ import logging
 
 logger = logging.getLogger("anchor")
 DEBUG = False
-
-def _p_shape(tensor,msg):
-    # return tensor
-    return tf.Print(tensor, [tf.shape(tensor)], msg,summarize= 100)
-
 
 # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
 # cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）

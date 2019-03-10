@@ -1,10 +1,12 @@
 # encoding:utf-8
 import os
 import time
-
+import logging
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+
+logger = logging.getLogger("data provider")
 
 from utils.dataset.data_util import GeneratorEnqueuer
 
@@ -87,6 +89,8 @@ def generator(vis=False):
                     plt.tight_layout()
                     plt.show()
                     plt.close()
+
+                logger.debug("generator yield了一个它读出的图片[%s]")
                 # 卧槽，注意看，这次返回的只有一张图
                 yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
 
@@ -97,6 +101,9 @@ def generator(vis=False):
 
 def get_batch(num_workers, **kwargs):
     try:
+        # 这里又藏着一个generator，注意，这个函数get_batch()本身就是一个generator
+        # 但是，这里，他的肚子里，还藏着一个generator()
+        # 这个generator实际上就是真正去读一张图片，返回回来了
         enqueuer = GeneratorEnqueuer(generator(**kwargs), use_multiprocessing=True)
         enqueuer.start(max_queue_size=24, workers=num_workers)
         generator_output = None
@@ -104,10 +111,14 @@ def get_batch(num_workers, **kwargs):
             while enqueuer.is_running():
                 if not enqueuer.queue.empty():
                     generator_output = enqueuer.queue.get()
+                    logger.debug("从GeneratorEnqueuer的queue中取出的图片")
                     break
                 else:
                     time.sleep(0.01)
+            # yield一调用，就挂起，等着外面再来调用next()了
+            # 所以，可以看出来queue.get()出来的是一个图片，验证了我的想法，就是一张图，不是多张
             yield generator_output
+
             generator_output = None
     finally:
         if enqueuer is not None:
