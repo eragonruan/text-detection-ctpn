@@ -20,7 +20,7 @@ tf.app.flags.DEFINE_string('gpu', '1', '') #使用第#1个GPU
 tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
-tf.app.flags.DEFINE_boolean('restore', False, '')
+tf.app.flags.DEFINE_boolean('restore', True, '')
 tf.app.flags.DEFINE_boolean('debug_mode', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 200, '')
 FLAGS = tf.app.flags.FLAGS
@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger("Train")
 
 def init_logger():
-    level = logging.INFO
+    level = logging.DEBUG
     if(FLAGS.debug_mode):
         level = logging.DEBUG
 
