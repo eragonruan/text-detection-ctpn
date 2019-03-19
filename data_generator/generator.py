@@ -58,6 +58,7 @@ MAX_BLANK_WIDTH = 100 # 最长的句子间距离
 
 
 
+
 # 从文字库中随机选择n个字符
 def sto_choice_from_info_str():
     start = random.randint(0, len(info_str)-MAX_LENGTH-1)
@@ -143,18 +144,30 @@ def random_image_size(image):
         return image, width, height
 
 
+# # 旋转函数
+# def random_rotate(image):
+#
+#     #按照5%的概率旋转
+#     rotate = np.random.choice([True,False], p = [ROTATE_POSSIBLE,1 - ROTATE_POSSIBLE])
+#     if not rotate:
+#         return image
+#     if DEBUG: print("需要旋转")
+#     degree = random.uniform(-ROTATE_ANGLE, ROTATE_ANGLE)  # 随机旋转0-8度
+#     image = image.rotate(degree)
+#
+#     return image
 # 旋转函数
-def random_rotate(image):
+def random_rotate():
 
     #按照5%的概率旋转
     rotate = np.random.choice([True,False], p = [ROTATE_POSSIBLE,1 - ROTATE_POSSIBLE])
     if not rotate:
-        return image
+        return None
     if DEBUG: print("需要旋转")
     degree = random.uniform(-ROTATE_ANGLE, ROTATE_ANGLE)  # 随机旋转0-8度
-    image = image.rotate(degree)
 
-    return image
+    return degree
+
 
 # 得到一个随机大小的字体大小
 def random_font_size():
@@ -244,8 +257,8 @@ def caculate_text_shape(text,font):
     #获得文件的大小
     width, height=font.getsize(text)
 
-    width = width - offsetx
-    height = height - offsety
+    width = width #- offsetx
+    height = height #- offsety
 
     return width,height
 
@@ -272,11 +285,14 @@ def process_one_sentence(x, y, background_image, image_width):
         # logger.debug("生成句子的右侧位置[%d]超过行宽[%d]，此行终结", x+words_image_width, image_width)
         return None,None
 
+    degree = random_rotate()
     words_image = Image.new('RGBA', (width, height))
     draw = ImageDraw.Draw(words_image)
     draw.text((0, 0), random_word, fill=font_color, font=font)
-    w = words_image.rotate(17.5, expand=1)
-    background_image.paste(ImageOps.colorize(w, (0, 0, 0), (255, 255, 0)), (242, 60), w)
+    if degree is not None:
+        words_image = words_image.rotate(degree, expand=1)
+
+    background_image.paste(words_image, (x,y), words_image)
 
     # # 生成一个文字图片
     # words_image = Image.new('RGBA', (width, height),(255,255,255,0)) # 假设字是方的，宽+10，高+4个像素
