@@ -297,7 +297,10 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
 
     model_loss = rpn_cross_entropy + rpn_loss_box
 
+    # tf.get_collection：从一个集合中取出全部变量，是一个列表
     regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+
+    # tf.add_n([p1, p2, p3....])函数是实现一个列表的元素的相加
     total_loss = tf.add_n(regularization_losses) + model_loss
 
     tf.summary.scalar('model_loss', model_loss)

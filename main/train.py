@@ -10,9 +10,10 @@ from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
 
-tf.app.flags.DEFINE_float('learning_rate', 1e-5, '') #学习率
-tf.app.flags.DEFINE_integer('max_steps', 4000, '') #我靠，人家原来是50000的设置
-tf.app.flags.DEFINE_integer('decay_steps', 30000, '')#？？？
+# tf.app.flags.DEFINE_float('learning_rate', 1e-5, '') #学习率
+tf.app.flags.DEFINE_float('learning_rate', 0.1, '') #学习率
+tf.app.flags.DEFINE_integer('max_steps', 20000, '') #我靠，人家原来是50000的设置
+tf.app.flags.DEFINE_integer('decay_steps', 4000, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.1, '')#？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
@@ -59,8 +60,16 @@ def main(argv=None):
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
     learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
+    learning_rate = tf.train.exponential_decay(
+                                        FLAGS.learning_rate, # 初始化的learning rate
+                                        global_step,         # 全局步数计数器，我理解是不管epochs多少，不停的把每个epochs内的step累加
+                                        FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
+                                        FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
+                                        staircase = True)
+
+
     tf.summary.scalar('learning_rate', learning_rate)
-    opt = tf.train.AdamOptimizer(learning_rate)
+    adam_opt = tf.train.AdamOptimizer(learning_rate)
 
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
@@ -73,18 +82,21 @@ def main(argv=None):
             # input_bbox，就是GT，就是样本、标签
             total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox,
                                                                                  input_im_info)
-            # 把
+            # tf.group，是把逻辑上的几个操作定义成一个操作
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
-            grads = opt.compute_gradients(total_loss)
+            grads = adam_opt.compute_gradients(total_loss)
 
-    apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
+    apply_gradient_op = adam_opt.apply_gradients(grads, global_step=global_step)
 
     summary_op = tf.summary.merge_all()
     variable_averages = tf.train.ExponentialMovingAverage(
         FLAGS.moving_average_decay, global_step)
     variables_averages_op = variable_averages.apply(tf.trainable_variables())
+
+    # 某些操作执行的依赖关系，这时我们可以使用tf.control_dependencies()来实现
+    # 我依赖于
     with tf.control_dependencies([variables_averages_op, apply_gradient_op, batch_norm_updates_op]):
-        train_op = tf.no_op(name='train_op')
+        train_op = tf.no_op(name='train_op') # no_op啥也不干，但是它依赖的操作都会被干一遍
 
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
     summary_writer = tf.summary.FileWriter(FLAGS.logs_path + StyleTime, tf.get_default_graph())
@@ -103,10 +115,12 @@ def main(argv=None):
     with tf.Session(config=config) as sess:
         if FLAGS.restore:
             ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+            logger.debug("最新的日志文件:%s",ckpt)
             restore_step = int(ckpt.split('.')[0].split('_')[-1])
-            print("continue training from previous checkpoint {}".format(restore_step))
             saver.restore(sess, ckpt)
+            logger.info("从之前的checkpoint继续训练，步数是: {}".format(restore_step))
         else:
+            logger.info("从头开始训练模型")
             sess.run(init)
             restore_step = 0
             if FLAGS.pretrained_model_path is not None:
@@ -127,7 +141,7 @@ def main(argv=None):
                                               feed_dict={input_image: data[0],
                                                          input_bbox: data[1],
                                                          input_im_info: data[2]})
-
+            logger.debug("结束运行sess.run了")
             summary_writer.add_summary(summary_str, global_step=step)
 
             # 在干什么？Adam的learning rate是自动衰减的呀，这里为何要再调整lr？！

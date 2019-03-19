@@ -28,20 +28,31 @@ def _load_label(full_label_file_name_path):
 # 注意：需要在根目录下运行，存到 /data/train目录下
 if __name__ == '__main__':
 
-    DATA_DIR = "data"
     TYPE= "train"
 
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--type") # 啥类型的数据啊，train/validate/test
+    parser.add_argument("--dir")  # 这个程序的主目录
+
+    args = parser.parse_args()
+
+    data_dir = args.dir
+    type = args.type
+
+
     # 原图目录
-    data_images_dir = os.path.join(DATA_DIR,TYPE,"images")
+    data_images_dir = os.path.join(data_dir,type,"images")
 
     # 大框标签目录（坐标）
-    data_labels_dir = os.path.join(DATA_DIR,TYPE,"labels")
+    data_labels_dir = os.path.join(data_dir,type,"labels")
 
     # 保存小框标签（坐标）的目录
-    data_split_labels_dir = os.path.join(DATA_DIR,TYPE,"split")
+    data_split_labels_dir = os.path.join(data_dir,type,"split")
 
     # 要画出来的图片存放的目录
-    data_draws_dir = os.path.join(DATA_DIR, TYPE, "draws")
+    data_draws_dir = os.path.join(data_dir, type, "draws")
 
 
     if not os.path.exists(data_draws_dir): os.makedirs(data_draws_dir)

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import numpy.random as npr
-from utils.bbox.bbox import bbox_overlaps
+from bbox import bbox_overlaps
 from utils.bbox.bbox_transform import bbox_transform
 from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
@@ -432,7 +432,11 @@ def _unmap(data, count, inds, fill=0):
         ret[inds, :] = data
     return ret
 
-
+# ex_rois就是anchor的4个坐标
+# gt_rois就是gt的4个坐标
+# 那你算啥呢？
+# 你算dx,dy,dw,dh，这个4元组就是标签啊
+# 不过，dx,dw是在CTPN的算法是没用的啊？这点我表示困惑
 def _compute_targets(ex_rois, gt_rois):
     """Compute bounding-box regression targets for an image."""
     logger.debug("_compute_targets")
@@ -444,5 +448,7 @@ def _compute_targets(ex_rois, gt_rois):
     assert gt_rois.shape[1] == 5
 
     #         (targets_dx, targets_dy, targets_dw, targets_dh)
-    # 返回的是4个差
+    # 返回的是4个差:[dx,dy,dw,dh]
+    # 其实，dx,dw是没用的啊？！
+    # 我理解，算了其实后面loss也不用，恩，等着瞧
     return bbox_transform(ex_rois, gt_rois[:, :4]).astype(np.float32, copy=False)

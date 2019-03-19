@@ -34,13 +34,29 @@ ROTATE_POSSIBLE = 0.4   # 按照定义的概率比率进行旋转，也就是100
 GAUSS_RADIUS_MIN = 0.8  # 高斯模糊的radius最小值
 GAUSS_RADIUS_MAX = 1.3  # 高斯模糊的radius最大值
 
-MAX_BACKGROUND_WIDTH = 1600
-MIN_BACKGROUND_WIDTH = 800
-MAX_BACKGROUND_HEIGHT = 2500
-MIN_BACKGROUND_HEIGHT = 1000
+# 之前的设置，太大，我决定改改
+# MAX_BACKGROUND_WIDTH = 1600
+# MIN_BACKGROUND_WIDTH = 800
+# MAX_BACKGROUND_HEIGHT = 2500
+# MIN_BACKGROUND_HEIGHT = 1000
+MAX_BACKGROUND_WIDTH = 700
+MIN_BACKGROUND_WIDTH = 500
+MAX_BACKGROUND_HEIGHT = 900
+MIN_BACKGROUND_HEIGHT = 800
+
 
 MIN_BLANK_WIDTH = 50 # 最小的句子间的随机距离
 MAX_BLANK_WIDTH = 100 # 最长的句子间距离
+
+
+# 改进图片的质量：
+# a、算清楚留白，不多留
+# b、旋转一下，不切去变了
+# c、增加整张纸的脏变形，暗影，干扰线
+# D、造单字的样本
+# F、造数字样本 1,000,00.000类似的
+
+
 
 # 从文字库中随机选择n个字符
 def sto_choice_from_info_str():
@@ -220,19 +236,19 @@ def generate_row(i,y, background_image,image_width):
     # logger.debug("第%d行图片产生完毕",i)
 
 # 因为英文、数字、符号等ascii可见字符宽度短，所以要计算一下他的实际宽度，便于做样本的时候的宽度过宽
-def caculate_sentence_width(sentence,one_word_width):
+def caculate_text_shape(text,font):
 
-    # 这个除2加4，是经验值，觉得英文字符是汉字的一半，然后再找补点
-    half_word_width = int(one_word_width/2 + 4)
+    #获得文字的offset位置
+    offsetx, offsety = font.getoffset(text)
 
-    width = 0
-    for w in sentence:
-        # 32~126 是 ascii的可见字符范围
-        if ord(w)>=32 and ord(w)<=126:
-            width+= half_word_width
-        else:
-            width+= one_word_width
-    return width
+    #获得文件的大小
+    width, height=font.getsize(text)
+
+    width = width - offsetx
+    height = height - offsety
+
+    return width,height
+
 
 # 生成的最小颗粒度，生成一句话
 def process_one_sentence(x, y, background_image, image_width):
@@ -242,51 +258,52 @@ def process_one_sentence(x, y, background_image, image_width):
 
     # 字号随机
     font_size = random_font_size()
-
-    # 算算句子的宽度
-    words_image_width = length * font_size + 10
-
-    # 算算句子的高度
-    words_image_height = font_size + 4
-
-    # 一算，句子的宽度超了，得嘞，这行咱就算生成完毕
-    if x + words_image_width > image_width:
-        # logger.debug("生成句子的右侧位置[%d]超过行宽[%d]，此行终结", x+words_image_width, image_width)
-        return None,None
-
-    # 生成一个文字图片
-    words_image = Image.new('RGBA', (words_image_width, words_image_height),(255,255,255,0)) # 假设字是方的，宽+10，高+4个像素
-    draw = ImageDraw.Draw(words_image)
-
     # 随机选取字体大小、颜色、字体
     font_name = random_font(ROOT+'/font/')
     font_color = random_word_color()
     font = ImageFont.truetype(font_name, font_size)
     # logger.debug("字体的颜色是：[%r]",font_color)
 
-    # 把这个句子画到生成的文字图片上
-    draw.text((0,0), random_word, fill=font_color, font=font) # TODO???
-
-    # 旋转之
-    words_image = random_rotate(words_image)
-    # 模糊、锐化之
-    words_image = random_blur(words_image)
-
-    # 把这个文字图片，贴到背景图片上
-    bans = words_image.split()
-    background_image.paste(words_image, (x, y),mask=bans[3]) # 必须是3，感觉是通道的意思？不理解？？？
-
     # 因为有数字啊，英文字母啊，他的宽度比中文短，所以为了框套的更严丝合缝，好好算算宽度
-    label_width = caculate_sentence_width(random_word.strip(),font_size)
+    width, height = caculate_text_shape(random_word.strip(),font)
+
+    # 一算，句子的宽度超了，得嘞，这行咱就算生成完毕
+    if x + width > image_width:
+        # logger.debug("生成句子的右侧位置[%d]超过行宽[%d]，此行终结", x+words_image_width, image_width)
+        return None,None
+
+    words_image = Image.new('RGBA', (width, height))
+    draw = ImageDraw.Draw(words_image)
+    draw.text((0, 0), random_word, fill=font_color, font=font)
+    w = words_image.rotate(17.5, expand=1)
+    background_image.paste(ImageOps.colorize(w, (0, 0, 0), (255, 255, 0)), (242, 60), w)
+
+    # # 生成一个文字图片
+    # words_image = Image.new('RGBA', (width, height),(255,255,255,0)) # 假设字是方的，宽+10，高+4个像素
+    # draw = ImageDraw.Draw(words_image)
+    #
+    #
+    # # 把这个句子画到生成的文字图片上
+    # draw.text((0,0), random_word, fill=font_color, font=font) # TODO???
+    #
+    # # 旋转之
+    # words_image = random_rotate(words_image)
+    # # 模糊、锐化之
+    # words_image = random_blur(words_image)
+    #
+    # # 把这个文字图片，贴到背景图片上
+    # bans = words_image.split()
+    # background_image.paste(words_image, (x, y),mask=bans[3]) # 必须是3，感觉是通道的意思？不理解？？？
+
 
     # x1, y1, x2, y2, x3, y3, x4, y4
     label = [x, y,
-             x + label_width, y ,
-             x + label_width, y + words_image_height,
-             x , y + words_image_height]
+             x + width, y ,
+             x + width, y + height,
+             x , y + height]
 
     # logger.debug("产生了一个句子[%s],坐标(%d,%d)",random_word,x,y)
-    return x + words_image_width ,label
+    return x + width ,label
 
 
 def init_logger():
