@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont, ImageFilter,ImageOps
 import random
+import cv2
 import numpy as np
 import os,math
 import logging as logger
@@ -30,7 +31,6 @@ MAX_FONT_COLOR = 100    # 最大的可能颜色
 FONT_COLOR_NOISE = 10   # 最大的可能颜色
 ONE_CHARACTOR_WIDTH = 1024# 一个字的宽度
 ROTATE_ANGLE = 3        # 随机旋转角度
-ROTATE_POSSIBLE = 0.4   # 按照定义的概率比率进行旋转，也就是100张里可能有多少个发生旋转
 GAUSS_RADIUS_MIN = 0.8  # 高斯模糊的radius最小值
 GAUSS_RADIUS_MAX = 1.3  # 高斯模糊的radius最大值
 
@@ -48,6 +48,12 @@ MIN_BACKGROUND_HEIGHT = 800
 MIN_BLANK_WIDTH = 50 # 最小的句子间的随机距离
 MAX_BLANK_WIDTH = 100 # 最长的句子间距离
 
+INTERFER_LINE_NUM = 10
+INTERFER_POINT_NUM = 2000
+INTERFER_LINE_WIGHT = 2
+INTERFER_WORD_LINE_NUM = 4
+INTERFER_WORD_POINT_NUM = 20
+INTERFER_WORD_LINE_WIGHT = 1
 
 # 改进图片的质量：
 # a、算清楚留白，不多留
@@ -56,20 +62,131 @@ MAX_BLANK_WIDTH = 100 # 最长的句子间距离
 # D、造单字的样本
 # F、造数字样本 1,000,00.000类似的
 
+# 各种可能性的概率
+# POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
+# POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
+# POSSIBILITY_PURE_NUM = 0.05 # 需要产生的纯数字
+# POSSIBILITY_DATE = 0.05     # 需要产生的日期
+# POSSIBILITY_DATE = 0.05     # 需要产生的纯数字
+# POSSIBILITY_SINGLE = 0.01   # 单字的比例
 
+# # 测试用
+POSSIBILITY_ROTOATE = 1   # 文字的旋转
+POSSIBILITY_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
+POSSIBILITY_WORD_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
+POSSIBILITY_AFFINE  = 0   # 需要被做仿射的文字
+POSSIBILITY_PURE_NUM = 0  # 需要产生的纯数字
+POSSIBILITY_DATE = 0      # 需要产生的纯数字
+POSSIBILITY_SINGLE = 0    # 单字的比例
+
+MAX_GENERATE_NUM = 1000000000
+
+# 仿射的倾斜的错位长度  |/_/
+AFFINE_OFFSET = 30
+
+def _get_random_point(x_scope,y_scope):
+    x1 = random.randint(0,x_scope)
+    y1 = random.randint(0,y_scope)
+    return x1,y1
+
+# 画干扰线
+def randome_intefer_line(img,possible,line_num,weight):
+
+    if not _random_accept(possible): return
+
+    w,h = img.size
+    draw = ImageDraw.Draw(img)
+    line_num = random.randint(0, line_num)
+
+    for i in range(line_num):
+        x1,y1 = _get_random_point(w,h)
+        x2, y2 = _get_random_point(w,h)
+        _weight = random.randint(0, weight)
+        draw.line([x1,y1,x2,y2],_get_random_color(),_weight)
+
+    del draw
+
+# 画干扰点
+def randome_intefer_point(img,possible,num):
+
+    if not _random_accept(possible): return
+
+    w,h = img.size
+    draw = ImageDraw.Draw(img)
+
+    point_num = random.randint(0, num)
+    for i in range(point_num):
+        x,y = _get_random_point(w,h)
+        draw.point([x,y], _get_random_color())
+    del draw
+
+
+def _generate_num():
+    num = random.randint(-MAX_GENERATE_NUM,MAX_GENERATE_NUM)
+    # print(num)
+    need_format = random.choice([True,False])
+
+    if (need_format):
+        return "{:,}".format(num)
+
+    return str(num)
+
+def _generate_date():
+    import time
+    now = time.time()
+
+    date_formatter = [
+        "%Y-%m-%d",
+        "%Y/%m/%d",
+        "%Y年%m月%d日",
+        "%Y%m%d ",
+        "%y-%m-%d ",
+        "%y/%m/%d ",
+        "%y年%m月%d日",
+        "%Y%m%d "
+    ]
+
+    _format = random.choice(date_formatter)
+
+    _timestamp = random.uniform(0,now)
+
+    time_local = time.localtime(_timestamp)
+
+    return time.strftime(_format, time_local)
 
 
 # 从文字库中随机选择n个字符
-def sto_choice_from_info_str():
+def _get_random_text():
+
+    # 产生随机数字
+    if _random_accept(POSSIBILITY_PURE_NUM):
+        s_num = _generate_num()
+        return s_num,len(s_num)
+
+    # 产生随机日期
+    if _random_accept(POSSIBILITY_DATE):
+        s_date = _generate_date()
+        return s_date, len(s_date)
+
     start = random.randint(0, len(info_str)-MAX_LENGTH-1)
-    length = random.randint(MIN_LENGTH,MAX_LENGTH)
+    length = random.randint(MIN_LENGTH, MAX_LENGTH)
+
+    # 是否产生单字
+    if _random_accept(POSSIBILITY_SINGLE):length = 1
+
     end = start + length
     random_word = info_str[start:end]
     if DEBUG: print("截取内容[%s]，%d" %(random_word,length))
-    return random_word,length
+    import re
+    rex = re.compile(' ')
+    random_word = rex.sub('', random_word)
+
+    return random_word,len(random_word)
 
 # 产生随机颜色
-def random_word_color():
+def _get_random_color():
     base_color = random.randint(0, MAX_FONT_COLOR)
     noise_r = random.randint(0, FONT_COLOR_NOISE)
     noise_g = random.randint(0, FONT_COLOR_NOISE)
@@ -100,8 +217,7 @@ def create_backgroud_image(bground_list):
     # return image, width, height
     return random_image_size(bground_choice)
 
-
-def add_noise(img):
+def _add_noise(img):
     # img = (scipy.misc.imread(filename)).astype(float)
     noise_mask = np.random.poisson(img)
     noisy_img = img + noise_mask
@@ -143,31 +259,95 @@ def random_image_size(image):
         # logger.debug("剪裁图像:x=%d,y=%d,w=%d,h=%d",x,y,width,height)
         return image, width, height
 
+# 随机接受概率
+def _random_accept(accept_possibility):
+    return np.random.choice([True,False], p = [accept_possibility,1 - accept_possibility])
 
-# # 旋转函数
-# def random_rotate(image):
-#
-#     #按照5%的概率旋转
-#     rotate = np.random.choice([True,False], p = [ROTATE_POSSIBLE,1 - ROTATE_POSSIBLE])
-#     if not rotate:
-#         return image
-#     if DEBUG: print("需要旋转")
-#     degree = random.uniform(-ROTATE_ANGLE, ROTATE_ANGLE)  # 随机旋转0-8度
-#     image = image.rotate(degree)
-#
-#     return image
 # 旋转函数
-def random_rotate():
+def random_rotate(img,points):
+    ''' ______________
+        |  /        /|
+        | /        / |
+        |/________/__|
+        旋转可能有两种情况，一种是矩形，一种是平行四边形，
+        但是传入的points，就是4个顶点，
+    '''
+    if not _random_accept(POSSIBILITY_ROTOATE): return img,points # 不旋转
 
-    #按照5%的概率旋转
-    rotate = np.random.choice([True,False], p = [ROTATE_POSSIBLE,1 - ROTATE_POSSIBLE])
-    if not rotate:
-        return None
+    w,h = img.size
+
+    center = (int(w/2),int(h/2))
+
     if DEBUG: print("需要旋转")
     degree = random.uniform(-ROTATE_ANGLE, ROTATE_ANGLE)  # 随机旋转0-8度
+    if DEBUG: print("旋转度数:%f" % degree)
+    return img.rotate(degree,center=center,expand=1),_rotate_points(points,degree)
 
-    return degree
 
+# 随机仿射一下，也就是歪倒一下
+# 不能随便搞，我现在是让图按照平行方向歪一下，高度不变，高度啊，大小啊，靠别的控制，否则，太乱了
+def random_affine(img):
+
+    HEIGHT_PIX = 10
+    WIDTH_PIX = 50
+
+    # 太短的不考虑了做变换了
+    # print(img.size)
+    original_width = img.size[0]
+    original_height = img.size[1]
+    points = [(0,0), (0,original_width), (original_width,original_height), (0,original_height)]
+
+    if original_width<WIDTH_PIX:   return img,points
+    # print("!!!!!!!!!!")
+    if not _random_accept(POSSIBILITY_AFFINE): return img,points
+
+    img = cv2.cvtColor(np.asarray(img), cv2.COLOR_RGBA2BGRA)
+
+    is_top_fix = random.choice([True,False])
+
+    bottom_offset = random.randint(0,AFFINE_OFFSET)
+
+    height = img.shape[0]
+
+    offset_ten_pixs = int(HEIGHT_PIX * bottom_offset / height) # 对应10个像素的高度，应该调整的横向offset像素
+    width = int(original_width * (1 + bottom_offset / WIDTH_PIX))
+
+    pts1 = np.float32([[0, 0], [WIDTH_PIX, 0], [0, HEIGHT_PIX]])  # 这就写死了，当做映射的3个点：左上角，左下角，右上角
+
+
+    #\---------\
+    # \         \
+    #  \_________\
+    if is_top_fix:  # 上边固定，意味着下边往右
+        pts2 = np.float32([[0, 0], [WIDTH_PIX, 0], [offset_ten_pixs, HEIGHT_PIX]])  # 看，只调整左下角
+        M = cv2.getAffineTransform(pts1, pts2)
+        img = cv2.warpAffine(img, M, (width, height))
+        points = [(0,0),
+                  (original_width,0),
+                  (width,original_height),
+                  (bottom_offset,original_height)]
+    #  /---------/
+    # /         /
+    #/_________/
+    else:  # 下边固定，意味着上边往右
+        # 得先把图往右错位，然后
+        # 先右移
+        # print("右移")
+        H = np.float32([[1, 0, bottom_offset], [0, 1, 0]])  #
+        img = cv2.warpAffine(img, H, (width, height))
+        # 然后固定上部，移动左下角
+        pts2 = np.float32([[0, 0], [WIDTH_PIX, 0], [-offset_ten_pixs, HEIGHT_PIX]])  # 看，只调整左下角
+        M = cv2.getAffineTransform(pts1, pts2)
+        img = cv2.warpAffine(img, M, (width, height))
+        points = [(bottom_offset,0),
+                  (original_width+bottom_offset,0),
+                  (width,original_height),
+                  (0,original_height)]
+
+
+    img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA))
+
+    return img,points
 
 # 得到一个随机大小的字体大小
 def random_font_size():
@@ -188,6 +368,10 @@ def generate_all(bground_list, image_name,label_name):
 
     # 先创建一张图，宽度和高度都是随机的
     image, w, h = create_backgroud_image(bground_list)
+
+    # 在整张图上产生干扰点和线
+    randome_intefer_line(image,POSSIBILITY_INTEFER,INTERFER_LINE_NUM,INTERFER_LINE_WIGHT)
+    randome_intefer_point(image,POSSIBILITY_INTEFER,INTERFER_POINT_NUM)
 
     # 上面先空出一行来
     y = random.randint(MIN_LINE_HEIGHT, MAX_LINE_HEIGHT)
@@ -263,17 +447,35 @@ def caculate_text_shape(text,font):
     return width,height
 
 
+def _rotate_one_point(xy, theta):
+    # https://en.wikipedia.org/wiki/Rotation_matrix#In_two_dimensions
+    cos_theta, sin_theta = math.cos(theta), math.sin(theta)
+
+    return (
+        xy[0] * cos_theta - xy[1] * sin_theta,
+        xy[0] * sin_theta + xy[1] * cos_theta
+    )
+
+
+def _rotate_points(points, degree):
+    theta = math.radians(degree)
+
+    rotated_points = [_rotate_one_point(xy, theta) for xy in points]
+
+    return rotated_points
+
+
 # 生成的最小颗粒度，生成一句话
 def process_one_sentence(x, y, background_image, image_width):
 
     # 随机选取10个字符，是从info.txt那个词库里，随机挑的长度的句子
-    random_word,length = sto_choice_from_info_str()
+    random_word,length = _get_random_text()
 
     # 字号随机
     font_size = random_font_size()
     # 随机选取字体大小、颜色、字体
     font_name = random_font(ROOT+'/font/')
-    font_color = random_word_color()
+    font_color = _get_random_color()
     font = ImageFont.truetype(font_name, font_size)
     # logger.debug("字体的颜色是：[%r]",font_color)
 
@@ -285,38 +487,27 @@ def process_one_sentence(x, y, background_image, image_width):
         # logger.debug("生成句子的右侧位置[%d]超过行宽[%d]，此行终结", x+words_image_width, image_width)
         return None,None
 
-    degree = random_rotate()
     words_image = Image.new('RGBA', (width, height))
     draw = ImageDraw.Draw(words_image)
     draw.text((0, 0), random_word, fill=font_color, font=font)
-    if degree is not None:
-        words_image = words_image.rotate(degree, expand=1)
+
+    ############### PIPELINE ###########################
+
+    words_image,points = random_affine(words_image)
+    words_image,points = random_rotate(words_image,points)
+    words_image = random_blur(words_image)
+    randome_intefer_line(words_image, POSSIBILITY_WORD_INTEFER,INTERFER_WORD_LINE_NUM,INTERFER_WORD_LINE_WIGHT)           # 给单个文字做做干扰
+    randome_intefer_point(words_image,POSSIBILITY_WORD_INTEFER,INTERFER_WORD_POINT_NUM)
+    ############### PIPELINE ###########################
 
     background_image.paste(words_image, (x,y), words_image)
 
-    # # 生成一个文字图片
-    # words_image = Image.new('RGBA', (width, height),(255,255,255,0)) # 假设字是方的，宽+10，高+4个像素
-    # draw = ImageDraw.Draw(words_image)
-    #
-    #
-    # # 把这个句子画到生成的文字图片上
-    # draw.text((0,0), random_word, fill=font_color, font=font) # TODO???
-    #
-    # # 旋转之
-    # words_image = random_rotate(words_image)
-    # # 模糊、锐化之
-    # words_image = random_blur(words_image)
-    #
-    # # 把这个文字图片，贴到背景图片上
-    # bans = words_image.split()
-    # background_image.paste(words_image, (x, y),mask=bans[3]) # 必须是3，感觉是通道的意思？不理解？？？
-
-
     # x1, y1, x2, y2, x3, y3, x4, y4
-    label = [x, y,
-             x + width, y ,
-             x + width, y + height,
-             x , y + height]
+    label = [
+        int(x + points[0][0]), int(y + points[0][1]),
+        int(x + points[1][0]), int(y + points[1][1]),
+        int(x + points[2][0]), int(y + points[2][1]),
+        int(x + points[3][0]), int(y + points[3][1])]
 
     # logger.debug("产生了一个句子[%s],坐标(%d,%d)",random_word,x,y)
     return x + width ,label
