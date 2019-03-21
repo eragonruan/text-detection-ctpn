@@ -20,8 +20,8 @@ ROOT="data_generator"   # 定义运行时候的数据目录，原因是imgen.sh�
 DATA_DIR="data"
 MAX_LENGTH=12   # 可能的最大长度（字符数）
 MIN_LENGTH=5    # 可能的最小长度（字符数）
-MAX_FONT_SIZE = 30 # 最大的字体
-MIN_FONT_SIZE = 20 # 最小的字体号
+MAX_FONT_SIZE = 20 # 最大的字体
+MIN_FONT_SIZE = 12 # 最小的字体号
 MAX_LINE_HEIGHT= 100   # 最大的高度（像素）
 MIN_LINE_HEIGHT= MIN_FONT_SIZE + 12   # 最小的高度（像素）
 
@@ -30,9 +30,9 @@ MIN_LINE_HEIGHT= MIN_FONT_SIZE + 12   # 最小的高度（像素）
 MAX_FONT_COLOR = 100    # 最大的可能颜色
 FONT_COLOR_NOISE = 10   # 最大的可能颜色
 ONE_CHARACTOR_WIDTH = 1024# 一个字的宽度
-ROTATE_ANGLE = 3        # 随机旋转角度
+ROTATE_ANGLE = 4        # 随机旋转角度
 GAUSS_RADIUS_MIN = 0.8  # 高斯模糊的radius最小值
-GAUSS_RADIUS_MAX = 1.3  # 高斯模糊的radius最大值
+GAUSS_RADIUS_MAX = 1.1  # 高斯模糊的radius最大值
 
 # 之前的设置，太大，我决定改改
 # MAX_BACKGROUND_WIDTH = 1600
@@ -63,28 +63,27 @@ INTERFER_WORD_LINE_WIGHT = 1
 # F、造数字样本 1,000,00.000类似的
 
 # 各种可能性的概率
-# POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
-# POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
-# POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
-# POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
-# POSSIBILITY_PURE_NUM = 0.05 # 需要产生的纯数字
-# POSSIBILITY_DATE = 0.05     # 需要产生的日期
-# POSSIBILITY_DATE = 0.05     # 需要产生的纯数字
-# POSSIBILITY_SINGLE = 0.01   # 单字的比例
+POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
+POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
+POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
+POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
+POSSIBILITY_PURE_NUM = 0.1  # 需要产生的纯数字
+POSSIBILITY_DATE = 0.1      # 需要产生的纯数字
+POSSIBILITY_SINGLE = 0.01   # 单字的比例
 
 # # 测试用
-POSSIBILITY_ROTOATE = 1   # 文字的旋转
-POSSIBILITY_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
-POSSIBILITY_WORD_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
-POSSIBILITY_AFFINE  = 0   # 需要被做仿射的文字
-POSSIBILITY_PURE_NUM = 0  # 需要产生的纯数字
-POSSIBILITY_DATE = 0      # 需要产生的纯数字
-POSSIBILITY_SINGLE = 0    # 单字的比例
+# POSSIBILITY_ROTOATE = 1   # 文字的旋转
+# POSSIBILITY_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_WORD_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_AFFINE  = 0   # 需要被做仿射的文字
+# POSSIBILITY_PURE_NUM = 0  # 需要产生的纯数字
+# POSSIBILITY_DATE = 0      # 需要产生的纯数字
+# POSSIBILITY_SINGLE = 0    # 单字的比例
 
 MAX_GENERATE_NUM = 1000000000
 
-# 仿射的倾斜的错位长度  |/_/
-AFFINE_OFFSET = 30
+# 仿射的倾斜的错位长度  |/_/, 这个是上边或者下边右移的长度
+AFFINE_OFFSET = 12
 
 def _get_random_point(x_scope,y_scope):
     x1 = random.randint(0,x_scope)
@@ -202,7 +201,12 @@ def load_all_backgroud_images(bground_path):
     bground_list = []
 
     for img_name in os.listdir(bground_path):
-        bground_list.append(Image.open(bground_path + img_name))
+        image = Image.open(bground_path + img_name)
+        if image.mode == "L":
+            logger.error("图像[%s]是灰度的，转RGB",img_name)
+            image = image.convert("RGB")
+
+        bground_list.append(image)
         logger.debug("    加载背景图片：%s",bground_path + img_name)
     logger.debug("所有图片加载完毕")
 
@@ -224,16 +228,24 @@ def _add_noise(img):
     return noisy_img
 
 # 模糊函数
-def random_blur(image):
+def random_blur(image,font_size):
     # 随机选取模糊参数
     radius = random.uniform(GAUSS_RADIUS_MIN,GAUSS_RADIUS_MAX)
     filter_ = random.choice(
                             [ImageFilter.SMOOTH,
-                            ImageFilter.DETAIL,
-                            ImageFilter.GaussianBlur(radius=radius),
-                            ImageFilter.EDGE_ENHANCE,      #边缘增强滤波 
-                            ImageFilter.SHARPEN]) #为深度边缘增强滤波
+                             ImageFilter.DETAIL,
+                             ImageFilter.GaussianBlur(radius=radius),
+                             ImageFilter.EDGE_ENHANCE,      #边缘增强滤波,这个效果不好，暂时注释掉，边缘扣掉的太多
+                             ImageFilter.SHARPEN
+                             ]) #为深度边缘增强滤波
     if DEBUG: print("模糊函数：%s" % str(filter_))
+
+    if (font_size < 13):return image
+
+    if (font_size<16):
+        if filter_ == ImageFilter.EDGE_ENHANCE: return image
+        if filter_ == ImageFilter.SHARPEN: return image
+        
     image = image.filter(filter_)
     return image
 
@@ -276,12 +288,12 @@ def random_rotate(img,points):
 
     w,h = img.size
 
-    center = (int(w/2),int(h/2))
+    center = (w//2,h//2)
 
     if DEBUG: print("需要旋转")
     degree = random.uniform(-ROTATE_ANGLE, ROTATE_ANGLE)  # 随机旋转0-8度
     if DEBUG: print("旋转度数:%f" % degree)
-    return img.rotate(degree,center=center,expand=1),_rotate_points(points,degree)
+    return img.rotate(degree,center=center,expand=1),_rotate_points(points,center,degree)
 
 
 # 随机仿射一下，也就是歪倒一下
@@ -295,9 +307,9 @@ def random_affine(img):
     # print(img.size)
     original_width = img.size[0]
     original_height = img.size[1]
-    points = [(0,0), (0,original_width), (original_width,original_height), (0,original_height)]
+    points = [(0,0), (original_width,0), (original_width,original_height), (0,original_height)]
 
-    if original_width<WIDTH_PIX:   return img,points
+    if original_width<WIDTH_PIX: return img,points
     # print("!!!!!!!!!!")
     if not _random_accept(POSSIBILITY_AFFINE): return img,points
 
@@ -305,12 +317,20 @@ def random_affine(img):
 
     is_top_fix = random.choice([True,False])
 
-    bottom_offset = random.randint(0,AFFINE_OFFSET)
+    bottom_offset = random.randint(0,AFFINE_OFFSET) # bottom_offset 是 上边或者下边 要位移的长度
 
     height = img.shape[0]
 
-    offset_ten_pixs = int(HEIGHT_PIX * bottom_offset / height) # 对应10个像素的高度，应该调整的横向offset像素
-    width = int(original_width * (1 + bottom_offset / WIDTH_PIX))
+    # 这里，我们设置投影变换的3个点的原则是，使用    左上(0,0)     右上(WIDTH_PIX,0)    左下(0,HEIGHT_PIX)
+    # 所以，他的投影变化，要和整个的四边形做根据三角形相似做换算
+    # .
+    # |\
+    # | \
+    # |__\  <------投影变化点,  做三角形相似计算，offset_ten_pixs / bottom_offset =  HEIGHT_PIX / height
+    # |   \                   所以： offset_ten_pixs = (bottom_offset * HEIGHT_PIX) / height
+    # |____\ <-----bottom_offset
+    offset_ten_pixs = int(HEIGHT_PIX * bottom_offset / height)   # 对应10个像素的高度，应该调整的横向offset像素
+    width = int(original_width  + bottom_offset )#
 
     pts1 = np.float32([[0, 0], [WIDTH_PIX, 0], [0, HEIGHT_PIX]])  # 这就写死了，当做映射的3个点：左上角，左下角，右上角
 
@@ -319,6 +339,7 @@ def random_affine(img):
     # \         \
     #  \_________\
     if is_top_fix:  # 上边固定，意味着下边往右
+        # print("上边左移")
         pts2 = np.float32([[0, 0], [WIDTH_PIX, 0], [offset_ten_pixs, HEIGHT_PIX]])  # 看，只调整左下角
         M = cv2.getAffineTransform(pts1, pts2)
         img = cv2.warpAffine(img, M, (width, height))
@@ -332,7 +353,7 @@ def random_affine(img):
     else:  # 下边固定，意味着上边往右
         # 得先把图往右错位，然后
         # 先右移
-        # print("右移")
+        # print("上边右移")
         H = np.float32([[1, 0, bottom_offset], [0, 1, 0]])  #
         img = cv2.warpAffine(img, H, (width, height))
         # 然后固定上部，移动左下角
@@ -368,6 +389,7 @@ def generate_all(bground_list, image_name,label_name):
 
     # 先创建一张图，宽度和高度都是随机的
     image, w, h = create_backgroud_image(bground_list)
+
 
     # 在整张图上产生干扰点和线
     randome_intefer_line(image,POSSIBILITY_INTEFER,INTERFER_LINE_NUM,INTERFER_LINE_WIGHT)
@@ -446,21 +468,36 @@ def caculate_text_shape(text,font):
 
     return width,height
 
-
-def _rotate_one_point(xy, theta):
+def _rotate_one_point(xy, center, theta):
     # https://en.wikipedia.org/wiki/Rotation_matrix#In_two_dimensions
     cos_theta, sin_theta = math.cos(theta), math.sin(theta)
 
-    return (
-        xy[0] * cos_theta - xy[1] * sin_theta,
-        xy[0] * sin_theta + xy[1] * cos_theta
-    )
+    cord = (
+        # (xy[0] - center[0]) * cos_theta - (xy[1]-center[1]) * sin_theta + xy[0],
+            # (xy[0] - center[0]) * sin_theta + (xy[1]-center[1]) * cos_theta + xy[1]
+            (xy[0] - center[0]) * cos_theta - (xy[1] - center[1]) * sin_theta + center[0],
+            (xy[0] - center[0]) * sin_theta + (xy[1] - center[1]) * cos_theta + center[1]
+
+        )
+    # print("旋转后的坐标：")
+    # print(cord)
+    return cord
 
 
-def _rotate_points(points, degree):
-    theta = math.radians(degree)
+def _rotate_points(points,center, degree):
+    theta = math.radians(-degree)
 
-    rotated_points = [_rotate_one_point(xy, theta) for xy in points]
+
+    original_min_x, original_min_y = np.array(points).max(axis=0)
+
+    rotated_points = [_rotate_one_point(xy, center, theta) for xy in points]
+
+    rotated_min_x, rotated_min_y = np.array(rotated_points).max(axis=0)
+
+    x_offset = abs(rotated_min_x - original_min_x)
+    y_offset = abs(rotated_min_y - original_min_y)
+
+    rotated_points = [(xy[0]+x_offset, xy[1]+y_offset) for xy in rotated_points]
 
     return rotated_points
 
@@ -489,19 +526,21 @@ def process_one_sentence(x, y, background_image, image_width):
 
     words_image = Image.new('RGBA', (width, height))
     draw = ImageDraw.Draw(words_image)
+    # 注意下，下标是从0,0开始的，是自己的坐标系
     draw.text((0, 0), random_word, fill=font_color, font=font)
 
     ############### PIPELINE ###########################
 
     words_image,points = random_affine(words_image)
     words_image,points = random_rotate(words_image,points)
-    words_image = random_blur(words_image)
+    words_image = random_blur(words_image,font_size)
     randome_intefer_line(words_image, POSSIBILITY_WORD_INTEFER,INTERFER_WORD_LINE_NUM,INTERFER_WORD_LINE_WIGHT)           # 给单个文字做做干扰
     randome_intefer_point(words_image,POSSIBILITY_WORD_INTEFER,INTERFER_WORD_POINT_NUM)
     ############### PIPELINE ###########################
 
     background_image.paste(words_image, (x,y), words_image)
 
+    logger.debug("产生了一个句子[%s],坐标(%r)", random_word, points)
     # x1, y1, x2, y2, x3, y3, x4, y4
     label = [
         int(x + points[0][0]), int(y + points[0][1]),
@@ -509,14 +548,14 @@ def process_one_sentence(x, y, background_image, image_width):
         int(x + points[2][0]), int(y + points[2][1]),
         int(x + points[3][0]), int(y + points[3][1])]
 
-    # logger.debug("产生了一个句子[%s],坐标(%d,%d)",random_word,x,y)
+    logger.debug("粘贴到背景上的坐标：(%r)", label)
     return x + width ,label
 
 
 def init_logger():
     logger.basicConfig(
         format='%(asctime)s : %(levelname)s : %(message)s',
-        level=logger.DEBUG,
+        level=logger.INFO,
         handlers=[logger.StreamHandler()])
 
 
@@ -562,5 +601,6 @@ if __name__ == '__main__':
         label_name = os.path.join(data_labels_dir,str(num)+".txt")
 
         generate_all(all_bg_images,image_name,label_name)
+        logger.info("已产生[%s]",image_name)
 
 

@@ -57,6 +57,7 @@ if __name__ == '__main__':
 
     if not os.path.exists(data_draws_dir): os.makedirs(data_draws_dir)
 
+    i = 0
     for img_name in os.listdir(data_images_dir):
 
         name, ext = os.path.splitext(img_name)
@@ -97,4 +98,7 @@ if __name__ == '__main__':
 
         # 把画完的图保存到draw目录
         image.save(draw_image_name)
+
+        i+=1
+        print("已绘制完第%d张：[%s]"  % (i,draw_image_name))
 

@@ -44,7 +44,7 @@ def shrink_poly(poly, r=16):
 
     # 取整一下吧
     start = int((x_min // 16 + 1) * 16)
-    end = int((x_max // 16) * 16)
+    end =  x_max # int((x_max // 16) * 16)
 
     p = x_min
     res.append([p, int(k1 * p + b1), # kx+b, p相当于是x，第一个p是最左面，但是第二个p就是16位取整的值了
@@ -53,8 +53,22 @@ def shrink_poly(poly, r=16):
                 p, int(k2 * p + b2)])
 
     for p in range(start, end + 1, r):
-        res.append([p, int(k1 * p + b1),
-                    (p + 15), int(k1 * (p + 15) + b1),
-                    (p + 15), int(k2 * (p + 15) + b2),
-                    p, int(k2 * p + b2)])
+        if (end-p) < 16:
+            right = end
+        else:
+            right = p + 16
+
+        # 左上，右上，右下，坐下 => [x1,y1,x2,y2,x3,y3,x4,y4]
+        res.append([p,                      # 上方的x1
+                    int(k1 * p + b1),       # 上方的y1
+
+                    right,               # 上方的x2
+                    int(k1 * (right) + b1),# 上方的y2
+
+                    right,               # 下方的x3
+                    int(k2 * (right) + b2),# 下方的y3
+
+                    p,                      # 下方的x4
+                    int(k2 * p + b2)])      # 下方的y4
+
     return np.array(res, dtype=np.int).reshape([-1, 8])
