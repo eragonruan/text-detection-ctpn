@@ -68,7 +68,7 @@ def main(argv=None):
     #                                     FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
     #                                     FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
     #                                     staircase = True)
-    # adam_opt = tf.train.AdamOptimizer(learning_rate)
+    adam_opt = tf.train.AdamOptimizer(learning_rate)
 
 
     tf.summary.scalar('learning_rate', learning_rate)
