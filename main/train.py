@@ -60,16 +60,18 @@ def main(argv=None):
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
     learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
-    learning_rate = tf.train.exponential_decay(
-                                        FLAGS.learning_rate, # 初始化的learning rate
-                                        global_step,         # 全局步数计数器，我理解是不管epochs多少，不停的把每个epochs内的step累加
-                                        FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
-                                        FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
-                                        staircase = True)
+
+    # 回头decay这块直接用这个policy了，回头尝试改一下
+    # learning_rate = tf.train.exponential_decay(
+    #                                     FLAGS.learning_rate, # 初始化的learning rate
+    #                                     global_step,         # 全局步数计数器，我理解是不管epochs多少，不停的把每个epochs内的step累加
+    #                                     FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
+    #                                     FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
+    #                                     staircase = True)
+    # adam_opt = tf.train.AdamOptimizer(learning_rate)
 
 
     tf.summary.scalar('learning_rate', learning_rate)
-    adam_opt = tf.train.AdamOptimizer(learning_rate)
 
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):

@@ -245,7 +245,7 @@ def random_blur(image,font_size):
     if (font_size<16):
         if filter_ == ImageFilter.EDGE_ENHANCE: return image
         if filter_ == ImageFilter.SHARPEN: return image
-        
+
     image = image.filter(filter_)
     return image
 
