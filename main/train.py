@@ -12,9 +12,9 @@ from utils.dataset import data_provider as data_provider
 
 # tf.app.flags.DEFINE_float('learning_rate', 1e-5, '') #学习率
 tf.app.flags.DEFINE_float('learning_rate', 0.1, '') #学习率
-tf.app.flags.DEFINE_integer('max_steps', 20000, '') #我靠，人家原来是50000的设置
-tf.app.flags.DEFINE_integer('decay_steps', 4000, '')#？？？
-tf.app.flags.DEFINE_float('decay_rate', 0.1, '')#？？？
+tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
+tf.app.flags.DEFINE_integer('decay_steps', 2000, '')#？？？
+tf.app.flags.DEFINE_float('decay_rate', 0.5, '')#？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
 tf.app.flags.DEFINE_string('gpu', '1', '') #使用第#1个GPU
@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', True, '')
 tf.app.flags.DEFINE_boolean('debug_mode', False, '')
-tf.app.flags.DEFINE_integer('save_checkpoint_steps', 200, '')
+tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
 
 tf.logging.set_verbosity(tf.logging.DEBUG)
@@ -59,15 +59,16 @@ def main(argv=None):
     input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-    learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
 
+    # 旧的代码是一个变量，新的learning_rate是一个策略了
+    # learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
     # 回头decay这块直接用这个policy了，回头尝试改一下
-    # learning_rate = tf.train.exponential_decay(
-    #                                     FLAGS.learning_rate, # 初始化的learning rate
-    #                                     global_step,         # 全局步数计数器，我理解是不管epochs多少，不停的把每个epochs内的step累加
-    #                                     FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
-    #                                     FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
-    #                                     staircase = True)
+    learning_rate = tf.train.exponential_decay(
+                                        FLAGS.learning_rate, # 初始化的learning rate
+                                        global_step,         # 全局步数计数器，我理解是不管epochs多少，不停的把每个epochs内的step累加
+                                        FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
+                                        FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
+                                        staircase = False)
     adam_opt = tf.train.AdamOptimizer(learning_rate)
 
 
@@ -106,6 +107,7 @@ def main(argv=None):
     init = tf.global_variables_initializer()
 
     if FLAGS.pretrained_model_path is not None:
+        logger.info('加载vgg模型：%s',FLAGS.pretrained_model_path)
         variable_restore_op = slim.assign_from_checkpoint_fn(FLAGS.pretrained_model_path,
                                                              slim.get_trainable_variables(),
                                                              ignore_missing_vars=True)
@@ -117,21 +119,18 @@ def main(argv=None):
     with tf.Session(config=config) as sess:
         if FLAGS.restore:
             ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
-            logger.debug("最新的日志文件:%s",ckpt)
-            restore_step = int(ckpt.split('.')[0].split('_')[-1])
+            logger.debug("最新的模型文件:%s",ckpt) #有点担心learning rate也被恢复
             saver.restore(sess, ckpt)
-            logger.info("从之前的checkpoint继续训练，步数是: {}".format(restore_step))
         else:
             logger.info("从头开始训练模型")
             sess.run(init)
-            restore_step = 0
             if FLAGS.pretrained_model_path is not None:
                 variable_restore_op(sess)
 
         # 是的，get_batch返回的是一个generator
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers)
         start = time.time()
-        for step in range(restore_step, FLAGS.max_steps):
+        for step in range(FLAGS.max_steps):
             # 注意! 这次返回的只有一张图，以及这张图对应的所有的bbox
             data = next(data_generator) # next(<迭代器>）来返回下一个结果
             logger.debug("在Train中，调用generator从queue中取出一个图片:%r",type(data))
@@ -146,9 +145,9 @@ def main(argv=None):
             logger.debug("结束运行sess.run了")
             summary_writer.add_summary(summary_str, global_step=step)
 
-            # 在干什么？Adam的learning rate是自动衰减的呀，这里为何要再调整lr？！
-            if step != 0 and step % FLAGS.decay_steps == 0:
-                sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
+            # 修改成为自动的方式，不需要手工调整了，使用了exponential_decay
+            # if step != 0 and step % FLAGS.decay_steps == 0:
+            #     sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
 
             if step % 10 == 0:
                 avg_time_per_step = (time.time() - start) / 10

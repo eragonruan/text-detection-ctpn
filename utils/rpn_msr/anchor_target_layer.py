@@ -335,8 +335,18 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
     # 返回的是4个差，应该算了一批把？这块感觉是，一口气都算了
 
+    # 定义一个weight的数组，维度是[图内anchor数, 4]，4是x,y,dx,dy
+    # 你知道这个inside_weights是干嘛用的么？是为了限定最后4个值，用哪个？如果设成1，就是用，设成0就是不用
+    # 你去看model_train.py的loss计算的时候
+    # rpn_loss_box_n = tf.reduce_sum(
+    #     rpn_bbox_outside_weights * smooth_l1_dist(
+    #         rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),<------------看到这行了吧，也就是x,dx是不参与loss计算的
+    #         reduction_indices=[1])
     bbox_inside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
-    bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)  # 内部权重，前景就给1，其他是0
+
+    # 那些可以认为是标签的anchor，他的weight设成,[0,1,0,1]，这个之前作者写错了[1,1,1,1]
+    # 参考issue：https://github.com/eragonruan/text-detection-ctpn/issues/317
+    bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)
 
     bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
     if cfg.RPN_POSITIVE_WEIGHT < 0:  # 暂时使用uniform 权重，也就是正样本是1，负样本是0

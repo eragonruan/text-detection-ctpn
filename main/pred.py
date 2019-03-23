@@ -13,16 +13,27 @@ from nets import model_train as model
 from utils.rpn_msr.proposal_layer import proposal_layer
 from utils.text_connector.detectors import TextDetector
 
+from utils.evaluate.evaluator import *
+
 tf.app.flags.DEFINE_boolean('debug_mode', True, '')
-tf.app.flags.DEFINE_string('test_data_path', 'data/pred/images', '')
-tf.app.flags.DEFINE_string('output_path', 'data/pred/output', '')
+tf.app.flags.DEFINE_string('home', 'data/test', '') # 图片主目录
+tf.app.flags.DEFINE_string('file', '', '')     # 为了支持单独文件
 tf.app.flags.DEFINE_string('gpu', '0', '')
-tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
+tf.app.flags.DEFINE_string('model', 'checkpoints_mlt/', '')
 FLAGS = tf.app.flags.FLAGS
 
 import logging
 
 logger = logging.getLogger("Train")
+
+IMAGE_PATH = "images" # 要文本检测的图片
+DRAW_PATH = "draws"   # 画出来的数据
+LABEL_PATH = "labels" # 大框数据，
+# SPLIT_PATH = "split"  # 小框数据
+
+image_path = os.path.join(FLAGS.home, IMAGE_PATH)
+draw_path =  os.path.join(FLAGS.home, DRAW_PATH)
+label_path = os.path.join(FLAGS.home, LABEL_PATH)
 
 def init_logger():
     level = logging.DEBUG
@@ -36,39 +47,36 @@ def init_logger():
 
 
 def get_images():
+    if FLAGS.file != "":
+        return [os.path.join(image_path, FLAGS.file)]
+
     files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for img_name in os.listdir(FLAGS.test_data_path):
+    for img_name in os.listdir(image_path):
         for ext in exts:
             if img_name.endswith(ext):
-                files.append(os.path.join(FLAGS.test_data_path, img_name))
+                files.append(os.path.join(image_path, img_name))
                 break
-    print('Find {} images'.format(len(files)))
+    logger.debug('找到需要检测的图片%d张',len(files))
     return files
 
-
-# def resize_image(img):
-#     img_size = img.shape
-#     im_size_min = np.min(img_size[0:2])
-#     im_size_max = np.max(img_size[0:2])
-#
-#     im_scale = float(600) / float(im_size_min)
-#     if np.round(im_scale * im_size_max) > 1200:
-#         im_scale = float(1200) / float(im_size_max)
-#     new_h = int(img_size[0] * im_scale)
-#     new_w = int(img_size[1] * im_scale)
-#
-#     new_h = new_h if new_h // 16 == 0 else (new_h // 16 + 1) * 16
-#     new_w = new_w if new_w // 16 == 0 else (new_w // 16 + 1) * 16
-#
-#     re_im = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-#     return re_im, (new_h / img_size[0], new_w / img_size[1])
+def get_gt_label(label_file):
+    bbox = []
+    with open(label_file, "r") as f:
+        lines = f.readlines()
+    for line in lines:
+        # logger.debug("line:%s",line)
+        line = line.strip().split(",")
+        four_points = list(map(int, line)) # 用map自动做int转型
+        bbox.append(four_points)
+    return bbox # 返回四个坐标的数组
 
 
 def main(argv=None):
-    if os.path.exists(FLAGS.output_path):
-        shutil.rmtree(FLAGS.output_path)
-    os.makedirs(FLAGS.output_path)
+    if not os.path.exists(image_path): os.makedirs(image_path)
+    if not os.path.exists(draw_path): os.makedirs(draw_path)
+    if not os.path.exists(label_path): os.makedirs(label_path)
+
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
 
     with tf.get_default_graph().as_default():
@@ -88,19 +96,18 @@ def main(argv=None):
         saver = tf.train.Saver(variable_averages.variables_to_restore())
 
         with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-            ckpt_state = tf.train.get_checkpoint_state(FLAGS.checkpoint_path)
-            logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]",FLAGS.checkpoint_path,ckpt_state)
-            model_path = os.path.join(FLAGS.checkpoint_path, os.path.basename(ckpt_state.model_checkpoint_path))
-            print('Restore from {}'.format(model_path))
+            ckpt_state = tf.train.get_checkpoint_state(FLAGS.model)
+            logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]",FLAGS.model,ckpt_state)
+            model_path = os.path.join(FLAGS.model, os.path.basename(ckpt_state.model_checkpoint_path))
+            logger.info('从%s加载模型',format(model_path))
             saver.restore(sess, model_path)
 
             im_fn_list = get_images()
             for im_fn in im_fn_list:
-                print('===============')
-                print(im_fn)
+                logger.info("正在探测图片：%s",im_fn)
                 start = time.time()
                 try:
-                    img = cv2.imread(im_fn)#[:, :, ::-1]
+                    img = cv2.imread(im_fn)#[:, :, ::-1] # bgr是opencv通道默认顺序
                 except:
                     print("Error reading image {}!".format(im_fn))
                     continue
@@ -138,13 +145,13 @@ def main(argv=None):
                 boxes = np.array(boxes, dtype=np.int)
 
                 cost_time = (time.time() - start)
-                print("cost time: {:.2f}s".format(cost_time))
+                logger.info("耗时: %f s" , cost_time)
 
                 for i, box in enumerate(boxes):
                     # logger.debug("画框:%r到图像[%s]",[box[:8].astype(np.int32).reshape((-1, 1, 2))],im_fn)
 
-                    # cv2.polylines(img, [box[:8].astype(np.int32).reshape((-1, 1, 2))], True, color=(0, 255, 0),
-                    #               thickness=2)
+                    cv2.polylines(img, [box[:8].astype(np.int32).reshape((-1, 1, 2))], True, color=(0, 0, 255),
+                                   thickness=2)
                     cv2.putText(img, str(i),(box[0],box[1]),
                                 fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                                 fontScale=0.5,
@@ -153,17 +160,29 @@ def main(argv=None):
                                 lineType=1)
 
                 # img = cv2.resize(img, None, None, fx=1.0 / rh, fy=1.0 / rw, interpolation=cv2.INTER_LINEAR)
-                out_image_path = os.path.join(FLAGS.output_path, os.path.basename(im_fn))
+                out_image_path = os.path.join(draw_path, os.path.basename(im_fn))
                 logger.debug("处理后的图像保存到：%s",out_image_path)
                 cv2.imwrite(out_image_path, img)#[:, :, ::-1])
 
-                with open(os.path.join(FLAGS.output_path, os.path.splitext(os.path.basename(im_fn))[0]) + ".txt",
+                with open(os.path.join(draw_path, os.path.splitext(os.path.basename(im_fn))[0]) + ".txt",
                           "w") as f:
                     for i, box in enumerate(boxes):
                         line = ",".join(str(box[k]) for k in range(8))
                         line += "," + str(scores[i]) + "\r\n"
                         f.writelines(line)
 
+                # 作评价
+                label_name = os.path.splitext(os.path.basename(im_fn))
+                if len(label_name)==2:
+                    label_name = label_name[0] # /usr/test/123.png => 123
+                    label_name = os.path.join(label_path,label_name+".txt")
+                    if os.path.exists(label_name):
+                        logger.info("存在GT标签文件[%s]，进行评价：" , label_name)
+                        gt_labels = get_gt_label(label_name)
+                        methods, metrics = \
+                        evaluate_method(gt_labels, textsegs, conf())
+                        logger.info(methods)
+                        logger.info(metrics)
 
 if __name__ == '__main__':
     init_logger()

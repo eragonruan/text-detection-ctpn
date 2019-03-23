@@ -57,6 +57,10 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # ？？？说是16，为何RPN_MIN_SIZE=8呢？
 
     height, width = rpn_cls_prob_reshape.shape[1:3]  # feature-map的高宽
+
+    # https://github.com/eragonruan/text-detection-ctpn/issues/311
+    # because “rpn_cls_prob_reshape.shape” size is[1,h,w*num_anchor,2]，so
+    # width = w*num_anchor/num_anchor num_anchor = 10
     width = width // 10 # ???整除干嘛？//是整除
 
     # the first set of _num_anchors channels are bg probs
