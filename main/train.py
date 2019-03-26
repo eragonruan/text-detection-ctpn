@@ -20,8 +20,8 @@ tf.app.flags.DEFINE_float('decay_rate', 0.5, '')#？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
 tf.app.flags.DEFINE_string('gpu', '1', '') #使用第#1个GPU
-tf.app.flags.DEFINE_string('model', 'model/', '')
-tf.app.flags.DEFINE_string('logs_path', 'logs/', '')
+tf.app.flags.DEFINE_string('model', 'model', '')
+tf.app.flags.DEFINE_string('logs_path', 'logs', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_boolean('debug_mode', False, '')
@@ -48,7 +48,7 @@ def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
     now = datetime.datetime.now()
     StyleTime = now.strftime("%Y-%m-%d-%H-%M-%S")
-    os.makedirs(FLAGS.logs_path + StyleTime)
+    os.makedirs(os.path.join(FLAGS.logs_path, StyleTime))
     if not os.path.exists(FLAGS.model):
         os.makedirs(FLAGS.model)
 
