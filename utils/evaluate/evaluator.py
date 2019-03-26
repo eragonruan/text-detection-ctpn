@@ -294,10 +294,10 @@ def evaluate(gt_points, detect_points, conf):
     logger.debug("一共%d个探测框匹配不上任何GT(r>0.8/p>0.4)",np.sum(gtRectMat))
 
     # 用recall除以所有的gt个数
-    recall = float(recallAccum) / len(gtRects)
+    recall = 0    if len(gtRects)==0  else float(recallAccum)    / len(gtRects)
     # precision也会除以所有的det的个数
-    precision =  float(precisionAccum) / len(detRects)
-    hmean =  2.0 * precision * recall / (precision + recall)
+    precision = 0 if len(detRects)==0 else float(precisionAccum) / len(detRects)
+    hmean =  0    if (precision + recall)==0 else 2.0 * precision * recall / (precision + recall)
 
     result = {
         'precision': precision,

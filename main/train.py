@@ -23,7 +23,7 @@ tf.app.flags.DEFINE_string('gpu', '1', '') #使用第#1个GPU
 tf.app.flags.DEFINE_string('model', 'model/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
-tf.app.flags.DEFINE_boolean('restore', True, '')
+tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_boolean('debug_mode', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
@@ -177,8 +177,9 @@ def generate_big_GT_and_evaluate(bboxs,classes,im_info,big_box_labels,sess):
     scores = textsegs[:, 0]
     textsegs = textsegs[:, 1:5]  # 这个是小框，是一个矩形
 
-    # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）
-    boxes = textdetector.detect(textsegs, scores[:, np.newaxis], img.shape[:2])
+    # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）, im_info[H,W,C]
+    im_info = im_info[0] # 其实就一行，但是为了统一，还是将im_info做成了矩阵
+    boxes = textdetector.detect(textsegs, scores[:, np.newaxis], (im_info[0],im_info[1]))
 
     # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
     boxes = np.array(boxes, dtype=np.int)

@@ -143,7 +143,7 @@ class TextProposalGraphBuilder:
         self.heights = text_proposals[:, 3] - text_proposals[:, 1] + 1 # 所有框的高度
 
         # 按照原图宽度，即所有x，建立一个数组
-        boxes_table = [[] for _ in range(self.im_size[1])] # im_size:h,w,原图的
+        boxes_table = [[] for _ in range(self.im_size[1])] # im_size:h,w,原图的, im_size is [H,W], so [1] is W
         for index, box in enumerate(text_proposals):
             # 如果某个x上有值，就把对应的proposal加到数组里
             #-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-* <----   * 是x的像素点

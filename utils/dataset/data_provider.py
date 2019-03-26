@@ -67,7 +67,7 @@ def generator(vis=False):
                 im_fn = image_list[i] # fn file name，文件名
                 im = cv2.imread(im_fn)
                 h, w, c = im.shape
-                im_info = np.array([h, w, c]).reshape([1, 3]) # 变成1行，3列，在这个是shape啊，不是数据
+                im_info = np.array([[h, w, c]]) # shape(1,3)
 
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)
@@ -81,7 +81,7 @@ def generator(vis=False):
                 #
                 #
                 txt_fn = os.path.join(DATA_FOLDER, "split", fn + '.txt')
-                big_gt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
+                big_gt_fn = os.path.join(DATA_FOLDER, "labels", fn + '.txt')
 
                 if not os.path.exists(txt_fn):
                     print("Ground truth for image {} not exist!".format(im_fn))
@@ -109,7 +109,7 @@ def generator(vis=False):
                     plt.show()
                     plt.close()
 
-                logger.debug("generator yield了一个它读出的图片[%s]")
+                logger.debug("generator yield了一个它读出的图片[%s]",im_fn)
                 # 卧槽，注意看，这次返回的只有一张图
                 yield [im], bbox, im_info,big_gt # yield很最重要，产生一个generator，可以遍历所有的图片
 

@@ -8,4 +8,4 @@ python main/pred.py \
     --pred_home=data/pred \
     --file=0.png \
     --gpu=0 \
-    --model=checkpoints_mlt
+    --model=model
