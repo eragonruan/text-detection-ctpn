@@ -11,7 +11,7 @@ python main/train.py \
 	--logs_path=logs \
 	--moving_average_decay=0.997 \
 	--restore=False \
-    >> ./logs_mlt/ctpn.log 2>&1
+    >> ./logs/ctpn.log 2>&1
 
 
 # 0.5 ^ 10 = 0.001

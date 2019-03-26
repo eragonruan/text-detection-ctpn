@@ -168,7 +168,7 @@ def evaluate(gt_points, detect_points, conf):
         gtRects.append(gtRect)
         # gtPolPoints.append(points)
 
-    logger.debug("一共有样本框（GT）:%d", len(gt_points))
+    logger.debug("一共有样本框（GT）:%d", len(gtRects))
 
     # 这个是探测的点，记住，是CTPN合并后的矩形的4个点
     for n in range(len(detect_points)):
@@ -187,7 +187,7 @@ def evaluate(gt_points, detect_points, conf):
         detRect = Rectangle(*points)
         detRects.append(detRect)
 
-    logger.debug("一共有预测的框 :%d", len(detect_points))
+    logger.debug("一共有预测的框 :%d", len(detRects))
 
     '''
     recall与precision两个矩阵,这两个矩阵合在一起也称为overlap matrices. i,j位置上的元素值不为0就代表GT_i,Det_j 之间有重合。
@@ -214,6 +214,8 @@ def evaluate(gt_points, detect_points, conf):
             # 精确率：真正例/所有预测正例
             precisionMat[gtNum, detNum] = 0 if rdDimensions == 0 else intersected_area / rdDimensions
 
+    logger.debug("计算好了召回矩阵和精确率矩阵")
+
     # ####################################################################################
     #    one-to-one matches  1:1
     # ####################################################################################
@@ -228,7 +230,9 @@ def evaluate(gt_points, detect_points, conf):
             if gtRectMat[gtNum] != 0 or detRectMat[detNum] != 0: continue
 
             match = one_to_one_match(gtNum, detNum,conf,recallMat,precisionMat)
+            logger.debug("比对[%d,%d]看看是否满足1:1的条件",gtNum,detNum)
             if not match: continue
+            logger.debug("满足1:1的基本条件:r>0.8,p>0.4")
 
             rG = gtRects[gtNum]   # 恩，我(GT)
             rD = detRects[detNum] # 恩， 你（Det），你我都是个矩形
@@ -245,6 +249,7 @@ def evaluate(gt_points, detect_points, conf):
                 precisionAccum += conf['MTYPE_OO_O'] # 算你一个
                 pairs.append({'gt': gtNum, 'det': detNum, 'type': 'OO'})
                 one2one+=1
+                logger.debug("赞!找到一个1:1的点,给recall[%f]/precision[%f]",conf['MTYPE_OO_O'],conf['MTYPE_OO_O'])
             else:
                 logger.debug("虽然匹配但是不满足中心点距离与两个框对角线平均值的比例")
     logger.debug("1:1一共%d个", one2one)

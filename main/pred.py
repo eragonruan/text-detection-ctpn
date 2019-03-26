@@ -177,7 +177,8 @@ def main(argv=None):
                 logger.info("正在探测图片：%s",im_fn)
                 start = time.time()
                 try:
-                    img = cv2.imread(im_fn)[:, :, ::-1] # bgr是opencv通道默认顺序
+                    original_img = cv2.imread(im_fn)
+                    img =  original_img[:, :, ::-1]# bgr是opencv通道默认顺序
                 except:
                     print("Error reading image {}!".format(im_fn))
                     continue
@@ -205,7 +206,7 @@ def main(argv=None):
                 textdetector = TextDetector(DETECT_MODE='H')
 
                 # 如果关注小框就把小框画上去
-                if FLAGS.evaluate_split: draw(img,textsegs,GREEN)
+                if FLAGS.evaluate_split: draw(original_img,textsegs,GREEN)
 
                 # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）
                 boxes = textdetector.detect(textsegs, scores[:, np.newaxis], img.shape[:2])
@@ -216,7 +217,7 @@ def main(argv=None):
                 logger.info("耗时: %f s" , cost_time)
 
                 # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-                draw(img, boxes[:,:8], color=RED,thick=2)
+                draw(original_img, boxes[:,:8], color=RED,thick=2)
 
                 # 输出大框到文件
                 save(
@@ -239,7 +240,7 @@ def main(argv=None):
                     metrics = evaluate(big_box_labels, boxes[:,:8], conf())
                     logger.debug("大框的评价：%r",metrics)
                     logger.debug("将大框标签画到图片上去")
-                    draw(img, big_box_labels[:, :8], color=GRAY, thick=2)
+                    draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
 
                 # 对小框做评价
                 if FLAGS.evaluate_split:
@@ -249,11 +250,11 @@ def main(argv=None):
                         metrics = evaluate(split_box_labels, textsegs, conf())
                         logger.debug("小框的评价：%r", metrics)
                         logger.debug("将小框标签画到图片上去")
-                        draw(img, split_box_labels[:,:4], color=GRAY, thick=1)
+                        draw(original_img, split_box_labels[:,:4], color=GRAY, thick=1)
 
                 out_image_path = os.path.join(pred_draw_path, os.path.basename(im_fn))
                 logger.debug("处理后的图像保存到：%s",out_image_path)
-                if FLAGS.save: cv2.imwrite(out_image_path, img[:, :, ::-1])
+                if FLAGS.save: cv2.imwrite(out_image_path, original_img)
 
 
 if __name__ == '__main__':
