@@ -43,6 +43,17 @@ def load_annoataion(p):
         bbox.append([x_min, y_min, x_max, y_max, 1])
     return bbox # 返回四个坐标的数组
 
+# 装载大框
+def load_big_GT(p):
+    bbox = []
+    with open(p, "r") as f:
+        lines = f.readlines()
+    for line in lines:
+        line = line.strip().split(",")
+        points = list(map(lambda x: int(float(x)), line))  # 用map自动做int转型, float->int是为了防止320.0这样的字符串
+        bbox.append(points[:8])  # 去掉最后的一列 置信度
+    return bbox # 返回四个坐标的数组
+
 
 def generator(vis=False):
     image_list = np.array(get_training_data())
@@ -70,13 +81,21 @@ def generator(vis=False):
                 #
                 #
                 txt_fn = os.path.join(DATA_FOLDER, "split", fn + '.txt')
+                big_gt_fn = os.path.join(DATA_FOLDER, "label", fn + '.txt')
 
                 if not os.path.exists(txt_fn):
                     print("Ground truth for image {} not exist!".format(im_fn))
                     continue
+                if not os.path.exists(big_gt_fn):
+                    print("大框 Big Ground truth for image {} not exist!".format(big_gt_fn))
+                    continue
                 bbox = load_annoataion(txt_fn)
+                big_gt = load_big_GT(big_gt_fn)
                 if len(bbox) == 0:
                     print("Ground truth for image {} empty!".format(im_fn))
+                    continue
+                if len(big_gt) == 0:
+                    print("Big Ground truth for image {} empty!".format(im_fn))
                     continue
 
                 if vis: # 给丫画出来
@@ -92,7 +111,7 @@ def generator(vis=False):
 
                 logger.debug("generator yield了一个它读出的图片[%s]")
                 # 卧槽，注意看，这次返回的只有一张图
-                yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
+                yield [im], bbox, im_info,big_gt # yield很最重要，产生一个generator，可以遍历所有的图片
 
             except Exception as e:
                 print(e)

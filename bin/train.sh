@@ -3,6 +3,7 @@ python main/train.py \
 	--pretrained_model_path=data/vgg_16.ckpt \
 	--max_steps=40000 \
 	--decay_steps=2000 \
+	--evaluate_steps=1 \
 	--learning_rate=0.001 \
 	--save_checkpoint_steps=2000 \
 	--decay_rate=0.5 \

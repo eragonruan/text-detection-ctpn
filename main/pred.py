@@ -22,7 +22,7 @@ tf.app.flags.DEFINE_string('pred_home', 'data/pred', '') # 图片主目录
 tf.app.flags.DEFINE_string('file', '', '')     # 为了支持单独文件
 tf.app.flags.DEFINE_string('gpu', '0', '')
 tf.app.flags.DEFINE_boolean('save', True, '')
-tf.app.flags.DEFINE_string('model', 'checkpoints_mlt/', '')
+tf.app.flags.DEFINE_string('model', 'model/', '')
 FLAGS = tf.app.flags.FLAGS
 
 import logging
@@ -177,7 +177,7 @@ def main(argv=None):
                 logger.info("正在探测图片：%s",im_fn)
                 start = time.time()
                 try:
-                    img = cv2.imread(im_fn)#[:, :, ::-1] # bgr是opencv通道默认顺序
+                    img = cv2.imread(im_fn)[:, :, ::-1] # bgr是opencv通道默认顺序
                 except:
                     print("Error reading image {}!".format(im_fn))
                     continue
@@ -253,7 +253,7 @@ def main(argv=None):
 
                 out_image_path = os.path.join(pred_draw_path, os.path.basename(im_fn))
                 logger.debug("处理后的图像保存到：%s",out_image_path)
-                if FLAGS.save: cv2.imwrite(out_image_path, img)#[:, :, ::-1])
+                if FLAGS.save: cv2.imwrite(out_image_path, img[:, :, ::-1])
 
 
 if __name__ == '__main__':
