@@ -75,7 +75,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
 
     # 模型输出的pred是相对值，需要进一步处理成真实图像中的坐标
     # 是dx，dy，dw，dh值
-    logger.debug("rpn_bbox_pred网络预测的dx，dy，dw，dh值为：%r",rpn_bbox_pred)
+    # logger.debug("rpn_bbox_pred网络预测的dx，dy，dw，dh值为：%r",rpn_bbox_pred)
     bbox_deltas = rpn_bbox_pred
     # im_info = bottom[2].data[0, :]
 

@@ -58,10 +58,10 @@ class Graph:
                     # 表示，找到我联通的下一个人的索引v
                     v = np.where(self.graph[v, :])[0][0]
 
-                    print("%d->" % v,end='')
+                    # print("%d->" % v,end='')
                     # 结束条件是v找不到下一个联通点了，while就退出了
                     sub_graphs[-1].append(v)
-                print()
+                # print()
 
         # 返回的是一个list[list]
         # 如：[[1-2-4-6-9],

@@ -10,8 +10,7 @@ from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
 
-# tf.app.flags.DEFINE_float('learning_rate', 1e-5, '') #学习率
-tf.app.flags.DEFINE_float('learning_rate', 0.1, '') #学习率
+tf.app.flags.DEFINE_float('learning_rate', 0.001, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
 tf.app.flags.DEFINE_integer('decay_steps', 2000, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.5, '')#？？？
@@ -60,19 +59,7 @@ def main(argv=None):
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-    # 旧的代码是一个变量，新的learning_rate是一个策略了
-    # learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
-    # 回头decay这块直接用这个policy了，回头尝试改一下
-    learning_rate = tf.train.exponential_decay(
-                                        FLAGS.learning_rate, # 初始化的learning rate
-                                        global_step,         # 全局步数计数器，我理解是不管epochs多少，不停的把每个epochs内的step累加
-                                        FLAGS.decay_steps, # 决定衰减周期，就是隔这么多step就开始衰减一下
-                                        FLAGS.decay_rate,  # 每次衰减的倍率，就是变成之前的多少
-                                        staircase = False)
-    adam_opt = tf.train.AdamOptimizer(learning_rate)
-
-
-    tf.summary.scalar('learning_rate', learning_rate)
+    adam_opt = tf.train.AdamOptimizer(FLAGS.learning_rate)
 
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
@@ -152,8 +139,8 @@ def main(argv=None):
             if step % 10 == 0:
                 avg_time_per_step = (time.time() - start) / 10
                 start = time.time()
-                print('Step {:06d}, model loss {:.4f}, total loss {:.4f}, {:.2f} seconds/step, LR: {:.6f}'.format(
-                    step, ml, tl, avg_time_per_step, learning_rate.eval()))
+                print('Step {:06d}, model loss {:.4f}, total loss {:.4f}, {:.2f} seconds/step'.format(
+                    step, ml, tl, avg_time_per_step))
 
             if (step + 1) % FLAGS.save_checkpoint_steps == 0:
                 filename = ('ctpn_{:d}'.format(step + 1) + '.ckpt')
