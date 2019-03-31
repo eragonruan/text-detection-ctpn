@@ -230,9 +230,9 @@ def evaluate(gt_points, detect_points, conf):
             if gtRectMat[gtNum] != 0 or detRectMat[detNum] != 0: continue
 
             match = one_to_one_match(gtNum, detNum,conf,recallMat,precisionMat)
-            logger.debug("比对[%d,%d]看看是否满足1:1的条件",gtNum,detNum)
+            # logger.debug("比对[%d,%d]看看是否满足1:1的条件",gtNum,detNum)
             if not match: continue
-            logger.debug("满足1:1的基本条件:r>0.8,p>0.4")
+            # logger.debug("满足1:1的基本条件:r>0.8,p>0.4")
 
             rG = gtRects[gtNum]   # 恩，我(GT)
             rD = detRects[detNum] # 恩， 你（Det），你我都是个矩形
@@ -249,9 +249,10 @@ def evaluate(gt_points, detect_points, conf):
                 precisionAccum += conf['MTYPE_OO_O'] # 算你一个
                 pairs.append({'gt': gtNum, 'det': detNum, 'type': 'OO'})
                 one2one+=1
-                logger.debug("赞!找到一个1:1的点,给recall[%f]/precision[%f]",conf['MTYPE_OO_O'],conf['MTYPE_OO_O'])
+                # logger.debug("赞!找到一个1:1的点,给recall[%f]/precision[%f]",conf['MTYPE_OO_O'],conf['MTYPE_OO_O'])
             else:
-                logger.debug("虽然匹配但是不满足中心点距离与两个框对角线平均值的比例")
+                # logger.debug("虽然匹配但是不满足中心点距离与两个框对角线平均值的比例")
+                pass
     logger.debug("1:1一共%d个", one2one)
 
     # ####################################################################################

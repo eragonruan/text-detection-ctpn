@@ -12,7 +12,7 @@ from utils.rpn_msr.proposal_layer import proposal_layer
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 
-tf.app.flags.DEFINE_float('learning_rate', 0.001, '') #学习率
+tf.app.flags.DEFINE_float('learning_rate', 0.1, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
 tf.app.flags.DEFINE_integer('decay_steps', 2000, '')#？？？
 tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
@@ -97,7 +97,7 @@ def main(argv=None):
         train_op = tf.no_op(name='train_op') # no_op啥也不干，但是它依赖的操作都会被干一遍
 
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
-    summary_writer = tf.summary.FileWriter(FLAGS.logs_path + StyleTime, tf.get_default_graph())
+    summary_writer = tf.summary.FileWriter(os.path.join(FLAGS.logs_path,StyleTime), tf.get_default_graph())
 
     init = tf.global_variables_initializer()
 
