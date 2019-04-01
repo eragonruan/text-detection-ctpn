@@ -86,6 +86,10 @@ def main(argv=None):
                     continue
 
                 img, (rh, rw) = resize_image(im)
+                print ('rh rw is ',rh,rw);
+                if rh==0 or rw==0 :
+                       print("ignore zero size image");
+                       continue 
                 h, w, c = img.shape
                 im_info = np.array([h, w, c]).reshape([1, 3])
                 bbox_pred_val, cls_prob_val = sess.run([bbox_pred, cls_prob],
