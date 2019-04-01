@@ -35,6 +35,7 @@ def get_images():
 
 def resize_image(img):
     img_size = img.shape
+    print("image ori size is",img_size)
     im_size_min = np.min(img_size[0:2])
     im_size_max = np.max(img_size[0:2])
 
@@ -48,7 +49,7 @@ def resize_image(img):
     new_w = new_w if new_w // 16 == 0 else (new_w // 16 + 1) * 16
 
     re_im = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-    return re_im, (new_h / img_size[0], new_w / img_size[1])
+    return re_im, (new_h*1.0 / img_size[0], new_w*1.0 / img_size[1])
 
 
 def main(argv=None):
@@ -86,9 +87,9 @@ def main(argv=None):
                     continue
 
                 img, (rh, rw) = resize_image(im)
-                print ('rh rw is ',rh,rw);
+                print ('resize radio is',rh,rw);
                 if rh==0 or rw==0 :
-                       print("ignore zero size image");
+                       print("resize image got some error");
                        continue 
                 h, w, c = img.shape
                 im_info = np.array([h, w, c]).reshape([1, 3])
