@@ -5,9 +5,10 @@ from bbox import bbox_overlaps
 from utils.bbox.bbox_transform import bbox_transform
 from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
-
+import tensorflow as tf
 import logging
 
+FLAGS = tf.app.flags.FLAGS
 logger = logging.getLogger("anchor")
 DEBUG = False
 
@@ -26,7 +27,7 @@ DEBUG = False
 # rpn_cls_score是啥，是神经网络跑出来的一个分类结果，是包含文字，还是不包含文字的一个概率值，
 #       因为有9个框，而且有包含和不包含2个值，所以是(1, H, W, Ax2)维度的，对H,W的含义是，对每一个feature map中的点，都做了预测
 # 另，这个太神奇了，参数本来都是张量
-def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ]):
+def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ],image_name=None):
     logger.debug("开始调用anchor_target_layer，这个函数是来算anchor们和gt的差距")
 
     logger.debug("传入的参数：")
@@ -36,6 +37,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("gt_boxes:%r", type(gt_boxes))
     logger.debug("gt_boxes:%r", gt_boxes.shape)
     logger.debug("im_info:%r", im_info)
+    logger.debug("image_name:%r",image_name.shape)
 
     """
     ground-truth就是正确的标签的Y的意思，表示的就是正确的标签，错的标签不包含：https://www.zhihu.com/question/22464082
@@ -222,6 +224,12 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     """
     # 这里，anchors是所有原图上的feature map为中心点画出的格子对应的10个anchors们
     # 这里，gt_boxes是所有的样本框
+    # 这个bbox_overlaps是算GT框和Anchor的相交情况，
+    # 返回的内容是每个框和GT的相交比，是一个矩阵 [|anchors|,|gt_box|]，
+    # 比如我的anchor是20000，gt是300，那这个数组就是[20000,30]，60万个IoU要计算，我的天哪，怪不得要用C实现呢
+    # overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    #     [anchors, gt_boxes] <= [N,K]
+    # 行是anchor，列是GT
     overlaps = bbox_overlaps(
         np.ascontiguousarray(anchors, dtype=np.float),   # anchor是[50*37*10,4]
         np.ascontiguousarray(gt_boxes, dtype=np.float))  # 假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
@@ -229,9 +237,19 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # 按照他写的注释，overlaps是[50*37*10,|G_t|]的一个数组，大部分都很稀硫啊，这个表示法不好，我理解
     # bbox_overlaps函数居然是用c写的，弄啥嘞，是嫌弃python算这种东西太慢么？
 
+    # print overlap matrix
+    # for x in range(0, overlaps.shape[0]):
+    #     for y in range(0, overlaps.shape[1]):
+    #         if overlaps[x,y]!=0:
+    #             logger.debug("x=%d,y=%d:%f", x,y,overlaps[x,y])
+
     # 存放每一个anchor和每一个gtbox之间的overlap
     # argmax_overlaps的shape[|G|,1]
     argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
+    # for i in range(0, argmax_overlaps.shape[0]):
+    #     logger.debug("index=%d", argmax_overlaps[i])
+
+    # ！！！argmax_overlaps是啥？是一个数组，|GT|个，每一个值是这个GT对应的最大的anchor的index
     logger.debug("每行里面，最大的列号argmax_overlaps:%r", argmax_overlaps.shape)
     # 返回是一维数组，长度是行数，值是每列对应的最大的列号
     # 是每行里面，最大的列号
@@ -263,42 +281,44 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("np.where(overlaps == gt_max_overlaps)后得到的gt_argmax_overlaps:%r", gt_argmax_overlaps.shape)
     # 过滤完的布尔矩阵，为何只取第一行？??????
 
-    if not cfg.RPN_CLOBBER_POSITIVES:
-        # assign bg labels first so that positive labels can clobber them
-        labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
 
     # lables是所有在图像内部的anchors，默认值都是-1，也就是不包含前景
     # fg label: for each gt, anchor with highest overlap
     logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
     logger.debug("gt_argmax_overlaps:%r",gt_argmax_overlaps)
     labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
+    # <------gt_argmax_overlaps是以anchor的某一行的视角来看，找到这个anchor对应的最大的iou的那个GT的index
 
     # fg label: above threshold IOU，
     logger.debug("overlap大于0.7的认为是前景")
     logger.debug("max_overlaps:%r",max_overlaps)
-    # ????
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
 
-    if cfg.RPN_CLOBBER_POSITIVES:
-        logger.debug("小于0.3的给打上背景标签0")
-        logger.debug("max_overlaps:%r",max_overlaps)
-        # assign bg labels last so that negative labels can clobber positives
-        labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0
+    # assign bg labels first so that positive labels can clobber them
+    # RPN_NEGATIVE_OVERLAP = 0.3
+    # 负样本就是IoU小于0.3的，设置值为0
+    labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
 
     # subsample positive labels if we have too many
     # 对正样本进行采样，如果正样本的数量太多的话
-    # 限制正样本的数量不超过128个
+    # 限制正样本的数量不超过1/2个
     num_fg = int(cfg.RPN_FG_FRACTION * cfg.RPN_BATCHSIZE)
+
+    # 为何要取第一项[0]：
+    # >> > np.where(a == 1)
+    # (array([0, 6, 7, 8, 14, 18, 20]),)
+    # >> > np.where(a == 1)[0]
+    # array([0, 6, 7, 8, 14, 18, 20])
     fg_inds = np.where(labels == 1)[0] #fg_inds，前景的anchors的数量
 
-    logger.debug("cfg.RPN_FG_FRACTION %d * cfg.RPN_BATCHSIZE %d = %d",cfg.RPN_FG_FRACTION , cfg.RPN_BATCHSIZE,num_fg)
-    logger.debug("fg_inds = %r", fg_inds.shape)
-    logger.debug("只保留num_fg个正样本，剩下的正样本去掉，置成-1")
+    logger.debug("保留正样本数：cfg.RPN_FG_FRACTION %f * cfg.RPN_BATCHSIZE %d = %d",cfg.RPN_FG_FRACTION , cfg.RPN_BATCHSIZE,num_fg)
+    # logger.debug("fg_inds = %r", fg_inds.shape)
+    logger.debug("只保留[%d]个正样本，剩下的正样本去掉，置成-1",num_fg)
     if len(fg_inds) > num_fg:
         # 随机去掉一些样本，去掉就是置为-1，数量是从前景里面去掉要求的数量num_fg，正样本里就只剩下num_fg这么多了
         disable_inds = npr.choice(
             fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
-        labels[disable_inds] = -1  # 变为-1
+        labels[disable_inds] = -1  # 变为-1，-1就是disable，就是这次不用的样本，既不能当正样本，也不能当负样本
 
     #上面是找到正样本，可能找出很多，这个时候要采样
 
@@ -309,15 +329,13 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
     bg_inds = np.where(labels == 0)[0]
 
-
+    # 再从负样本里面去掉一部分，就留 1/2的batch数
     if len(bg_inds) > num_bg:
         disable_inds = npr.choice(
             bg_inds, size=(len(bg_inds) - num_bg), replace=False)
         labels[disable_inds] = -1
         # print "was %s inds, disabling %s, now %s inds" % (
         # len(bg_inds), len(disable_inds), np.sum(labels == 0))
-
-    # zheli
 
     ####################################################################################################
     ####################################################################################################
@@ -326,13 +344,19 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     ####################################################################################################
     # 至此， 上好标签，开始计算rpn-box的真值
 
-
     # --------------------------------------------------------------
     bbox_targets = np.zeros((len(inds_inside), 4), dtype=np.float32)
     # anchors是所有的剔除了出界（前面处理过）的剩余的anchors，每条都是anchor的x1,y1,x2,y2
     # argmax_overlaps是指每个GT上，和他overlap最大的那个anchor的索引
     logger.debug("开始计算bbox的差：anchors(图内的)和gt_boxes[argmax_overlaps, :] %r",argmax_overlaps)
+    logger.debug("gt_boxes shape=%r",gt_boxes.shape)
+    logger.debug("argmax_overlaps=%r",argmax_overlaps)
+
+    # 这里有个细节，argmax_overlaps会有|Anchors|个，也就是大约2万个，
+    # 所以，gt_boxes[argmax_overlaps, :]会把gt_boxes撑大了，从原来的300多个，撑成了2万多个
+    # 这样，就可以和anchors的数量对上了
     bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
+    # 算2万个，我本来还担心速度，后来print了一把，速度很快50毫秒就完成了，就不担心了
     # 返回的是4个差，应该算了一批把？这块感觉是，一口气都算了
 
     # 定义一个weight的数组，维度是[图内anchor数, 4]，4是x,y,dx,dy
@@ -424,6 +448,49 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("rpn_bbox_inside_weights:%r", rpn_bbox_inside_weights.shape)
     logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
 
+    # 我要画出来，GT，和，被选中的anchor
+    if FLAGS.debug_mode:
+        pass
+        from PIL import Image, ImageDraw
+        # 先打开原图
+        logger.debug("当前处理的文件名字：%s", image_name[0])
+        image = Image.open(image_name[0])
+        draw = ImageDraw.Draw(image)
+
+        # 先得到anchor是前景的索引
+        debug_labels = rpn_labels.reshape(-1,1)
+        fg_index  = np.where(debug_labels==1)
+
+        # 拿到每个anchor对应的anchor和gt
+        # 其实我不关心所有的GT，我只关心和我IoU>0.7的GT，我把他们画出来
+        # 先得到对应的是前景的anchor，这个好获得
+        logger.debug("调试画图时候的前景索引：%r",fg_index[0])
+
+        candidate_anchors = anchors[fg_index[0],:]
+
+        # 然后去获得，是前景anchor对应最大IoU的那个GT
+        # argmax_overlaps里面就是存着这些gt的index呢，
+        # 但是，有重复的，因为他是按照anchor的数量存的，即每个anchor存着他对应最大的gt呢
+        # 所以，这么干吧：
+        #   1.先通过fg_index过滤所有的argmax_overlaps，只剩下那些选中的anchor
+        #   2.然后把这些anchor对应的最大的GT做一个排重操作，剩下的就是我们要的GT们
+        left_fg_gt_index_of_anchor = argmax_overlaps[fg_index[0]]
+        left_uniq_gt_index = np.unique(left_fg_gt_index_of_anchor)
+        candidate_gts = gt_boxes[left_uniq_gt_index,:]
+
+        for anchor in candidate_anchors:
+             draw.rectangle(anchor, outline='red')
+        for gt in candidate_gts:
+             draw.rectangle(gt[:, :4], outline='green')
+
+        import os
+        _, fn = os.path.split(str(image_name[0]))
+        fn, _ = os.path.splitext(fn)
+        if not os.path.exists("data/train/debug"): os.makedirs("data/train/debug")
+        dump_img = os.path.join("data/train/debug", fn + '.png')
+
+        image.save(dump_img)
+
     # 得到一个新的RPN的标签，对比
     return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
 
@@ -447,6 +514,14 @@ def _unmap(data, count, inds, fill=0):
 # 那你算啥呢？
 # 你算dx,dy,dw,dh，这个4元组就是标签啊
 # 不过，dx,dw是在CTPN的算法是没用的啊？这点我表示困惑
+# 2019-04-03 16:10:08,510 : DEBUG : ex_rois:anchors:(20008, 4)
+# 2019-04-03 16:10:08,510 : DEBUG : gt_rois:gts:(20008, 5)
+# 看！两个的行数是一样的，啥意思？就是gt多少个，anchor就给他准备多少个，
+# 你说了，怎么20008，2万多个，怎么这么多？我给你算算：
+# 870x662的图，featuremap是54x41=2214，x10个anchor是22140，再取出越界的，剩下这20008个了。
+# 我去，都比啊，恩！
+# 哦，我理解，错了，这个不是在算IoU，而是在算那4个值,x,y,dw,dh，
+# 没关系，注释不删了，有助于理解别的
 def _compute_targets(ex_rois, gt_rois):
     """Compute bounding-box regression targets for an image."""
     logger.debug("_compute_targets")

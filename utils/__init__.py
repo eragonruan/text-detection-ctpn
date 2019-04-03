@@ -6,3 +6,9 @@ def _p_shape(tensor,msg):
         return tf.Print(tensor, [tf.shape(tensor)], msg,summarize= 100)
     else:
         return tensor
+
+def _p(tensor,msg):
+    if (FLAGS.debug_mode):
+        return tf.Print(tensor, [tensor], msg,summarize= 100)
+    else:
+        return tensor

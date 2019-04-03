@@ -12,7 +12,7 @@ from utils.rpn_msr.proposal_layer import proposal_layer
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 
-tf.app.flags.DEFINE_float('learning_rate', 0.1, '') #学习率
+tf.app.flags.DEFINE_float('learning_rate', 0.01, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
 tf.app.flags.DEFINE_integer('decay_steps', 2000, '')#？？？
 tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
@@ -53,13 +53,14 @@ def main(argv=None):
         os.makedirs(FLAGS.model)
 
     # 输入图像数据的维度[批次,  高度,  宽度,  3通道]
-    input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
-    input_bbox = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox') # 为何是5列？
-    input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
+    input_image         = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
+    input_image_name    = tf.placeholder(tf.string,  shape=[None,], name='input_image')
+    input_bbox          = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox') # 为何是5列？
+    input_im_info       = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-    adam_opt = tf.train.AdamOptimizer(FLAGS.learning_rate)
+    adam_opt = tf.train.AdamOptimizer()# 默认是learning_rate是0.001，而且后期会不断的根据梯度调整，一般不用设这个数，所以我索性去掉了
 
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
@@ -70,8 +71,11 @@ def main(argv=None):
             # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
 
             # input_bbox，就是GT，就是样本、标签
-            total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, cls_pred, input_bbox,
-                                                                                 input_im_info)
+            total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, #预测出来的bbox位移
+                                                                                 cls_pred,  #预测出来是否是前景的概率
+                                                                                 input_bbox,#标签
+                                                                                 input_im_info, # 图像信息
+                                                                                 input_image_name)
             # tf.group，是把逻辑上的几个操作定义成一个操作
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = adam_opt.compute_gradients(total_loss)
@@ -135,7 +139,8 @@ def main(argv=None):
             # im_info是[w,h,c]
 
             logger.debug("开始运行sess.run了")
-            ml, tl, _, summary_str,bboxs,classes = sess.run([model_loss,
+            ml, tl, _, summary_str,bboxs,classes = sess.run([
+                                               model_loss,
                                                total_loss,
                                                train_op,
                                                summary_op,
@@ -143,7 +148,8 @@ def main(argv=None):
                                                cls_prob],
                                               feed_dict={input_image: data[0],
                                                          input_bbox: data[1],
-                                                         input_im_info: data[2]})
+                                                         input_im_info: data[2],
+                                                         input_image_name: data[3]})
             logger.debug("结束运行sess.run了")
             summary_writer.add_summary(summary_str, global_step=step)
 

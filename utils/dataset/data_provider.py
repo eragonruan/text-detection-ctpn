@@ -111,7 +111,7 @@ def generator(vis=False):
 
                 logger.debug("generator yield了一个它读出的图片[%s]",im_fn)
                 # 卧槽，注意看，这次返回的只有一张图
-                yield [im], bbox, im_info,big_gt # yield很最重要，产生一个generator，可以遍历所有的图片
+                yield [im], bbox, im_info,[im_fn]  # yield很最重要，产生一个generator，可以遍历所有的图片
 
             except Exception as e:
                 print(e)

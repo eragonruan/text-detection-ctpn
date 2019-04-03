@@ -3,11 +3,11 @@ from tensorflow.contrib import slim
 import logging
 from nets import vgg
 from utils.rpn_msr.anchor_target_layer import anchor_target_layer as anchor_target_layer_py
-from utils import _p_shape
+from utils import _p_shape,_p
 
 logger = logging.getLogger('model_train')
 
-# [123.68, 116.78, 103.94] 这个是VGG的预处理要求的，必须减去这个均值
+# [123.68, 116.78, 103.94] 这个是VGG的预处理要求的，必须减去这个均值：https://blog.csdn.net/smilejiasmile/article/details/80807050
 def mean_image_subtraction(images, means=[123.68, 116.78, 103.94]):
     num_channels = images.get_shape().as_list()[-1] # 通道数
     if len(means) != num_channels:
@@ -189,7 +189,7 @@ def model(image):
 # 计算IOU >=0.7 为正样本，IOU <0.3为负样本，
 # 得到在理想情况下应该各自一半的256个正负样本
 # （实际上正样本大多只有10-100个之间，相对负样本偏少）。
-def anchor_target_layer(cls_pred, bbox, im_info, scope_name):
+def anchor_target_layer(cls_pred, bbox, im_info, input_image_name, scope_name):
     with tf.variable_scope(scope_name) as scope:
         # 'rpn_cls_score', 'gt_boxes', 'im_info'
         # tf.py_func是把普通函数改造成TF运行用的函数：包装一个普通的 Python 函数，这个函数接受 numpy 的数组作为输入和输出，
@@ -197,7 +197,7 @@ def anchor_target_layer(cls_pred, bbox, im_info, scope_name):
         # https://zhuanlan.zhihu.com/p/32970370
         rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights = \
             tf.py_func(anchor_target_layer_py,
-                       [cls_pred, bbox, im_info, [16, ], [16]],
+                       [cls_pred,bbox,im_info,[16, ],[16],input_image_name],
                        [tf.float32, tf.float32, tf.float32, tf.float32])
 
         rpn_labels = tf.convert_to_tensor(tf.cast(rpn_labels, tf.int32),
@@ -233,14 +233,14 @@ def smooth_l1_dist(deltas, sigma2=9.0, name='smooth_l1_dist'):
 # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
 # cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）
 # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
-def loss(bbox_pred, cls_pred, bbox, im_info):
+def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
 
     bbox_pred = _p_shape(bbox_pred,"Loss输入：bbox_pred")
 
     #返回 [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
     #rpn_labels anchor是否包含前景
     #rpn_bbox_targets 所有的anchor对应的4个标签回归值，所有对应在图像内的anchors
-    rpn_data = anchor_target_layer(cls_pred, bbox, im_info, "anchor_target_layer")
+    rpn_data = anchor_target_layer(cls_pred, bbox, im_info,input_image_name, "anchor_target_layer")
 
     # classification loss
     # transpose: (1, H, W, A x d) -> (1, H, WxA, d)
@@ -250,24 +250,32 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
     rpn_label = tf.reshape(rpn_data[0], [-1]) #rpn_labels : (HxWxA, 1), for each anchor, 0 denotes bg, 1 fg, -1 dontcare，是不是包含前景
     # ignore_label(-1)
 
-    ##########
-    # 看！这里很重要，去掉了所有的-1，也就是刨除了那些不用的样本，只保留了300个样本
-    ##########
+    ################################################################################
+    # 看！这里很重要，去掉了所有的-1，也就是刨除了那些不用的样本，只保留了300个样本 *************
+    ################################################################################
     fg_keep = tf.equal(rpn_label, 1) # 所有前景，fg_keep是一个true/false数组,tf.equal返回true/false test结果的数组
+    # 这步很重要，因为anchor_target_layer_py那个函数里面只标注了batch/2个正样本，和batch/2个负样本，剩下的anchor都标注成-1了，所以，这里要去掉他们
+    # 最后，只剩下batch个了
     rpn_keep = tf.where(tf.not_equal(rpn_label, -1)) # rpn只剩下是非-1的那些元素的下标，注意！是位置下标！
 
     # tf.gather 类似于数组的索引，可以把向量中某些索引值提取出来，得到新的向量，适用于要提取的索引为不连续的情况。这个函数似乎只适合在一维的情况下使用。
     # https://blog.csdn.net/Cyiano/article/details/76087747
     rpn_cls_score = tf.gather(rpn_cls_score, rpn_keep) # 把对应的前景的概率取出来，rpn_cls_score是从cls_pred来的(具体自己读代码)
-    rpn_label = tf.gather(rpn_label, rpn_keep) # 把对应的label取出来，这个是label
+    rpn_label = tf.gather(rpn_label, rpn_keep) # 看，rpn_label是所有的label，但是经过rpn_keep过滤，就只剩下batch的样本了
 
     logger.debug("我们来看看lstm预测的cls_pred和anchor_target_layer选出来的anchor组成的label的shape：")
-    rpn_cls_score = _p_shape(rpn_cls_score,"rpn_cls_score")
-    rpn_label = _p_shape(rpn_label, "rpn_label")
 
     # 做交叉熵，1那个是通过IoU算出来的，而rpn_cls_score是通过卷积网络算出来的
     # loss11111111111111111
-    rpn_label = _p_shape(rpn_label,"做交叉熵了")
+    rpn_label = _p_shape(rpn_label, "做交叉熵:label")
+    rpn_label = _p(rpn_label,"做交叉熵:label")
+    rpn_cls_score = _p_shape(rpn_cls_score, "做交叉熵:predict")
+    rpn_cls_score = _p(rpn_cls_score, "做交叉熵:predict")
+
+    # 文档里说，输入的logits应该是网络的输出，而不需要做softmax
+    #  **WARNING:** This op expects unscaled logits, since it performs a `softmax`
+    # on `logits` internally for efficiency.  Do not call this op with the
+    # output of `softmax`, as it will produce incorrect results.
     rpn_cross_entropy_n = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=rpn_label, logits=rpn_cls_score)
 
     # box loss
@@ -276,6 +284,7 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
     rpn_bbox_inside_weights = rpn_data[2]
     rpn_bbox_outside_weights = rpn_data[3]
 
+    # 看！这里又过滤了一下 ====> "rpn_keep"，只保留样本
     rpn_bbox_pred = tf.gather(tf.reshape(rpn_bbox_pred, [-1, 4]), rpn_keep)  # shape (N, 4) #256个，好像是，anchor_target_layer完成了采样，不过这块需要回头再看看
     rpn_bbox_targets = tf.gather(tf.reshape(rpn_bbox_targets, [-1, 4]), rpn_keep)
     rpn_bbox_inside_weights = tf.gather(tf.reshape(rpn_bbox_inside_weights, [-1, 4]), rpn_keep)
@@ -298,7 +307,8 @@ def loss(bbox_pred, cls_pred, bbox, im_info):
             rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),
             reduction_indices=[1])
 
-    # reduce_sum 求个均值
+    # 是对loss求个均值，总loss / 前景的anchhor的个数（这个前景是配置里面规定的批次的一半的数量）
+    # 表示，平均每个前景anchor的loss
     rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
     rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)
 
