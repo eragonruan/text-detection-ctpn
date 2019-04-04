@@ -253,7 +253,7 @@ def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
     ################################################################################
     # 看！这里很重要，去掉了所有的-1，也就是刨除了那些不用的样本，只保留了300个样本 *************
     ################################################################################
-    fg_keep = tf.equal(rpn_label, 1) # 所有前景，fg_keep是一个true/false数组,tf.equal返回true/false test结果的数组
+    fg_keep = tf.where(tf.equal(rpn_label,1)) # 所有前景，fg_keep是一个true/false数组,tf.equal返回true/false test结果的数组
     # 这步很重要，因为anchor_target_layer_py那个函数里面只标注了batch/2个正样本，和batch/2个负样本，剩下的anchor都标注成-1了，所以，这里要去掉他们
     # 最后，只剩下batch个了
     rpn_keep = tf.where(tf.not_equal(rpn_label, -1)) # rpn只剩下是非-1的那些元素的下标，注意！是位置下标！
@@ -285,10 +285,14 @@ def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
     rpn_bbox_outside_weights = rpn_data[3]
 
     # 看！这里又过滤了一下 ====> "rpn_keep"，只保留样本
-    rpn_bbox_pred = tf.gather(tf.reshape(rpn_bbox_pred, [-1, 4]), rpn_keep)  # shape (N, 4) #256个，好像是，anchor_target_layer完成了采样，不过这块需要回头再看看
-    rpn_bbox_targets = tf.gather(tf.reshape(rpn_bbox_targets, [-1, 4]), rpn_keep)
-    rpn_bbox_inside_weights = tf.gather(tf.reshape(rpn_bbox_inside_weights, [-1, 4]), rpn_keep)
-    rpn_bbox_outside_weights = tf.gather(tf.reshape(rpn_bbox_outside_weights, [-1, 4]), rpn_keep)
+    # # https://github.com/eragonruan/text-detection-ctpn/issues/334
+    # 我理解，应该是rpn_bbox_pred = tf.gather(tf.reshape(rpn_bbox_pred, [-1, 4]), fg_keep)  # shape (N, 4)
+    # 因为，计算bbox的loss的时候，应该只考虑前景框的loss，对于背景，也就是负样本（我理解负样本就是那些非前景的anchor们），这些负样本计算他们的loss没有任何意义。#
+    # 不知道我理解的对不对？如果是的话，这应该是一个bug。
+    rpn_bbox_pred = tf.gather(tf.reshape(rpn_bbox_pred, [-1, 4]), fg_keep)  # shape (N, 4) #256个，好像是，anchor_target_layer完成了采样，不过这块需要回头再看看
+    rpn_bbox_targets = tf.gather(tf.reshape(rpn_bbox_targets, [-1, 4]), fg_keep)
+    rpn_bbox_inside_weights = tf.gather(tf.reshape(rpn_bbox_inside_weights, [-1, 4]), fg_keep)
+    rpn_bbox_outside_weights = tf.gather(tf.reshape(rpn_bbox_outside_weights, [-1, 4]), fg_keep)
 
     rpn_bbox_pred = _p_shape(rpn_bbox_pred,"我们来看看lstm预测的bbox_pred和anchor_target_layer选出来的anchor组成的bbox_targets的shape：")
     rpn_bbox_pred = _p_shape(rpn_bbox_pred,"rpn_bbox_pred")

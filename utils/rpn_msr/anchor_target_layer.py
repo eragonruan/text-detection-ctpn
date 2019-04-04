@@ -169,10 +169,11 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     all_anchors = all_anchors.reshape((K * A, 4)) # [50*37*10,4]，我理解，就是所有的anchor的坐标
     logger.debug("reshape后的all_anchors：%r", all_anchors.shape)
-    total_anchors = int(K * A)
+    total_anchors_num = int(K * A)
 
     # only keep anchors inside the image
-    # 仅保留那些还在图像内部的anchor，超出图像的都删掉
+    # 仅保留那些还在图像内部的anchor，超出图像的都删掉,inds_inside都是内部的
+    # all_anchor的index
     inds_inside = np.where(
         (all_anchors[:, 0] >= -_allowed_border) &
         (all_anchors[:, 1] >= -_allowed_border) &
@@ -182,7 +183,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("图像内的点的索引inds_inside：%r",inds_inside.shape)
 
     if DEBUG:
-        print('total_anchors', total_anchors)
+        print('total_anchors_num', total_anchors_num)
         print('inds_inside', len(inds_inside))
 
     # keep only inside anchors
@@ -256,9 +257,12 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     # inds_inside是在图片范围内的anchor的索引，图像内部的anchor的索引
     # 这里是再做一次图像内部的过滤，去掉那些超范围的anchor的overlap的坐标
-    # 注意，这里得到的是坐标
+    # 为何是'np.arange(len(inds_inside))'呢？
+    # 是因为overlaps的行数恰好是len(inds_inside).
+    # argmax_overlaps存的是每行（anchor）的gt的索引
+    # max_overlaps变成了一个[最大的那个iou值]一维数组，行是那些在范围之内的
     max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
-    logger.debug("每行里面，最大的列号的值max_overlaps:%r", max_overlaps.shape)
+    logger.debug("每行里面，最大的列号的值max_overlaps:%r", max_overlaps)
     # 这个的坐标是每行里面交面积最大的gt的坐标 ！！！是一个一维数组中
     # [Gt坐标，Gt坐标，Gt坐标，...]，一共anchor数量行
     # sorry,不是坐标，是一个数组，每行和GT最大的交的值
@@ -286,7 +290,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # fg label: for each gt, anchor with highest overlap
     logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
     logger.debug("gt_argmax_overlaps:%r",gt_argmax_overlaps)
-    labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
+    # labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
     # <------gt_argmax_overlaps是以anchor的某一行的视角来看，找到这个anchor对应的最大的iou的那个GT的index
 
     # fg label: above threshold IOU，
@@ -294,6 +298,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("max_overlaps:%r",max_overlaps)
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
 
+    logger.debug("现在有%d个前景样本（anchors）",(labels==1).sum())
     # assign bg labels first so that positive labels can clobber them
     # RPN_NEGATIVE_OVERLAP = 0.3
     # 负样本就是IoU小于0.3的，设置值为0
@@ -403,11 +408,14 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     # map up to original set of anchors
     # 一开始是将超出图像范围的anchor直接丢掉的，现在在加回来
-    labels = _unmap(labels, total_anchors, inds_inside, fill=-1)  # 这些anchor的label是-1，也即dontcare
+    # 为什么呢？是因为，要能和之前的allanchors对上
+    # 这样后面的"labels.reshape((1, height, width, A)) "就不会错
+    inside_labels = labels.copy()
+    labels = _unmap(labels, total_anchors_num, inds_inside, fill=-1)  # 这些anchor的label是-1，也即dontcare
     # bbox_targets是4个差
-    bbox_targets = _unmap(bbox_targets, total_anchors, inds_inside, fill=0)  # 这些anchor的真值是0，也即没有值
-    bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors, inds_inside, fill=0)  # 内部权重以0填充
-    bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors, inds_inside, fill=0)  # 外部权重以0填充
+    bbox_targets = _unmap(bbox_targets, total_anchors_num, inds_inside, fill=0)  # 这些anchor的真值是0，也即没有值
+    bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors_num, inds_inside, fill=0)  # 内部权重以0填充
+    bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors_num, inds_inside, fill=0)  # 外部权重以0填充
 
     if DEBUG:
         print('rpn: max max_overlap', np.max(max_overlaps))
@@ -439,9 +447,6 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         .reshape((1, height, width, A * 4))
     rpn_bbox_outside_weights = bbox_outside_weights
 
-    if DEBUG:
-        print("anchor target set")
-
     logger.debug("最后的这个超长的anchor_target_layer返回结果为：")
     logger.debug("rpn_labels:%r",rpn_labels.shape)
     logger.debug("rpn_bbox_targets:%r", rpn_bbox_targets.shape)
@@ -450,22 +455,23 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     # 我要画出来，GT，和，被选中的anchor
     if FLAGS.debug_mode:
-        pass
+        logger.debug("调试画图时候的前景索引")
         from PIL import Image, ImageDraw
         # 先打开原图
         logger.debug("当前处理的文件名字：%s", image_name[0])
         image = Image.open(image_name[0])
         draw = ImageDraw.Draw(image)
 
-        # 先得到anchor是前景的索引
-        debug_labels = rpn_labels.reshape(-1,1)
-        fg_index  = np.where(debug_labels==1)
+        # 先得到anchor是前景的索引,rpn_labels是所有的anchors，但是值为0,1,-1，所以下面要过滤
+        # 得到所有的是标签值是1，也就是前景的那些anchor的索引
+        fg_index  = np.where(inside_labels==1)
 
         # 拿到每个anchor对应的anchor和gt
         # 其实我不关心所有的GT，我只关心和我IoU>0.7的GT，我把他们画出来
         # 先得到对应的是前景的anchor，这个好获得
-        logger.debug("调试画图时候的前景索引：%r",fg_index[0])
+        logger.debug("[调试画图]时候的前景索引：%r",fg_index[0])
 
+        # 根据索引得到，要画的前景anchor
         candidate_anchors = anchors[fg_index[0],:]
 
         # 然后去获得，是前景anchor对应最大IoU的那个GT
@@ -475,13 +481,25 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         #   1.先通过fg_index过滤所有的argmax_overlaps，只剩下那些选中的anchor
         #   2.然后把这些anchor对应的最大的GT做一个排重操作，剩下的就是我们要的GT们
         left_fg_gt_index_of_anchor = argmax_overlaps[fg_index[0]]
+        logger.debug("[调试画图]argmax_overlaps里存着IoU>0.7的GT，我要来过滤这些GT，过滤索引为：%r",left_fg_gt_index_of_anchor)
+
+        for anchor_index in fg_index[0]:
+            gt_index = argmax_overlaps[anchor_index]
+            logger.debug("[调试画图]overlaps[%d,%d]的IoU值%f",
+                         anchor_index, gt_index , max_overlaps[anchor_index])
+
+
         left_uniq_gt_index = np.unique(left_fg_gt_index_of_anchor)
+        logger.debug("[调试画图]排重后的GT索引为：%r", left_uniq_gt_index)
+
         candidate_gts = gt_boxes[left_uniq_gt_index,:]
 
+        logger.debug("[调试画图]GT最后有%d个，Anchor最后有%d个",len(candidate_gts),len(candidate_anchors))
+
         for anchor in candidate_anchors:
-             draw.rectangle(anchor, outline='red')
+             draw.rectangle(anchor.tolist(), outline='red')
         for gt in candidate_gts:
-             draw.rectangle(gt[:, :4], outline='green')
+             draw.rectangle(gt[:4].tolist(), outline='green')
 
         import os
         _, fn = os.path.split(str(image_name[0]))

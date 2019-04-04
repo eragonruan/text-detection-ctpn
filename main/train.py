@@ -149,7 +149,7 @@ def main(argv=None):
                                               feed_dict={input_image: data[0],
                                                          input_bbox: data[1],
                                                          input_im_info: data[2],
-                                                         input_image_name: data[3]})
+                                                         input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
             logger.debug("结束运行sess.run了")
             summary_writer.add_summary(summary_str, global_step=step)
 
@@ -163,8 +163,9 @@ def main(argv=None):
                 print('Step {:06d}, model loss {:.4f}, total loss {:.4f}, {:.2f} seconds/step'.format(
                     step, ml, tl, avg_time_per_step))
 
+                # data[4]是大框的坐标，是个数组，8个值
                 f1_value,recall_value,precision_value = \
-                    generate_big_GT_and_evaluate(bboxs,classes,data[2],data[3],sess)
+                    generate_big_GT_and_evaluate(bboxs,classes,data[2],data[4])
                 sess.run([tf.assign(v_f1, f1_value),
                           tf.assign(v_recall, recall_value),
                           tf.assign(v_precision, precision_value)]
@@ -176,8 +177,9 @@ def main(argv=None):
                 saver.save(sess, filename)
                 print('Write model to: {:s}'.format(filename))
 
-# 评估
-def generate_big_GT_and_evaluate(bboxs,classes,im_info,big_box_labels,sess):
+# 评估,之前写的，我好像没有评估小框，只评估大框了
+# 为什么只评估大框呢？我忘了...
+def generate_big_GT_and_evaluate(bboxs,classes,im_info,big_box_labels):
     # 返回所有的base anchor调整后的小框，是矩形
     textsegs, _ = proposal_layer(classes, bboxs, im_info)
     scores = textsegs[:, 0]
@@ -185,11 +187,11 @@ def generate_big_GT_and_evaluate(bboxs,classes,im_info,big_box_labels,sess):
 
     # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）, im_info[H,W,C]
     im_info = im_info[0] # 其实就一行，但是为了统一，还是将im_info做成了矩阵
-    boxes = textdetector.detect(textsegs, scores[:, np.newaxis], (im_info[0],im_info[1]))
+    big_boxes = textdetector.detect(textsegs, scores[:, np.newaxis], (im_info[0],im_info[1]))
 
     # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
-    boxes = np.array(boxes, dtype=np.int)
-    metrics = evaluate(big_box_labels, boxes[:, :8], conf())
+    big_boxes = np.array(big_boxes, dtype=np.int)
+    metrics = evaluate(big_box_labels, big_boxes[:, :8], conf())
     # result = {
     #     'precision': precision,
     #     'recall': recall,
@@ -199,7 +201,7 @@ def generate_big_GT_and_evaluate(bboxs,classes,im_info,big_box_labels,sess):
     f1_value = metrics['hmean']
     recall_value = metrics['recall']
     precision_value = metrics['precision']
-    return f1_value,recall_value,precision
+    return f1_value,recall_value,precision_value
 
 
 if __name__ == '__main__':
