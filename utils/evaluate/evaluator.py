@@ -153,7 +153,7 @@ def evaluate(gt_points, detect_points, conf):
         # logger.debug(points)
         # convert x1,y1,x2,y2,x3,y3,x4,y4 to xmin,ymin,xmax,ymax
         if len(points) >= 8:
-            logger.debug("evaluate gt is:%r",points)
+            # logger.debug("evaluate gt is:%r",points)
             points_tmp = np.array(points).reshape(4, 2)
             points_x = points_tmp[:, 0]
             points_y = points_tmp[:, 1]

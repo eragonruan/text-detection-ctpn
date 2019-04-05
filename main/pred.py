@@ -16,13 +16,15 @@ from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 
 tf.app.flags.DEFINE_boolean('debug_mode', True, '')
-tf.app.flags.DEFINE_boolean('evaluate_split', True, '') # 是否对小框做出评价
-tf.app.flags.DEFINE_string('test_home', 'data/test', '') # 图片主目录
-tf.app.flags.DEFINE_string('pred_home', 'data/pred', '') # 图片主目录
-tf.app.flags.DEFINE_string('file', '', '')     # 为了支持单独文件
+tf.app.flags.DEFINE_boolean('evaluate', True, '') # 是否进行评价（你可以光预测，也可以一边预测一边评价）
+tf.app.flags.DEFINE_boolean('split', True, '')    # 是否对小框做出评价，和画到图像上
+tf.app.flags.DEFINE_string('test_home', 'data/test', '') # 被预测的图片目录
+tf.app.flags.DEFINE_string('pred_home', 'data/pred', '') # 预测后的结果的输出目录
+tf.app.flags.DEFINE_string('file', '', '')     # 为了支持单独文件，如果为空，就预测test_home中的所有文件
 tf.app.flags.DEFINE_string('gpu', '0', '')
-tf.app.flags.DEFINE_boolean('save', True, '')
-tf.app.flags.DEFINE_string('model', 'model/', '')
+tf.app.flags.DEFINE_boolean('draw', True, '') # 是否把gt和预测画到图片上保存下来，保存目录也是pred_home
+tf.app.flags.DEFINE_boolean('save', True, '') # 是否保存输出结果（大框、小框信息都要保存），保存到pred_home目录里面去
+tf.app.flags.DEFINE_string('model', 'model/', '') # model的存放目录，会自动加载最新的那个模型
 FLAGS = tf.app.flags.FLAGS
 
 import logging
@@ -75,22 +77,22 @@ def get_images():
             if img_name.endswith(ext):
                 files.append(os.path.join(image_path, img_name))
                 break
-    logger.debug('找到需要检测的图片%d张',len(files))
+    logger.debug('批量预测，找到需要检测的图片%d张',len(files))
     return files
 
 # 根据图片文件名，得到，对应的标签文件名，可能是split的小框的(矩形4个值)，也可能是4个点的大框的（四边形8个值）
 def get_gt_label_by_image_name(image_name,label_path):
-    #
+
     label_name = os.path.splitext(os.path.basename(image_name))  # ['123','png'] 123.png
 
     if len(label_name)!=2:
-        logger.debug("图像文件解析失败：image_name[%s],label_name[%s]", image_name,label_name)
+        logger.error("图像文件解析失败：image_name[%s],label_name[%s]", image_name,label_name)
         return None
 
     label_name = label_name[0]  # /usr/test/123.png => 123
     label_name = os.path.join(label_path, label_name + ".txt")
     if not os.path.exists(label_name):
-        logger.debug("标签文件不存在：%s",label_name)
+        logger.error("标签文件不存在：%s",label_name)
         return None
 
     bbox = []
@@ -104,12 +106,11 @@ def get_gt_label_by_image_name(image_name,label_path):
                 bbox.append(points[:8]) # 去掉最后的一列 置信度
             else:
                 bbox.append(points)
+    logger.info("加载标签文件完毕:%s",label_name)
     return np.array(bbox)
 
 # 保存预测的输出结果，保存大框和小框，都用这个函数，保存大框的时候不需要scores这个参数
 def save(path, file_name,data,scores=None):
-    if not FLAGS.save: return
-
     # 输出
     with open(os.path.join(path, file_name),"w") as f:
         for i, one in enumerate(data):
@@ -118,11 +119,10 @@ def save(path, file_name,data,scores=None):
                 line += "," + str(scores[i])
             line += "\r\n"
             f.writelines(line)
+    logger.info("预测结果保存完毕：%s/%s", path, file_name)
 
 # 把框画到图片上
 def draw(image,boxes,color,thick=1):
-    if not FLAGS.save: return
-
     if boxes.shape[1]==4: #矩形
         for box in boxes:
             cv2.rectangle(image,
@@ -174,11 +174,12 @@ def main(argv=None):
 
             im_fn_list = get_images()
             for im_fn in im_fn_list:
-                logger.info("正在探测图片：%s",im_fn)
+
+                logger.info("探测图片[%s]的文字区域开始",im_fn)
                 start = time.time()
                 try:
                     original_img = cv2.imread(im_fn)
-                    img =  original_img[:, :, ::-1]# bgr是opencv通道默认顺序
+                    img =  original_img[:, :, ::-1]# bgr是opencv通道默认顺序，转成标准的RGB方式
                 except:
                     print("Error reading image {}!".format(im_fn))
                     continue
@@ -199,62 +200,64 @@ def main(argv=None):
                 textsegs, _ = proposal_layer(cls_prob_val, bbox_pred_val, im_info)
                 scores = textsegs[:, 0]
                 textsegs = textsegs[:, 1:5] # 这个是小框，是一个矩形
-                logger.debug('textsegs.shape:%r',textsegs.shape)
-                logger.debug('score.shape:%r', scores[:, np.newaxis].shape)
+                # logger.debug('textsegs.shape:%r',textsegs.shape)
+                # logger.debug('score.shape:%r', scores[:, np.newaxis].shape)
 
                 # 做文本检测小框的生成，是根据上面的gt小框合成的
                 textdetector = TextDetector(DETECT_MODE='H')
-
-                # 如果关注小框就把小框画上去
-                if FLAGS.evaluate_split: draw(original_img,textsegs,GREEN)
-
                 # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）
                 boxes = textdetector.detect(textsegs, scores[:, np.newaxis], img.shape[:2])
                 # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
                 boxes = np.array(boxes, dtype=np.int)
 
                 cost_time = (time.time() - start)
-                logger.info("耗时: %f s" , cost_time)
+                logger.info("探测图片[%s]的文字区域完成，耗时: %f" ,im_fn, cost_time)
 
-                # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-                draw(original_img, boxes[:,:8], color=RED,thick=2)
+                # 如果关注小框就把小框画上去
+                if FLAGS.draw :
+                    if FLAGS.split:
+                        draw(original_img,textsegs,GREEN)
+                    # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
+                    draw(original_img, boxes[:,:8], color=RED,thick=2)
+                    out_image_path = os.path.join(pred_draw_path, os.path.basename(im_fn))
+                    cv2.imwrite(out_image_path, original_img)
+                    logger.debug("绘制预测和GT到图像完毕：%s", out_image_path)
 
-                # 输出大框到文件
-                save(
-                    pred_gt_path,
-                    os.path.splitext(os.path.basename(im_fn))[0] + ".txt",
-                    boxes
-                )
-                # 输出小框到文件
-                save(
-                    pred_bbox_path,
-                    os.path.splitext(os.path.basename(im_fn))[0] + ".txt",
-                    textsegs,
-                    scores
-                )
+                # 是否保存预测结果（包括大框和小框）=> data/pred目录
+                if FLAGS.save :
+                    # 输出大框到文件
+                    save(
+                        pred_gt_path,
+                        os.path.splitext(os.path.basename(im_fn))[0] + ".txt",
+                        boxes
+                    )
+                    # 输出小框到文件
+                    save(
+                        pred_bbox_path,
+                        os.path.splitext(os.path.basename(im_fn))[0] + ".txt",
+                        textsegs,
+                        scores
+                    )
 
-                # 对大框作评价
-                big_box_labels   = get_gt_label_by_image_name(im_fn,label_path)
-                if big_box_labels is not None:
-                    logger.debug("找到图像（%s）对应的大框样本（%d）个，开始评测",im_fn,len(big_box_labels))
-                    metrics = evaluate(big_box_labels, boxes[:,:8], conf())
-                    logger.debug("大框的评价：%r",metrics)
-                    logger.debug("将大框标签画到图片上去")
-                    draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
+                # 是否做评价
+                if FLAGS.evaluate:
+                    # 对8个值（4个点）的任意四边形大框做评价
+                    big_box_labels   = get_gt_label_by_image_name(im_fn,label_path)
+                    if big_box_labels is not None:
+                        logger.debug("找到图像（%s）对应的大框样本（%d）个，开始评测",im_fn,len(big_box_labels))
+                        metrics = evaluate(big_box_labels, boxes[:,:8], conf())
+                        logger.debug("大框的评价：%r",metrics)
+                        draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
 
-                # 对小框做评价
-                if FLAGS.evaluate_split:
-                    split_box_labels = get_gt_label_by_image_name(im_fn, split_path)
-                    if split_box_labels is not None:
-                        logger.debug("找到图像（%s）对应的小框split样本（%d）个，开始评测",im_fn, len(split_box_labels))
-                        metrics = evaluate(split_box_labels, textsegs, conf())
-                        logger.debug("小框的评价：%r", metrics)
-                        logger.debug("将小框标签画到图片上去")
-                        draw(original_img, split_box_labels[:,:4], color=GRAY, thick=1)
-
-                out_image_path = os.path.join(pred_draw_path, os.path.basename(im_fn))
-                logger.debug("处理后的图像保存到：%s",out_image_path)
-                if FLAGS.save: cv2.imwrite(out_image_path, original_img)
+                    # 对4个值（2个点）的矩形小框做评价
+                    if FLAGS.split:
+                        split_box_labels = get_gt_label_by_image_name(im_fn, split_path)
+                        if split_box_labels is not None:
+                            logger.debug("找到图像（%s）对应的小框split样本（%d）个，开始评测",im_fn, len(split_box_labels))
+                            metrics = evaluate(split_box_labels, textsegs, conf())
+                            logger.debug("小框的评价：%r", metrics)
+                            logger.debug("将小框标签画到图片上去")
+                            draw(original_img, split_box_labels[:,:4], color=GRAY, thick=1)
 
 
 if __name__ == '__main__':

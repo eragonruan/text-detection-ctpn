@@ -42,8 +42,8 @@ def bbox_transform(ex_rois, gt_rois):
 def bbox_transform_inv(boxes, deltas):
     # debug完成后，要删掉这个，太TMD多了
     # 我主要想看看dw,dx到底是啥
-    logger.debug("bbox_transform: boxes:%r" ,boxes)
-    logger.debug("bbox_transform: deltas:%r", deltas)
+    # logger.debug("bbox_transform: boxes:%r" ,boxes)
+    # logger.debug("bbox_transform: deltas:%r", deltas)
 
     boxes = boxes.astype(deltas.dtype, copy=False)
 
