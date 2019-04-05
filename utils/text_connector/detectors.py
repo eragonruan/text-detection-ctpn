@@ -26,7 +26,7 @@ class TextDetector:
 
         # 删除得分较低的proposal,TEXT_PROPOSALS_MIN_SCORE=0.7,这个是前景的置信度
         keep_inds = np.where(scores > TextLineCfg.TEXT_PROPOSALS_MIN_SCORE)[0]
-        logger.debug("detect - keep_inds:%d", len(keep_inds))
+        logger.debug("只保留scores成绩>0.7的anchor:保留了%d个", len(keep_inds))
         text_proposals, scores = text_proposals[keep_inds], scores[keep_inds]
 
 

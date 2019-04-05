@@ -5,6 +5,7 @@ from nms import nms
 from utils.bbox.bbox_transform import bbox_transform_inv, clip_boxes
 from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
+from utils import stat
 
 DEBUG = False
 
@@ -42,6 +43,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     """
     # 先产生备选框，返回10个不同高度的anchor的4个坐标，是一个 10x4 的数组
     _anchors = generate_anchors(scales=np.array(anchor_scales))  # 生成基本的10个anchor
+
     _num_anchors = _anchors.shape[0]  # 10个anchor，应该是feature map的点数，10
 
     #im_info: a list of [image_height, image_width, scale_ratios]
@@ -56,12 +58,13 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     min_size = cfg.RPN_MIN_SIZE  # 候选box的最小尺寸，目前是16，高宽均要大于16j,RPN_MIN_SIZE = 8
     # ？？？说是16，为何RPN_MIN_SIZE=8呢？
 
-    height, width = rpn_cls_prob_reshape.shape[1:3]  # feature-map的高宽
+    logger.debug("传入的前后景概率:%r",rpn_cls_prob_reshape)
+    height, width = rpn_cls_prob_reshape.shape[1:3]  # feature-map的高宽 [1:3]=>1,2
 
     # https://github.com/eragonruan/text-detection-ctpn/issues/311
     # because “rpn_cls_prob_reshape.shape” size is[1,h,w*num_anchor,2]，so
     # width = w*num_anchor/num_anchor num_anchor = 10
-    width = width // 10 # ???整除干嘛？//是整除
+    width = width // 10 # ???整除干嘛？//是整除, 10是10个anchor数
 
     # the first set of _num_anchors channels are bg probs
     # the second set are the fg probs, which we want
@@ -69,9 +72,11 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # rpn_cls_prob_reshape: (1 , H , W , Kx2)，K是10，
     # reshape后，[:, :, :, :, 1]得到的是前景的置信度吧
     # 提取到object的分数，non-object的我们不关心
-    scores = np.reshape(np.reshape(rpn_cls_prob_reshape,
-                                   [1, height, width, _num_anchors,2])[:, :, :, :, 1],
-                        [1, height, width, _num_anchors])
+    scores = np.reshape(
+        np.reshape(rpn_cls_prob_reshape,
+                   [1, height, width, _num_anchors,2])[:, :, :, :, 1],
+                        [1, height, width, _num_anchors])# _num_anchors =10
+    logger.debug("去掉了背景(第0列)，只保留前景(第1列)的概率了，shape：%r",scores.shape)
 
     # 模型输出的pred是相对值，需要进一步处理成真实图像中的坐标
     # 是dx，dy，dw，dh值
@@ -108,6 +113,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
               shifts.reshape((1, K, 4)).transpose((1, 0, 2))
     # >>>>> 结果维度是[ HxWx10, 4]
     anchors = anchors.reshape((K * A, 4))  # 这里得到的anchor就是整张图像上的所有anchor
+    logger.debug('产生最开始的所有的anchor:%r',anchors.shape)
 
     # Transpose and reshape predicted bbox transformations to get them
     # into the same order as the anchors:
@@ -117,10 +123,12 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # in slowest to fastest order
     # >>>>> 结果维度是[ HxWx10, 4]
     bbox_deltas = bbox_deltas.reshape((-1, 4))  # (HxWxA, 4)
+    logger.debug("神经网络预测出来的delta值：%r",bbox_deltas.shape)
 
     # Same story for the scores:
     # >>>>> 结果维度是[ HxWx10, 1]
     scores = scores.reshape((-1, 1))
+    logger.debug("原始前景score的概率分布情况：%s",stat(scores))
 
     # Convert anchors into proposals via bbox transformations
     # >>>>> anchors     结果维度是[ HxWx10, 4] 4是4个点的坐标
@@ -128,13 +136,16 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # 他们之间一一对应，剩下的额就是要让这个bbox_transform_inv，给还原成对应调整后的框框了
     # 返回的proposals是调整后的2个点的坐标:[x1,y1,x2,y2]
     proposals = bbox_transform_inv(anchors, bbox_deltas)  # 做逆变换，得到box在图像上的真实坐标
+    logger.debug("从delta值还原成小框坐标值(2个点,4个值)：%r",proposals.shape)
 
     # 2. clip predicted boxes to image
     proposals = clip_boxes(proposals, im_info[:2])  # 将所有的proposal修建一下，超出图像范围的将会被修剪掉
+    logger.debug("把超出图像的proposal剪裁掉：%r", proposals.shape)
 
     # 3. remove predicted boxes with either height or width < threshold
     # (NOTE: convert min_size to input image scale stored in im_info[2])
     keep = _filter_boxes(proposals, min_size)  # min_size=8,移除那些proposal小于一定尺寸的proposal
+    logger.debug("删除掉长和宽小于%d的框，剩余%d个",min_size,len(keep))
     proposals = proposals[keep, :]  # 保留剩下的proposal
     scores = scores[keep]
     bbox_deltas = bbox_deltas[keep, :]
@@ -155,16 +166,23 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     proposals = proposals[order, :]
     scores = scores[order]
     bbox_deltas = bbox_deltas[order, :]
+    logger.debug("排序前景置信度后，只保留%d个小框了",len(scores))
 
     # 6. apply nms (e.g. threshold = 0.7)
     # 7. take after_nms_topN (e.g. 300)
     # 8. return the top proposals (-> RoIs top)
+    # NMS算法：https://www.cnblogs.com/makefile/p/nms.html
+    # 就是一堆候选框，按照概率排序后，跟最大的比较接近的删掉；然后递归再找剩下的
+    # 总之就是会删掉一部分框
     keep = nms(np.hstack((proposals, scores)), nms_thresh)  # 进行nms操作，保留2000个proposal
+    logger.debug("经过NMS算法，保留的框有%d个",len(keep))
     if post_nms_topN > 0:
         keep = keep[:post_nms_topN]
     proposals = proposals[keep, :]
     scores = scores[keep]
     bbox_deltas = bbox_deltas[keep, :]
+    logger.debug("然后再删除后，保留的框%d个", len(proposals))
+    logger.debug("最后剩下的1000个前景score的概率分布情况：%s",stat(scores))
 
     # Output rois blob
     # Our RPN implementation only supports a single input image, so all

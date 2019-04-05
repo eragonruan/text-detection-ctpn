@@ -12,3 +12,13 @@ def _p(tensor,msg):
         return tf.Print(tensor, [tensor], msg,summarize= 100)
     else:
         return tensor
+
+def stat(data):
+    return "num={},mean={},std={},max={},min={},0={}".format(
+        len(data),
+        data.mean(),
+        data.std(),
+        data.max(),
+        data.min(),
+        (data==0).sum())
+

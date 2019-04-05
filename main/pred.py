@@ -198,8 +198,8 @@ def main(argv=None):
 
                 # 返回所有的base anchor调整后的小框，是矩形
                 textsegs, _ = proposal_layer(cls_prob_val, bbox_pred_val, im_info)
-                scores = textsegs[:, 0]
-                textsegs = textsegs[:, 1:5] # 这个是小框，是一个矩形
+                scores = textsegs[:, 0] # 0是前景？1是背景？
+                textsegs = textsegs[:, 1:5] # 这个是小框，是一个矩形 [1:5]=>1,2,3,4
                 # logger.debug('textsegs.shape:%r',textsegs.shape)
                 # logger.debug('score.shape:%r', scores[:, np.newaxis].shape)
 
