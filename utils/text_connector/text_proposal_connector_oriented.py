@@ -2,9 +2,11 @@
 import numpy as np
 
 from utils.text_connector.text_proposal_graph_builder import TextProposalGraphBuilder
+import logging
 
+logger = logging.getLogger("TextProposalConnector")
 
-class TextProposalConnector:
+class TextProposalConnectorOriented:
     """
         Connect text proposals into text lines
     """
@@ -54,6 +56,7 @@ class TextProposalConnector:
         #     [7-13-14-15]]
         # 每一行是一个list，是一个联通的index的list
         tp_groups = self.group_text_proposals(text_proposals, scores, im_size)  # 首先还是建图，获取到文本行由哪几个小框构成
+        logger.debug("找到可以备选成串的区域有%d个",len(tp_groups))
 
         text_lines = np.zeros((len(tp_groups), 8), np.float32)
 
@@ -93,6 +96,8 @@ class TextProposalConnector:
             text_lines[index, 6] = z1[1]
             height = np.mean((text_line_boxes[:, 3] - text_line_boxes[:, 1]))  # 小框平均高度
             text_lines[index, 7] = height + 2.5
+        logger.debug("得到区域有%d个",len(text_lines))
+
 
         text_recs = np.zeros((len(text_lines), 9), np.float)
         index = 0

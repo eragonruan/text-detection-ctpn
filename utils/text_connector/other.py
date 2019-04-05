@@ -16,7 +16,8 @@ def clip_boxes(boxes, im_shape):
     boxes[:, 1::2] = threshold(boxes[:, 1::2], 0, im_shape[0] - 1)
     return boxes
 
-
+# graph是proposalxproposal的方阵
+# 来表明我和你之间是否联通
 class Graph:
     def __init__(self, graph):
         self.graph = graph
@@ -68,5 +69,5 @@ class Graph:
         #     [2-3-5-11],
         #     [7-13-14-15]]
         # 每一行是一个list，是一个联通的index的list
-        logger.debug("联通子图sub_graphs: %d",len(sub_graphs))
+        logger.debug("找到联通子图sub_graphs: %d",len(sub_graphs))
         return sub_graphs
