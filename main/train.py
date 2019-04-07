@@ -60,7 +60,10 @@ def main(argv=None):
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-    adam_opt = tf.train.AdamOptimizer()# 默认是learning_rate是0.001，而且后期会不断的根据梯度调整，一般不用设这个数，所以我索性去掉了
+
+    learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
+    tf.summary.scalar('learning_rate', learning_rate)
+    adam_opt = tf.train.AdamOptimizer(learning_rate)# 默认是learning_rate是0.001，而且后期会不断的根据梯度调整，一般不用设这个数，所以我索性去掉了
 
     gpu_id = int(FLAGS.gpu)
     with tf.device('/gpu:%d' % gpu_id):
@@ -176,6 +179,11 @@ def main(argv=None):
                 filename = os.path.join(FLAGS.model, filename)
                 saver.save(sess, filename)
                 print('Write model to: {:s}'.format(filename))
+
+            if step != 0 and step % FLAGS.decay_steps == 0:
+                print('learning rate decay: {:f}'.format(learning_rate.eval() * FLAGS.decay_rate))
+                sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
+
 
 # 评估,之前写的，我好像没有评估小框，只评估大框了
 # 为什么只评估大框呢？我忘了...
