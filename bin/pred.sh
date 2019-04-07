@@ -16,8 +16,9 @@ echo "开始检测图片的字块区域....."
 python main/pred.py \
     --debug_mode=True \
     --save=True \
+    --file=0.png \
     --evaluate=True \
-    --split=False \
+    --split=True \
     --test_home=data/test \
     --pred_home=data/pred \
     --draw=True \

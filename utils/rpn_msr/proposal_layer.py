@@ -74,7 +74,8 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # 提取到object的分数，non-object的我们不关心
     scores = np.reshape(
         np.reshape(rpn_cls_prob_reshape,
-                   [1, height, width, _num_anchors,2])[:, :, :, :, 1],
+                   [1, height, width, _num_anchors,2])[:, :, :, :, 1], #<-------看，1是前景概率，0是背景概率
+                                                                       #这个是对的，因为在训练的时候，做交叉熵的时候，传入的样本是[01001101],0就是背景，1是前景
                         [1, height, width, _num_anchors])# _num_anchors =10
     logger.debug("去掉了背景(第0列)，只保留前景(第1列)的概率了，shape：%r",scores.shape)
 

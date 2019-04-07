@@ -44,7 +44,8 @@ def shrink_poly(poly, r=16):
 
     # 取整一下吧
     start = int((x_min // 16 + 1) * 16)
-    end =  x_max # int((x_max // 16) * 16)
+    # end =  x_max # int((x_max // 16) * 16)
+    end = int((x_max // 16) * 16)
 
     p = x_min
     res.append([p, int(k1 * p + b1), # kx+b, p相当于是x，第一个p是最左面，但是第二个p就是16位取整的值了
@@ -53,12 +54,19 @@ def shrink_poly(poly, r=16):
                 p, int(k2 * p + b2)])
 
     for p in range(start, end + 1, r):
-        if (end-p) < 16:
-            right = end
-        else:
-            right = p + 16
+        # 2019.4.7 我给改成了收紧，让小框紧紧的包裹住大框的右侧边缘
+        # 后来觉得自作聪明了，因为，这样会让右面出现一个特别窄的小框
+        # 左面这样倒也罢了，毕竟是因为没办法，因为要和16像素对齐，must be aligned with 16pxs
+        # 可右面，你还整这么窄，不是自我zuo么？！
+        # 赶紧去掉
+        # if (end-p) < 16:  <-----之前自作聪明的修改，打脸啊
+        #     right = end
+        # else:
+        #     right = p + 16
+        right = p + 15
 
         # 左上，右上，右下，坐下 => [x1,y1,x2,y2,x3,y3,x4,y4]
+        # 看，res是一个四边形，不是一个矩形
         res.append([p,                      # 上方的x1
                     int(k1 * p + b1),       # 上方的y1
 

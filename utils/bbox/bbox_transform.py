@@ -60,7 +60,17 @@ def bbox_transform_inv(boxes, deltas):
     # 我靠，我一直想知道，为何要预测4个，不是CTPN算法只需要预测d_h和d_y么？d_x,d_w是不需要的
     # 至此，我终于明白了，你预测吧，我根本就不用！！！纳尼？！！！
     # 那会不会对权重有影响呢？！我有点想不清楚，忽略dx,dw，会影响梯度下降算法吗？我不知道。。。
+    # 别担心：看下面的解答：
+    # 你知道这个inside_weights是干嘛用的么？是为了限定最后4个值，用哪个？如果设成1，就是用，设成0就是不用
+    # 你去看model_train.py的loss计算的时候
+    # rpn_loss_box_n = tf.reduce_sum(
+    #     rpn_bbox_outside_weights * smooth_l1_dist(
+    #         rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),<------------看到这行了吧，也就是x,dx是不参与loss计算的
+    #         reduction_indices=[1])
+    # 那些可以认为是标签的anchor，他的weight设成,[0,1,0,1]，这个之前作者写错了[1,1,1,1]
+    # 参考issue：https://github.com/eragonruan/text-detection-ctpn/issues/317
     pred_ctr_x = ctr_x[:, np.newaxis] # 卧槽！卧槽！卧槽！卧槽！太流氓了，直接把anchor的x，就当做预测的x了，臭不要脸啊
+                                      # 回答一下之前的注释的惊奇，这个是因为横坐标就是按照严格16个像素来的，其实就是anchor的x值
     pred_ctr_y = dy * heights[:, np.newaxis] + ctr_y[:, np.newaxis]
     pred_w = widths[:, np.newaxis]
     pred_h = np.exp(dh) * heights[:, np.newaxis]

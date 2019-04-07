@@ -269,13 +269,13 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     # 这里是找和某个anchor最交的GT，得到是一个数组，长度是列数，值是行上最大的行号
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
-    logger.debug("每列里面，最大的行号gt_argmax_overlaps:%r", gt_argmax_overlaps.shape)
+    logger.debug("每列里面，最大的IoU对应的anchor的行号(gt_argmax_overlaps):%r", gt_argmax_overlaps.shape)
     # [行号,行号,行号,行号...] 一共列数个
 
     # 先挑行gt_argmax_overlaps，那些行，然后选列
     gt_max_overlaps = overlaps[gt_argmax_overlaps,
                                np.arange(overlaps.shape[1])]
-    logger.debug("每列里面，最大的行号的值gt_max_overlaps:%r", gt_max_overlaps.shape)
+    logger.debug("从矩阵overlaps中依据gt_argmax_overlaps取出IoU最大的值到数组gt_max_overlaps中:%r", gt_max_overlaps.shape)
     # 得到的是一个一维数组，就是那些最大值
 
     # np.where得到一个和overlaps一样的true、false矩阵，得到
@@ -284,18 +284,31 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]
     logger.debug("np.where(overlaps == gt_max_overlaps)后得到的gt_argmax_overlaps:%r", gt_argmax_overlaps.shape)
     # 过滤完的布尔矩阵，为何只取第一行？??????
+    # 是因为overylap是一个矩阵，矩阵的where就不像一维的就返回一个下标，而是返回二维下标，即(anchor行号,gt标号），但是，我们只关心anchor行号，所以就只取[0]
+    # 我调试的时候，看到一个诡异现象，开始gt是305个，结果这么折腾一下，gt_argmax_overlaps变成322个，为何？
+    # 我觉得是因为，你用的是where==，也就是跟IoU最大的那个值一样大的好几个，大家的最大IoU值都一样，就是说，好几个anchor都和一个GT的IoU最大且一样
+    # 那就把几个anchor也拎出来，所以就从305=>322
+    # 嗯！没毛病
 
 
     # lables是所有在图像内部的anchors，默认值都是-1，也就是不包含前景
     # fg label: for each gt, anchor with highest overlap
+    # 《papaer》 Section 3.5 - Training and Implementation Details：
+    # (ii) the anchor with the highest IoU overlap with a GT box.
+    # By the condition  (ii), even a very small text pattern can assign a positive anchor.
+    # This is crucial to detect small-scale text patterns,
+    # which is one of key advantages of the CTPN.
+    # This is different from generic object detection
+    # where the impact of condition (ii) may be not significant.
+    # 这段话就是说，这种貌似没啥用，但是对小文本检测有作用
     logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
-    logger.debug("gt_argmax_overlaps:%r",gt_argmax_overlaps)
-    # labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
+    logger.debug("gt_argmax_overlaps(每个gt对应的IoU最大的anchor的标号):%d个",len(gt_argmax_overlaps))
+    labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
     # <------gt_argmax_overlaps是以anchor的某一行的视角来看，找到这个anchor对应的最大的iou的那个GT的index
 
     # fg label: above threshold IOU，
-    logger.debug("overlap大于0.7的认为是前景")
-    logger.debug("max_overlaps:%r",max_overlaps)
+    logger.debug("overlap大于0.7的认为是前景，一共有%d个",(max_overlaps >= cfg.RPN_POSITIVE_OVERLAP).sum())
+    logger.debug("max_overlaps(每个anchor里最大的那个gt对应的IoU):%r",max_overlaps)
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
 
     logger.debug("现在有%d个前景样本（anchors）",(labels==1).sum())
@@ -378,6 +391,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)
 
     bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
+
     if cfg.RPN_POSITIVE_WEIGHT < 0:  # 暂时使用uniform 权重，也就是正样本是1，负样本是0
         # uniform weighting of examples (given non-uniform sampling)
         num_examples = np.sum(labels >= 0) + 1
@@ -449,6 +463,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     logger.debug("最后的这个超长的anchor_target_layer返回结果为：")
     logger.debug("rpn_labels:%r",rpn_labels.shape)
+    logger.debug("rpn_labels中正例%d个,负例%d个,无效%d个", (rpn_labels==1).sum(),(rpn_labels==0).sum(),(rpn_labels==-1).sum())
     logger.debug("rpn_bbox_targets:%r", rpn_bbox_targets.shape)
     logger.debug("rpn_bbox_inside_weights:%r", rpn_bbox_inside_weights.shape)
     logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
