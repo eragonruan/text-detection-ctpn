@@ -203,50 +203,151 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("labels初始化：%r", labels.shape)
 
     ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    # 脑子抽了，明天继续看这块，先跳过去看看简单的。
 
-    # 挑选正样本
+    # overlaps between the anchors and the gt boxes
+    # overlaps (ex, gt), shape is A x G
+    # 计算anchor和gt-box的overlap，用来给anchor上标签
+    """
+    bbox_overlaps(boxes,query_boxes)
+    Parameters
+    ----------
+    boxes: (N, 4) ndarray of float
+    query_boxes: (K, 4) ndarray of float
+    Returns
+    -------
+    overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    这个是对一个gt_box，算9个anchor的重叠度
+    """
+    # 这里，anchors是所有原图上的feature map为中心点画出的格子对应的10个anchors们
+    # 这里，gt_boxes是所有的样本框
+    # 这个bbox_overlaps是算GT框和Anchor的相交情况，
+    # 返回的内容是每个框和GT的相交比，是一个矩阵 [|anchors|,|gt_box|]，
+    # 比如我的anchor是20000，gt是300，那这个数组就是[20000,30]，60万个IoU要计算，我的天哪，怪不得要用C实现呢
+    # overlaps: (N, K) ndarray of overlap between boxes and query_boxes
+    #     [anchors, gt_boxes] <= [N,K]
+    # 行是anchor，列是GT
     overlaps = bbox_overlaps(
         np.ascontiguousarray(anchors, dtype=np.float),   # anchor是[50*37*10,4]
         np.ascontiguousarray(gt_boxes, dtype=np.float))  # 假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
-    logger.debug("bbox_overlaps矩阵，存放着GT和Anchor的IoU值:%r",overlaps.shape)
-    argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
-    logger.debug("argmax_overlaps存着gt索引，一共anchors行:%r", argmax_overlaps.shape)
-    max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
-    logger.debug("max_overlaps是个数组，存放着每个anchor最大的IoU值：:%r", max_overlaps.shape)
+    logger.debug("经过bbox_overlaps处理后的overlops:%r",overlaps.shape)
+    # 按照他写的注释，overlaps是[50*37*10,|G_t|]的一个数组，大部分都很稀硫啊，这个表示法不好，我理解
+    # bbox_overlaps函数居然是用c写的，弄啥嘞，是嫌弃python算这种东西太慢么？
 
+    # print overlap matrix
+    # for x in range(0, overlaps.shape[0]):
+    #     for y in range(0, overlaps.shape[1]):
+    #         if overlaps[x,y]!=0:
+    #             logger.debug("x=%d,y=%d:%f", x,y,overlaps[x,y])
+    # 存放每一个anchor和每一个gtbox之间的overlap
+    # argmax_overlaps的shape[|G|,1]
+    argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
+    # for i in range(0, argmax_overlaps.shape[0]):
+    #     logger.debug("index=%d", argmax_overlaps[i])
+    # ！！！argmax_overlaps是啥？是一个数组，|GT|个，每一个值是这个GT对应的最大的anchor的index
+    logger.debug("argmax_overlaps存着gt索引:%r", argmax_overlaps.shape)
+    # 返回是一维数组，长度是行数，值是每列对应的最大的列号
+    # 是每行里面，最大的列号
+
+    # inds_inside是在图片范围内的anchor的索引，图像内部的anchor的索引
+    # 这里是再做一次图像内部的过滤，去掉那些超范围的anchor的overlap的坐标
+    # 为何是'np.arange(len(inds_inside))'呢？
+    # 是因为overlaps的行数恰好是len(inds_inside).
+    # argmax_overlaps存的是每行（anchor）的gt的索引
+    # max_overlaps变成了一个[最大的那个iou值]一维数组，行是那些在范围之内的
+    max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
+    logger.debug("每行(anchor)里面，最大的IoU值：max_overlaps:%r", max_overlaps)
+    # 这个的坐标是每行里面交面积最大的gt的坐标 ！！！是一个一维数组中
+    # [Gt坐标，Gt坐标，Gt坐标，...]，一共anchor数量行
+    # sorry,不是坐标，是一个数组，每行和GT最大的交的值
+
+    # 这里是找和某个anchor最交的GT，得到是一个数组，长度是列数，值是行上最大的行号
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
-    logger.debug("gt_argmax_overlaps是个一位数组，存放着每GT最大IoU的anchor的行号:%r", gt_argmax_overlaps.shape)
-    # 这个是原作者代码，但是一旦打开，正例备选框就居多无比？！！可为何原来没问题呢？诡异。。。
-    # gt_max_overlaps = overlaps[gt_argmax_overlaps,np.arange(overlaps.shape[1])]
-    # logger.debug("从矩阵overlaps中依据gt_argmax_overlaps取出IoU最大的值到数组gt_max_overlaps中:%r", gt_max_overlaps.shape)
-    # logger.debug("此刻的gt_max_overlaps和gt数量一样的一个数组，存放着对应的IoU值")
-    # gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]
-    # logger.debug("gt_max_overlaps对比overlaps，得到所有和这个值一样的anchor:%r", gt_argmax_overlaps.shape)
-    # logger.debug("目的是找出某个GT")
-    # logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
-    # logger.debug("gt_argmax_overlaps(每个gt对应的IoU最大的anchor的标号):%d个",len(gt_argmax_overlaps))
+    logger.debug("每列（GT）里面，这个GT对应IoU最大的anchor的行号(gt_argmax_overlaps):%r", gt_argmax_overlaps.shape)
+    # [行号,行号,行号,行号...] 一共列数个
+
+    # 先挑行gt_argmax_overlaps，那些行，然后选列
+    gt_max_overlaps = overlaps[gt_argmax_overlaps,
+                               np.arange(overlaps.shape[1])]
+    logger.debug("从矩阵overlaps中依据gt_argmax_overlaps取出IoU最大的值到数组gt_max_overlaps中:%r", gt_max_overlaps.shape)
+    logger.debug("此刻的gt_max_overlaps和gt数量一样的一个数组，存放着对应的IoU值")
+    # 得到的是一个一维数组，就是那些最大值
+
+    # np.where得到一个和overlaps一样的true、false矩阵，得到
+    # np.where输出满足条件 (即非0) 元素的坐标
+
+    gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]
+    logger.debug("gt_max_overlaps对比overlaps，得到所有和这个值一样的anchor:%r", gt_argmax_overlaps.shape)
+    logger.debug("目的是找出某个GT")
+    # 过滤完的布尔矩阵，为何只取第一行？??????
+    # 是因为overylap是一个矩阵，矩阵的where就不像一维的就返回一个下标，而是返回二维下标，即(anchor行号,gt标号），但是，我们只关心anchor行号，所以就只取[0]
+    # 我调试的时候，看到一个诡异现象，开始gt是305个，结果这么折腾一下，gt_argmax_overlaps变成322个，为何？
+    # 我觉得是因为，你用的是where==，也就是跟IoU最大的那个值一样大的好几个，大家的最大IoU值都一样，就是说，好几个anchor都和一个GT的IoU最大且一样
+    # 那就把几个anchor也拎出来，所以就从305=>322
+    # 嗯！没毛病
+
+    # lables是所有在图像内部的anchors，默认值都是-1，也就是不包含前景
+    # fg label: for each gt, anchor with highest overlap
+    # 《papaer》 Section 3.5 - Training and Implementation Details：
+    # (ii) the anchor with the highest IoU overlap with a GT box.
+    # By the condition  (ii), even a very small text pattern can assign a positive anchor.
+    # This is crucial to detect small-scale text patterns,
+    # which is one of key advantages of the CTPN.
+    # This is different from generic object detection
+    # where the impact of condition (ii) may be not significant.
+    # 这段话就是说，这种貌似没啥用，但是对小文本检测有作用
+    logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
+    logger.debug("gt_argmax_overlaps(每个gt对应的IoU最大的anchor的标号):%d个",len(gt_argmax_overlaps))
     labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
     __debug_iou_max_with_gt_anchors = anchors[gt_argmax_overlaps]
+    # <------gt_argmax_overlaps是以anchor的某一行的视角来看，找到这个anchor对应的最大的iou的那个GT的index
+
+    # fg label: above threshold IOU，
     logger.debug("overlap大于0.7的认为是前景，一共有%d个",(max_overlaps >= cfg.RPN_POSITIVE_OVERLAP).sum())
     logger.debug("max_overlaps(每个anchor里最大的那个gt对应的IoU):%r",max_overlaps)
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
     __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
+
     logger.debug("现在有%d个前景样本（anchors）",(labels==1).sum())
+    # assign bg labels first so that positive labels can clobber them
+    # RPN_NEGATIVE_OVERLAP = 0.3
+    # 负样本就是IoU小于0.3的，设置值为0
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
 
-    # 开始按照batch要求，削减样本正样本数量，以及增加负样本
+    # subsample positive labels if we have too many
+    # 对正样本进行采样，如果正样本的数量太多的话
+    # 限制正样本的数量不超过1/2个
     num_fg = int(cfg.RPN_FG_FRACTION * cfg.RPN_BATCHSIZE)
+
+    # 为何要取第一项[0]：
+    # >> > np.where(a == 1)
+    # (array([0, 6, 7, 8, 14, 18, 20]),)
+    # >> > np.where(a == 1)[0]
+    # array([0, 6, 7, 8, 14, 18, 20])
     fg_inds = np.where(labels == 1)[0] #fg_inds，前景的anchors的数量
+
     logger.debug("保留正样本数：cfg.RPN_FG_FRACTION %f * cfg.RPN_BATCHSIZE %d = %d",cfg.RPN_FG_FRACTION , cfg.RPN_BATCHSIZE,num_fg)
+    # logger.debug("fg_inds = %r", fg_inds.shape)
     logger.debug("只保留[%d]个正样本，剩下的正样本去掉，置成-1",num_fg)
     if len(fg_inds) > num_fg:
         # 随机去掉一些样本，去掉就是置为-1，数量是从前景里面去掉要求的数量num_fg，正样本里就只剩下num_fg这么多了
         disable_inds = npr.choice(
             fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
         labels[disable_inds] = -1  # 变为-1，-1就是disable，就是这次不用的样本，既不能当正样本，也不能当负样本
+
     #上面是找到正样本，可能找出很多，这个时候要采样
+
+    # subsample negative labels if we have too many
+    # 对负样本进行采样，如果负样本的数量太多的话
+    # 正负样本总数是256，限制正样本数目最多128，
+    # 如果正样本数量小于128，差的那些就用负样本补上，凑齐256个样本
     num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
     bg_inds = np.where(labels == 0)[0]
+
     # 再从负样本里面去掉一部分，就留 1/2的batch数
     if len(bg_inds) > num_bg:
         disable_inds = npr.choice(
@@ -255,22 +356,48 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         # print "was %s inds, disabling %s, now %s inds" % (
         # len(bg_inds), len(disable_inds), np.sum(labels == 0))
 
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
+    ####################################################################################################
     # 至此， 上好标签，开始计算rpn-box的真值
+
+    # --------------------------------------------------------------
     bbox_targets = np.zeros((len(inds_inside), 4), dtype=np.float32)
+    # anchors是所有的剔除了出界（前面处理过）的剩余的anchors，每条都是anchor的x1,y1,x2,y2
+    # argmax_overlaps是指每个GT上，和他overlap最大的那个anchor的索引
     logger.debug("开始计算bbox的差：anchors(图内的)和gt_boxes[argmax_overlaps, :] %r",argmax_overlaps)
     logger.debug("gt_boxes shape=%r",gt_boxes.shape)
     logger.debug("argmax_overlaps=%r",argmax_overlaps)
+
     # 这里有个细节，argmax_overlaps会有|Anchors|个，也就是大约2万个，
     # 所以，gt_boxes[argmax_overlaps, :]会把gt_boxes撑大了，从原来的300多个，撑成了2万多个
     # 这样，就可以和anchors的数量对上了
     bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
     # 算2万个，我本来还担心速度，后来print了一把，速度很快50毫秒就完成了，就不担心了
     # 返回的是4个差，应该算了一批把？这块感觉是，一口气都算了
+
+    # 定义一个weight的数组，维度是[图内anchor数, 4]，4是x,y,dx,dy
+    # 你知道这个inside_weights是干嘛用的么？是为了限定最后4个值，用哪个？如果设成1，就是用，设成0就是不用
+    # 你去看model_train.py的loss计算的时候
+    # rpn_loss_box_n = tf.reduce_sum(
+    #     rpn_bbox_outside_weights * smooth_l1_dist(
+    #         rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),<------------看到这行了吧，也就是x,dx是不参与loss计算的
+    #         reduction_indices=[1])
     bbox_inside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
+
+    # 那些可以认为是标签的anchor，他的weight设成,[0,1,0,1]，这个之前作者写错了[1,1,1,1]
+    # 参考issue：https://github.com/eragonruan/text-detection-ctpn/issues/317
     bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)
+
     bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
+
     if cfg.RPN_POSITIVE_WEIGHT < 0:  # 暂时使用uniform 权重，也就是正样本是1，负样本是0
+        # uniform weighting of examples (given non-uniform sampling)
         num_examples = np.sum(labels >= 0) + 1
+        # positive_weights = np.ones((1, 4)) * 1.0 / num_examples
+        # negative_weights = np.ones((1, 4)) * 1.0 / num_examples
         positive_weights = np.ones((1, 4))
         negative_weights = np.zeros((1, 4))
     else:
@@ -282,23 +409,54 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
                             (np.sum(labels == 0)) + 1)
     bbox_outside_weights[labels == 1, :] = positive_weights  # 外部权重，前景是1，背景是0
     bbox_outside_weights[labels == 0, :] = negative_weights
+
+    if DEBUG:
+        _sums += bbox_targets[labels == 1, :].sum(axis=0)
+        _squared_sums += (bbox_targets[labels == 1, :] ** 2).sum(axis=0)
+        _counts += np.sum(labels == 1)
+        means = _sums / _counts
+        stds = np.sqrt(_squared_sums / _counts - means ** 2)
+        print('means:')
+        print(means)
+        print('stdevs:')
+        print(stds)
+
+    # map up to original set of anchors
+    # 一开始是将超出图像范围的anchor直接丢掉的，现在在加回来
+    # 为什么呢？是因为，要能和之前的allanchors对上
+    # 这样后面的"labels.reshape((1, height, width, A)) "就不会错
     inside_labels = labels.copy()
     labels = _unmap(labels, total_anchors_num, inds_inside, fill=-1)  # 这些anchor的label是-1，也即dontcare
     # bbox_targets是4个差
     bbox_targets = _unmap(bbox_targets, total_anchors_num, inds_inside, fill=0)  # 这些anchor的真值是0，也即没有值
     bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors_num, inds_inside, fill=0)  # 内部权重以0填充
     bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors_num, inds_inside, fill=0)  # 外部权重以0填充
+
+    if DEBUG:
+        print('rpn: max max_overlap', np.max(max_overlaps))
+        print('rpn: num_positive', np.sum(labels == 1))
+        print('rpn: num_negative', np.sum(labels == 0))
+        _fg_sum += np.sum(labels == 1)
+        _bg_sum += np.sum(labels == 0)
+        _count += 1
+        print('rpn: num_positive avg', _fg_sum / _count)
+        print('rpn: num_negative avg', _bg_sum / _count)
+
     # labels
     labels = labels.reshape((1, height, width, A))  # reshap一下label
     rpn_labels = labels
+
     # bbox_targets
     bbox_targets = bbox_targets \
         .reshape((1, height, width, A * 4))  # reshape
+
     rpn_bbox_targets = bbox_targets
     # bbox_inside_weights
     bbox_inside_weights = bbox_inside_weights \
         .reshape((1, height, width, A * 4))
+
     rpn_bbox_inside_weights = bbox_inside_weights
+
     # bbox_outside_weights
     bbox_outside_weights = bbox_outside_weights \
         .reshape((1, height, width, A * 4))
@@ -311,72 +469,58 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("rpn_bbox_inside_weights:%r", rpn_bbox_inside_weights.shape)
     logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
 
-    debug_draw(__debug_iou_max_with_gt_anchors, __debug_iou_more_0_7_anchors, anchors, gt_boxes, image_name,
-               inside_labels)
-
-    # 得到一个新的RPN的标签，对比
-    return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
-
-#  调试用，把所有的anchor都画出来看看，还有GT
-def debug_draw(__debug_iou_max_with_gt_anchors,
-               __debug_iou_more_0_7_anchors,
-               anchors,
-               gt_boxes,
-               image_name,
-               inside_labels):
-
-    if not FLAGS.debug_mode: return
-
     # 这段代码是调试用的，是为了让训练过程可视化，
     # 我要画出来，所有的备选anchor，包括IoU>0.7的 + GT相交最多的那个anchor，这些都是样本备选，用红色
     # 我要画出来所有的GT，用绿色
     # 我还要画出最后的选中的备选的正例和负例，用蓝色，用黑色（？蓝色可能看不到吧，因为被红色重复了，那我都他们都错位1个像素），
+    if FLAGS.debug_mode:
+        logger.debug("调试画图时候的前景索引")
+        from PIL import Image, ImageDraw
+        # 先打开原图
+        logger.debug("当前处理的文件名字：%s", image_name[0])
+        image = Image.open(image_name[0])
+        draw = ImageDraw.Draw(image)
 
-    logger.debug("调试画图时候的前景索引")
-    from PIL import Image, ImageDraw
-    # 先打开原图
-    logger.debug("当前处理的文件名字：%s", image_name[0])
-    image = Image.open(image_name[0])
-    draw = ImageDraw.Draw(image)
+        # 根据索引得到，要画的前景anchor
+        positive_anchors = anchors[inside_labels==1,:]
+        negative_anchors = anchors[inside_labels==0, :]
 
-    # 根据索引得到，要画的前景anchor，inside_labels是因为label现在已经包含了超出图片范围的anchor的指示了
-    positive_anchors = anchors[inside_labels == 1, :]
-    negative_anchors = anchors[inside_labels == 0, :]
+        RED = "#FF0000"
+        PINK  = "#FF00FF"
+        ORANGE = "#FF6600"
+        GREEN = "#00FF00"
+        GRAY = "#808080"
 
-    RED = "#FF0000"
-    BLUE= "#0000FF"
-    PURPLE = "#9900FF"
-    GREEN = "#00FF00"
-    GRAY = "#808080"
+        logger.debug("[调试画图] 画出所有IoU大于0.7的anchors，粉色")
+        for anchor in __debug_iou_more_0_7_anchors:
+             draw.rectangle(anchor.tolist(), outline=PINK)
 
-    logger.debug("[调试画图] 画出所有IoU大于0.7的anchors[%d]，红色",len(__debug_iou_more_0_7_anchors))
-    for anchor in __debug_iou_more_0_7_anchors:
-        draw.rectangle(anchor.tolist(), outline=RED)
+        logger.debug("[调试画图] 画出所有和GT相交最大的anchor，橘色")
+        for anchor in __debug_iou_max_with_gt_anchors:
+             draw.rectangle(anchor.tolist(), outline=ORANGE)
 
-    logger.debug("[调试画图] 画出所有和GT相交最大的anchor[%d]，紫色",len(__debug_iou_max_with_gt_anchors))
-    for anchor in __debug_iou_max_with_gt_anchors:
-        draw.rectangle(anchor.tolist(), outline=PURPLE)
+        logger.debug("[调试画图] 画出所有正例，红色")
+        for anchor in positive_anchors:
+             draw.rectangle(anchor.tolist(), outline=RED)
 
-    logger.debug("[调试画图] 画出所有正例[%d]，蓝色",len(positive_anchors))
-    for anchor in positive_anchors:
-        draw.rectangle(anchor.tolist(), outline=BLUE)
+        logger.debug("[调试画图] 画出所有负例，灰色")
+        for anchor in negative_anchors:
+             draw.rectangle(anchor.tolist(), outline=GRAY)
 
-    logger.debug("[调试画图] 画出所有负例[%d]，灰色",len(negative_anchors))
-    for anchor in negative_anchors:
-        draw.rectangle(anchor.tolist(), outline=GRAY)
+        logger.debug("[调试画图] 画出所有的GT，绿色")
+        for gt in gt_boxes:
+             draw.rectangle(gt[:4].tolist(), outline=GREEN)
 
-    logger.debug("[调试画图] 画出所有的GT[%d]，绿色",len(gt_boxes))
-    for gt in gt_boxes:
-        draw.rectangle(gt[:4].tolist(), outline=GREEN)
+        # 保存图片
+        import os
+        _, fn = os.path.split(str(image_name[0]))
+        fn, _ = os.path.splitext(fn)
+        if not os.path.exists("data/train/debug"): os.makedirs("data/train/debug")
+        dump_img = os.path.join("data/train/debug", fn + '.png')
+        image.save(dump_img)
 
-    # 保存图片
-    import os
-    _, fn = os.path.split(str(image_name[0]))
-    fn, _ = os.path.splitext(fn)
-    if not os.path.exists("data/train/debug"): os.makedirs("data/train/debug")
-    dump_img = os.path.join("data/train/debug", fn + '.png')
-    image.save(dump_img)
-
+    # 得到一个新的RPN的标签，对比
+    return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
 
 # 这个函数说白了，就是还原到大矩阵，把那些抛弃的都拿回来
 def _unmap(data, count, inds, fill=0):
