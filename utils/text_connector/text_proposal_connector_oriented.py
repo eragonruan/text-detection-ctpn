@@ -52,7 +52,7 @@ class TextProposalConnectorOriented:
         """
         # group_text_proposals得到的的是一个list[list]
         # 如：[[1-2-4-6-9],
-        #     [2-3-5-11],
+        #     [3-5-11],
         #     [7-13-14-15]]
         # 每一行是一个list，是一个联通的index的list
         tp_groups = self.group_text_proposals(text_proposals, scores, im_size)  # 首先还是建图，获取到文本行由哪几个小框构成

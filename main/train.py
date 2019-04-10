@@ -54,7 +54,7 @@ def main(argv=None):
 
     # 输入图像数据的维度[批次,  高度,  宽度,  3通道]
     input_image         = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
-    input_image_name    = tf.placeholder(tf.string,  shape=[None,], name='input_image')
+    input_image_name    = tf.placeholder(tf.string,  shape=[None,], name='input_image_name')
     input_bbox          = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox') # 为何是5列？
     input_im_info       = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
@@ -141,7 +141,7 @@ def main(argv=None):
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 
-            logger.debug("开始运行sess.run了")
+            logger.debug("开始运行sess.run[%d]了",step)
             ml, tl, _, summary_str,bboxs,classes = sess.run([
                                                model_loss,
                                                total_loss,
@@ -153,7 +153,7 @@ def main(argv=None):
                                                          input_bbox: data[1],
                                                          input_im_info: data[2],
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
-            logger.debug("结束运行sess.run了")
+            logger.debug("结束运行sess.run[%d]了",step)
             summary_writer.add_summary(summary_str, global_step=step)
 
             # 修改成为自动的方式，不需要手工调整了，使用了exponential_decay

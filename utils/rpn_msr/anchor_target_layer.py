@@ -216,8 +216,17 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
     logger.debug("gt_argmax_overlaps是个一位数组，存放着每GT最大IoU的anchor的行号:%r", gt_argmax_overlaps.shape)
+
     # 这个是原作者代码，但是一旦打开，正例备选框就居多无比？！！可为何原来没问题呢？诡异。。。
     # gt_max_overlaps = overlaps[gt_argmax_overlaps,np.arange(overlaps.shape[1])]
+    # logger.debug(gt_argmax_overlaps)
+    # logger.debug("anchor index:!!!!!!%r",np.where(gt_max_overlaps == 0)[0])
+    # logger.debug("anchor index:!!!!!!%r",gt_argmax_overlaps[np.where(gt_max_overlaps==0)[0]])
+    # __debug_specail_anchors = anchors[
+    #     gt_argmax_overlaps[np.where(gt_max_overlaps==0)[0]]
+    # ]
+    # logger.debug("gt index:!!!!!!!!!%r",np.where(gt_max_overlaps==0))
+    # __debug_specail_gt = gt_boxes[140]
     # logger.debug("从矩阵overlaps中依据gt_argmax_overlaps取出IoU最大的值到数组gt_max_overlaps中:%r", gt_max_overlaps.shape)
     # logger.debug("此刻的gt_max_overlaps和gt数量一样的一个数组，存放着对应的IoU值")
     # gt_argmax_overlaps = np.where(overlaps == gt_max_overlaps)[0]
@@ -225,6 +234,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # logger.debug("目的是找出某个GT")
     # logger.debug("每个位置上的9个anchor中overlap最大的认为是前景,都打上前景标签1")
     # logger.debug("gt_argmax_overlaps(每个gt对应的IoU最大的anchor的标号):%d个",len(gt_argmax_overlaps))
+
     labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
     __debug_iou_max_with_gt_anchors = anchors[gt_argmax_overlaps]
     logger.debug("overlap大于0.7的认为是前景，一共有%d个",(max_overlaps >= cfg.RPN_POSITIVE_OVERLAP).sum())
@@ -348,6 +358,10 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
     PURPLE = "#9900FF"
     GREEN = "#00FF00"
     GRAY = "#808080"
+
+    # draw.rectangle(__debug_specail_anchors.tolist(), outline=RED)
+    # logger.debug("__debug_specail_gt:%r",__debug_specail_gt)
+    # draw.rectangle(__debug_specail_gt[:4], outline=RED)
 
     logger.debug("[调试画图] 画出所有IoU大于0.7的anchors[%d]，红色",len(__debug_iou_more_0_7_anchors))
     for anchor in __debug_iou_more_0_7_anchors:

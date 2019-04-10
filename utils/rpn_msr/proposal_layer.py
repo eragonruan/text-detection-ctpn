@@ -83,15 +83,6 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # 是dx，dy，dw，dh值
     # logger.debug("rpn_bbox_pred网络预测的dx，dy，dw，dh值为：%r",rpn_bbox_pred)
     bbox_deltas = rpn_bbox_pred
-    # im_info = bottom[2].data[0, :]
-
-    if DEBUG:
-        print('im_size: ({}, {})'.format(im_info[0], im_info[1]))
-        print('scale: {}'.format(im_info[2]))
-
-    # 1. Generate proposals from bbox deltas and shifted anchors
-    if DEBUG:
-        print('score map size: {}'.format(scores.shape))
 
     # Enumerate all shifts
     # 同anchor-target-layer-tf这个文件一样，生成anchor的shift，进一步得到整张图像上的所有anchor
