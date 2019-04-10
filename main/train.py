@@ -47,6 +47,8 @@ def init_logger():
 
 def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
+    logger.info("")
+
     now = datetime.datetime.now()
     StyleTime = now.strftime("%Y-%m-%d-%H-%M-%S")
     os.makedirs(os.path.join(FLAGS.logs_path, StyleTime))

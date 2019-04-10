@@ -37,6 +37,7 @@ if [ "$1" = "gpu0" ]; then
         --save_checkpoint_steps=5000 \
         --decay_rate=0.5 \
         --lambda1=400 \
+        --gpu=0 \
         --debug_mode=False \
         --logs_path=logs \
         --moving_average_decay=0.997 \
@@ -46,7 +47,7 @@ if [ "$1" = "gpu0" ]; then
 fi
 
 if [ "$1" = "gpu1" ]; then
-    echo "生产模式"
+    echo "生产模式:GPU1"
     CUDA_VISIBLE_DEVICES=1 \
     python main/train.py \
         --pretrained_model_path=data/vgg_16.ckpt \
