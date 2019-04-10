@@ -4,6 +4,7 @@ import logging
 from nets import vgg
 from utils.rpn_msr.anchor_target_layer import anchor_target_layer as anchor_target_layer_py
 from utils import _p_shape,_p
+FLAGS = tf.app.flags.FLAGS
 
 logger = logging.getLogger('model_train')
 
@@ -315,8 +316,8 @@ def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
     # 表示，平均每个前景anchor的loss
     rpn_loss_box = tf.reduce_sum(rpn_loss_box_n) / (tf.reduce_sum(tf.cast(fg_keep, tf.float32)) + 1)
     rpn_cross_entropy = tf.reduce_mean(rpn_cross_entropy_n)
-
-    model_loss = rpn_cross_entropy + rpn_loss_box
+    # lambda1是照着论文来的，来平衡分类和回归，需要根据实际情况调整，让两者在一个数量级
+    model_loss = rpn_cross_entropy + FLAGS.lambda1 * rpn_loss_box
 
     # tf.get_collection：从一个集合中取出全部变量，是一个列表
     regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)

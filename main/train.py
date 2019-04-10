@@ -21,6 +21,7 @@ tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
 tf.app.flags.DEFINE_string('gpu', '1', '') #使用第#1个GPU
 tf.app.flags.DEFINE_string('model', 'model', '')
+tf.app.flags.DEFINE_string('lambda1', 'model', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', False, '')
@@ -134,6 +135,7 @@ def main(argv=None):
         # 是的，get_batch返回的是一个generator
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers)
         start = time.time()
+        train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(start))
         for step in range(FLAGS.max_steps):
             # 注意! 这次返回的只有一张图，以及这张图对应的所有的bbox
             data = next(data_generator) # next(<迭代器>）来返回下一个结果
@@ -175,7 +177,9 @@ def main(argv=None):
                          )
 
             if (step + 1) % FLAGS.save_checkpoint_steps == 0:
-                filename = ('ctpn_{:d}'.format(step + 1) + '.ckpt')
+
+                # 每次训练的模型不要覆盖，前缀是训练启动时间
+                filename = ('ctpn-{:s}-{:d}'.format(train_start_time,step + 1) + '.ckpt')
                 filename = os.path.join(FLAGS.model, filename)
                 saver.save(sess, filename)
                 print('Write model to: {:s}'.format(filename))
