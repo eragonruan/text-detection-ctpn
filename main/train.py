@@ -2,9 +2,7 @@ import datetime
 import os
 import sys
 import time
-import logging
 import tensorflow as tf
-sys.path.append(os.getcwd())
 from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
@@ -25,9 +23,10 @@ tf.app.flags.DEFINE_float('lambda1', 1000, '')
 tf.app.flags.DEFINE_string('logs_path', 'logs', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', False, '')
-tf.app.flags.DEFINE_boolean('debug_mode', False, '')
+tf.app.flags.DEFINE_boolean('debug', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
+
 
 tf.logging.set_verbosity(tf.logging.DEBUG)
 
@@ -37,7 +36,7 @@ textdetector = TextDetector(DETECT_MODE='H')
 
 def init_logger():
     level = logging.DEBUG
-    if(FLAGS.debug_mode):
+    if(FLAGS.debug):
         level = logging.DEBUG
 
     logging.basicConfig(
@@ -46,14 +45,33 @@ def init_logger():
         handlers=[logging.StreamHandler()])
 
 def main(argv=None):
+
+    # 选择GPU
+    if FLAGS.gpu!="1" or FLAGS.gpu!="0":
+        logger.error("无法确定使用哪一个GPU，退出")
+        exit()
+    logger.info("使用GPU%s显卡进行训练",FLAGS.gpu)
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
-    logger.info("")
+
+    logger.info(
+        "本次使用的参数：\nlearning_rate:%f\nmax_steps:%d\nevaluate_steps:%d\nmodel:%s\nlambda1:%d\nlogs_path:%s\nrestore:%r\ndebug:%r\nsave_checkpoint_steps:%d", \
+        FLAGS.learning_rate,
+        FLAGS.max_steps,
+        FLAGS.evaluate_steps,
+        FLAGS.model,
+        FLAGS.lambda1,
+        FLAGS.logs_path,
+        FLAGS.restore,
+        FLAGS.debug,
+        FLAGS.save_checkpoint_steps)
 
     now = datetime.datetime.now()
     StyleTime = now.strftime("%Y-%m-%d-%H-%M-%S")
     os.makedirs(os.path.join(FLAGS.logs_path, StyleTime))
     if not os.path.exists(FLAGS.model):
         os.makedirs(FLAGS.model)
+
+    logger.info("CTPN训练开始...")
 
     # 输入图像数据的维度[批次,  高度,  宽度,  3通道]
     input_image         = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
@@ -62,7 +80,6 @@ def main(argv=None):
     input_im_info       = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-
 
     learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
     tf.summary.scalar('learning_rate', learning_rate)
@@ -145,7 +162,7 @@ def main(argv=None):
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 
-            logger.debug("开始运行sess.run[%d]了",step)
+            logger.debug("开始第%d步训练，运行sess.run",step)
             ml, tl, _, summary_str,bboxs,classes = sess.run([
                                                model_loss,
                                                total_loss,
@@ -157,7 +174,7 @@ def main(argv=None):
                                                          input_bbox: data[1],
                                                          input_im_info: data[2],
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
-            logger.debug("结束运行sess.run[%d]了",step)
+            logger.info("结束第%d步训练，结束sess.run",step)
             summary_writer.add_summary(summary_str, global_step=step)
 
             # 修改成为自动的方式，不需要手工调整了，使用了exponential_decay
@@ -169,25 +186,28 @@ def main(argv=None):
                 start = time.time()
                 print('Step {:06d}, model loss {:.4f}, total loss {:.4f}, {:.2f} seconds/step'.format(
                     step, ml, tl, avg_time_per_step))
+                logger.info("在第%d步，开始进行模型评估",step)
 
                 # data[4]是大框的坐标，是个数组，8个值
                 f1_value,recall_value,precision_value = \
                     generate_big_GT_and_evaluate(bboxs,classes,data[2],data[4])
+                # 更新F1,Recall和Precision
                 sess.run([tf.assign(v_f1, f1_value),
                           tf.assign(v_recall, recall_value),
-                          tf.assign(v_precision, precision_value)]
-                         )
+                          tf.assign(v_precision, precision_value)])
+                logger.info("在第%d步，模型评估结束", step)
 
-            if (step + 1) % FLAGS.save_checkpoint_steps == 0:
+            if(FLAGS.debug) or (step + 1) % FLAGS.save_checkpoint_steps == 0:
 
                 # 每次训练的模型不要覆盖，前缀是训练启动时间
                 filename = ('ctpn-{:s}-{:d}'.format(train_start_time,step + 1) + '.ckpt')
                 filename = os.path.join(FLAGS.model, filename)
                 saver.save(sess, filename)
-                print('Write model to: {:s}'.format(filename))
+                logger.info("在第%d步，保存了模型文件(checkout point)：%s",step,filename)
+
 
             if step != 0 and step % FLAGS.decay_steps == 0:
-                print('learning rate decay: {:f}'.format(learning_rate.eval() * FLAGS.decay_rate))
+                logger.info("学习率(learning rate)衰减：%f=>%f",learning_rate.eval(),learning_rate.eval() * FLAGS.decay_rate)
                 sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
 
 

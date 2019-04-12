@@ -335,7 +335,7 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
                image_name,
                inside_labels):
 
-    if not FLAGS.debug_mode: return
+    if not FLAGS.debug: return
 
     # 这段代码是调试用的，是为了让训练过程可视化，
     # 我要画出来，所有的备选anchor，包括IoU>0.7的 + GT相交最多的那个anchor，这些都是样本备选，用红色

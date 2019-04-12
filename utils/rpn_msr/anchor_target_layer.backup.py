@@ -473,7 +473,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # 我要画出来，所有的备选anchor，包括IoU>0.7的 + GT相交最多的那个anchor，这些都是样本备选，用红色
     # 我要画出来所有的GT，用绿色
     # 我还要画出最后的选中的备选的正例和负例，用蓝色，用黑色（？蓝色可能看不到吧，因为被红色重复了，那我都他们都错位1个像素），
-    if FLAGS.debug_mode:
+    if FLAGS.debug:
         logger.debug("调试画图时候的前景索引")
         from PIL import Image, ImageDraw
         # 先打开原图

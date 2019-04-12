@@ -1,18 +1,15 @@
 # coding=utf-8
-import os
+import os,sys
 import time
 import cv2
-import base64
 import tensorflow as tf
-from nets import model_train as model
+import logging
+sys.path.append(os.getcwd())
+import nets.model_train as model
 from utils.rpn_msr.proposal_layer import proposal_layer
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from utils import stat
-
-FLAGS = tf.app.flags.FLAGS
-
-import logging
 
 logger = logging.getLogger("Train")
 
@@ -21,7 +18,7 @@ GREEN = (0,255,0)
 GRAY  = (50,50,50)
 BLUE  = (0,0,255)
 
-# 输入的路径
+# 测试目录下，包含了3个子路径：放图片的images,放标签的labels，放小框标签的split
 IMAGE_PATH = "images" # 要文本检测的图片
 LABEL_PATH = "labels" # 大框数据，
 SPLIT_PATH = "split"  # 小框数据
@@ -31,23 +28,25 @@ PRED_DRAW_PATH = "draws"   # 画出来的数据
 PRED_BBOX_PATH = "detect.bbox" # 探测的小框
 PRED_GT_PATH = "detect.gt"     # 探测的大框
 
+FLAGS = tf.app.flags.FLAGS
+
+
 def init_params():
-    tf.app.flags.DEFINE_boolean('debug_mode', True, '')
+    tf.app.flags.DEFINE_boolean('debug', True, '')
     tf.app.flags.DEFINE_boolean('evaluate', True, '') # 是否进行评价（你可以光预测，也可以一边预测一边评价）
     tf.app.flags.DEFINE_boolean('split', True, '')    # 是否对小框做出评价，和画到图像上
-    tf.app.flags.DEFINE_string('test_home', 'data/test', '') # 被预测的图片目录
-
+    tf.app.flags.DEFINE_string('test_dir', '', '') # 被预测的图片目录
+    tf.app.flags.DEFINE_string('image_name','', '') # 被预测的图片名字，为空就预测目录下所有的文件
     tf.app.flags.DEFINE_string('pred_home', 'data/pred', '') # 预测后的结果的输出目录
-    tf.app.flags.DEFINE_string('file', '', '')     # 为了支持单独文件，如果为空，就预测test_home中的所有文件
-    tf.app.flags.DEFINE_string('gpu', '0', '')
     tf.app.flags.DEFINE_boolean('draw', True, '') # 是否把gt和预测画到图片上保存下来，保存目录也是pred_home
     tf.app.flags.DEFINE_boolean('save', True, '') # 是否保存输出结果（大框、小框信息都要保存），保存到pred_home目录里面去
-    tf.app.flags.DEFINE_string('model', 'model/', '') # model的存放目录，会自动加载最新的那个模型
+    tf.app.flags.DEFINE_string('ctpn_model_dir', 'model/', '') # model的存放目录，会自动加载最新的那个模型
+    tf.app.flags.DEFINE_string('ctpn_model_file', '', '')     # 为了支持单独文件，如果为空，就预测test_dir中的所有文件
 
 
 def init_logger():
     level = logging.DEBUG
-    if(FLAGS.debug_mode):
+    if(FLAGS.debug):
         level = logging.DEBUG
 
     logging.basicConfig(
@@ -57,17 +56,19 @@ def init_logger():
 
 
 def get_images():
-    image_path = os.path.join(FLAGS.test_home, IMAGE_PATH)
 
-    if FLAGS.file != "":
-        return [os.path.join(image_path, FLAGS.file)]
+    if FLAGS.image_name:
+        image_path = os.path.join(FLAGS.test_dir,IMAGE_PATH,FLAGS.image_name)
+        logger.info("指定被检测图片：%s",image_path)
+        return [image_path]
 
     files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for img_name in os.listdir(image_path):
+    images_dir = os.path.join(FLAGS.test_dir,IMAGE_PATH)
+    for img_name in os.listdir(images_dir):
         for ext in exts:
             if img_name.endswith(ext):
-                files.append(os.path.join(image_path, img_name))
+                files.append(os.path.join(images_dir, img_name))
                 break
     logger.debug('批量预测，找到需要检测的图片%d张',len(files))
     return files
@@ -117,7 +118,12 @@ def save(path, file_name,data,scores=None):
 
 
 # 把框画到图片上
+# 注意：image是RGB格式的
 def draw(image,boxes,color,thick=1):
+
+    # 先将RGB格式转成BGR，也就是OpenCV要求的格式
+    image = image[:,:,::-1]
+
     if boxes.shape[1]==4: #矩形
         for box in boxes:
             cv2.rectangle(image,
@@ -137,11 +143,10 @@ def draw(image,boxes,color,thick=1):
 
     logger.error("画图失败，无效的Shape:%r",boxes.shape)
 
-
+# 定义图，并且还原模型，创建session
 def initialize():
     g = tf.Graph()
     with g.as_default():
-        os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
         global input_image,input_im_info,bbox_pred, cls_pred, cls_prob
 
         input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
@@ -153,11 +158,15 @@ def initialize():
         saver = tf.train.Saver(variable_averages.variables_to_restore())
 
         sess = tf.Session(graph=g,config=tf.ConfigProto(allow_soft_placement=True))
-        ckpt_state = tf.train.get_checkpoint_state(FLAGS.model)
-        logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.model, ckpt_state)
-        model_path = os.path.join(FLAGS.model, os.path.basename(ckpt_state.model_checkpoint_path))
-        logger.info('从%s加载模型', format(model_path))
-        saver.restore(sess, model_path)
+        if FLAGS.ctpn_model_file:
+            ctpn_model_file_path = os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file)
+            logger.debug("恢复给定名字的CTPN模型：%s", ctpn_model_file_path)
+            saver.restore(sess,ctpn_model_file_path)
+        else:
+            ckpt = tf.train.latest_checkpoint(FLAGS.ctpn_model_dir)
+            logger.debug("最新CTPN模型目录中最新模型文件:%s", ckpt)  # 有点担心learning rate也被恢复
+            saver.restore(sess, ckpt)
+
 
     return sess
 
@@ -179,9 +188,14 @@ def main():
             print("Error reading image {}!".format(image_name))
             continue
 
-    pred(image_name_list,image_names)
+    sess = initialize()
+
+    pred(sess,image_list,image_names)
 
 
+# image_list    : numpy数组，注意，这个格式是RGB的，如果需要使用，需要转一下[:,:,::-1]
+#                 为何这么设计呢？是为了兼容Web的服务，那边传过来的是RGB顺序的。
+# image_names   : 文件名字
 def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls_pred, cls_prob):
 
     logger.info("开始探测图片的文字区域")
@@ -191,8 +205,8 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
     pred_draw_path = os.path.join(FLAGS.pred_home, PRED_DRAW_PATH)
     pred_gt_path = os.path.join(FLAGS.pred_home, PRED_GT_PATH)
     pred_bbox_path = os.path.join(FLAGS.pred_home, PRED_BBOX_PATH)
-    label_path = os.path.join(FLAGS.test_home, LABEL_PATH)
-    split_path = os.path.join(FLAGS.test_home, SPLIT_PATH)
+    label_path = os.path.join(FLAGS.test_dir, LABEL_PATH)
+    split_path = os.path.join(FLAGS.test_dir, SPLIT_PATH)
 
     if not os.path.exists(pred_bbox_path): os.makedirs(pred_bbox_path)
     if not os.path.exists(pred_draw_path): os.makedirs(pred_draw_path)
@@ -318,6 +332,21 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
 
 
 if __name__ == '__main__':
-    init_logger()
+
     init_params()
-    tf.app.run()
+
+    if not os.path.exists(FLAGS.test_dir):
+        logger.error("要识别的图片的目录[%s]不存在",FLAGS.test_dir)
+        exit()
+    if FLAGS.image_name and not os.path.exists(os.path.join(FLAGS.test_dir,IMAGE_PATH,FLAGS.image_name)):
+        logger.error("要识别的图片[%s]不存在",os.path.join(FLAGS.test_dir,IMAGE_PATH,FLAGS.image_name))
+        exit()
+    if not os.path.exists(FLAGS.ctpn_model_dir):
+        logger.error("模型目录[%s]不存在",FLAGS.ctpn_model_dir)
+        exit()
+    if FLAGS.ctpn_model_file and not os.path.exists(os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file+".meta")):
+        logger.error("模型文件[%s]不存在",os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file + ".meta"))
+        exit()
+
+    init_logger()
+    main()
