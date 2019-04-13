@@ -37,9 +37,9 @@ def init_params():
     tf.app.flags.DEFINE_boolean('split', True, '')    # 是否对小框做出评价，和画到图像上
     tf.app.flags.DEFINE_string('test_dir', '', '') # 被预测的图片目录
     tf.app.flags.DEFINE_string('image_name','', '') # 被预测的图片名字，为空就预测目录下所有的文件
-    tf.app.flags.DEFINE_string('pred_home', 'data/pred', '') # 预测后的结果的输出目录
-    tf.app.flags.DEFINE_boolean('draw', True, '') # 是否把gt和预测画到图片上保存下来，保存目录也是pred_home
-    tf.app.flags.DEFINE_boolean('save', True, '') # 是否保存输出结果（大框、小框信息都要保存），保存到pred_home目录里面去
+    tf.app.flags.DEFINE_string('pred_dir', 'data/pred', '') # 预测后的结果的输出目录
+    tf.app.flags.DEFINE_boolean('draw', True, '') # 是否把gt和预测画到图片上保存下来，保存目录也是pred_dir
+    tf.app.flags.DEFINE_boolean('save', True, '') # 是否保存输出结果（大框、小框信息都要保存），保存到pred_dir目录里面去
     tf.app.flags.DEFINE_string('ctpn_model_dir', 'model/', '') # model的存放目录，会自动加载最新的那个模型
     tf.app.flags.DEFINE_string('ctpn_model_file', '', '')     # 为了支持单独文件，如果为空，就预测test_dir中的所有文件
 
@@ -158,6 +158,12 @@ def initialize():
         saver = tf.train.Saver(variable_averages.variables_to_restore())
 
         sess = tf.Session(graph=g,config=tf.ConfigProto(allow_soft_placement=True))
+        ckpt_state = tf.train.get_checkpoint_state(FLAGS.ctpn_model_dir)
+        logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.ctpn_model_dir, ckpt_state)
+        model_path = os.path.join(FLAGS.ctpn_model_dir, os.path.basename(ckpt_state.model_checkpoint_path))
+        logger.info('从%s加载模型', format(model_path))
+        saver.restore(sess, model_path)
+
         if FLAGS.ctpn_model_file:
             ctpn_model_file_path = os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file)
             logger.debug("恢复给定名字的CTPN模型：%s", ctpn_model_file_path)
@@ -202,9 +208,9 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
     global input_image,input_im_info, bbox_pred, cls_pred, cls_prob
 
     # 输出的路径
-    pred_draw_path = os.path.join(FLAGS.pred_home, PRED_DRAW_PATH)
-    pred_gt_path = os.path.join(FLAGS.pred_home, PRED_GT_PATH)
-    pred_bbox_path = os.path.join(FLAGS.pred_home, PRED_BBOX_PATH)
+    pred_draw_path = os.path.join(FLAGS.pred_dir, PRED_DRAW_PATH)
+    pred_gt_path = os.path.join(FLAGS.pred_dir, PRED_GT_PATH)
+    pred_bbox_path = os.path.join(FLAGS.pred_dir, PRED_BBOX_PATH)
     label_path = os.path.join(FLAGS.test_dir, LABEL_PATH)
     split_path = os.path.join(FLAGS.test_dir, SPLIT_PATH)
 
