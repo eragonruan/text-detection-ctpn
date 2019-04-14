@@ -8,7 +8,7 @@ fi
 
 if [ "$1" = "console" ]; then
     echo "调试模式:只训练一次"
-    python main/train.py \
+    python -m main.train \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=2 \
         --decay_steps=1 \
@@ -17,7 +17,7 @@ if [ "$1" = "console" ]; then
         --save_checkpoint_steps=2000 \
         --decay_rate=0.1 \
         --lambda1=1000 \
-        --gpu=1 \
+        --gpu=1\
         --debug=True \
         --logs_path=logs \
         --moving_average_decay=0.997 \
@@ -27,7 +27,7 @@ fi
 
 if [ "$1" = "gpu0" ]; then
     echo "生产模式:GPU0"
-    python main/train.py \
+    python -m main.train \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=100000 \
         --decay_steps=10000 \
@@ -47,7 +47,7 @@ fi
 
 if [ "$1" = "gpu1" ]; then
     echo "生产模式:GPU1"
-    python main/train.py \
+    python -m main.train \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=40000 \
         --decay_steps=8000 \

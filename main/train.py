@@ -1,6 +1,5 @@
 import datetime
 import os
-import sys
 import time
 import tensorflow as tf
 from tensorflow.contrib import slim
@@ -47,7 +46,7 @@ def init_logger():
 def main(argv=None):
 
     # 选择GPU
-    if FLAGS.gpu!="1" or FLAGS.gpu!="0":
+    if FLAGS.gpu!="1" and FLAGS.gpu!="0":
         logger.error("无法确定使用哪一个GPU，退出")
         exit()
     logger.info("使用GPU%s显卡进行训练",FLAGS.gpu)
