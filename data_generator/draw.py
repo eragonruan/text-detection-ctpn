@@ -18,10 +18,15 @@ import os
 
 # load 标签坐标
 def _load_label(full_label_file_name_path):
+    if not (os.path.exists(full_label_file_name_path)): return None
+
     label_xy = []
     with open(full_label_file_name_path, "r") as label_file:
         for line in label_file:
-            label_xy.append([int(p) for p in line.split(",")])
+            if line.strip('\n')=="": continue
+            # print("(%s)" % line)
+            cord_xy = line.split(",")[0:8] # 有可能最后一列是标签，所以只取前8列
+            label_xy.append([int(p) for p in cord_xy])
     return label_xy
 
 
@@ -73,29 +78,29 @@ if __name__ == '__main__':
         label_name          = os.path.join(data_labels_dir, lab_name)
         split_label_name    = os.path.join(data_split_labels_dir,lab_name)
 
-        # 得到要画框后的图片文件的存放路径（大框和小框画到一个文件上）
-        draw_image_name    = os.path.join(data_draws_dir, img_name)
-
-        # 得到大框和小框的坐标文件数组，注意区别，大框长度是8，小框长度是4
-        label_xys = _load_label(label_name)
-        split_label_xys = _load_label(split_label_name)
-
         # 先打开原图
         image = Image.open(image_name)
         draw = ImageDraw.Draw(image)
 
-        # 画一句话最外面大框，8个坐标，画4边型
-        for one_img_pos in label_xys:
-            cord_xy = [(one_img_pos[0],one_img_pos[1]),
-                       (one_img_pos[2], one_img_pos[3]),
-                       (one_img_pos[4], one_img_pos[5]),
-                       (one_img_pos[6], one_img_pos[7])]
-            draw.polygon(cord_xy, outline='red')
+        # 得到大框和小框的坐标文件数组，注意区别，大框长度是8，小框长度是4
+        label_xys = _load_label(label_name)
+        if label_xys:
+            # 画一句话最外面大框，8个坐标，画4边型
+            for one_img_pos in label_xys:
+                cord_xy = [(one_img_pos[0],one_img_pos[1]),
+                           (one_img_pos[2], one_img_pos[3]),
+                           (one_img_pos[4], one_img_pos[5]),
+                           (one_img_pos[6], one_img_pos[7])]
+                draw.polygon(cord_xy, outline='red')
 
-        # 画每一个anchor，4个坐标，所以画矩形
-        for one_img_pos in split_label_xys:
-            draw.rectangle(tuple(one_img_pos), outline='green')
+        split_label_xys = _load_label(split_label_name)
+        if split_label_xys:
+            # 画每一个anchor，4个坐标，所以画矩形
+            for one_img_pos in split_label_xys:
+                draw.rectangle(tuple(one_img_pos), outline='green')
 
+        # 得到要画框后的图片文件的存放路径（大框和小框画到一个文件上）
+        draw_image_name    = os.path.join(data_draws_dir, img_name)
         # 把画完的图保存到draw目录
         image.save(draw_image_name)
 

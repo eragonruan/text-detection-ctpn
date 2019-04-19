@@ -55,7 +55,11 @@ def split_labels(data_home, type):
 
             # 对每一个大框，都完成他的隔16个像素，产生的小框
             for line in lines:
-                splitted_line = line.strip().lower().split(',')
+                splitted_line = line.split(',')
+
+                if len(splitted_line)<8: continue
+                print(splitted_line)
+                # if len(splitted_line)==0: continue
                 x1, y1, x2, y2, x3, y3, x4, y4 = map(float, splitted_line[:8])
                 poly = np.array([x1, y1, x2, y2, x3, y3, x4, y4]).reshape([4, 2])
 

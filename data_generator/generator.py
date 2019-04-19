@@ -21,7 +21,7 @@ DATA_DIR="data"
 MAX_LENGTH=12   # 可能的最大长度（字符数）
 MIN_LENGTH=5    # 可能的最小长度（字符数）
 MAX_FONT_SIZE = 20 # 最大的字体
-MIN_FONT_SIZE = 12 # 最小的字体号
+MIN_FONT_SIZE = 15 # 最小的字体号
 MAX_LINE_HEIGHT= 100   # 最大的高度（像素）
 MIN_LINE_HEIGHT= MIN_FONT_SIZE + 12   # 最小的高度（像素）
 
@@ -31,8 +31,8 @@ MAX_FONT_COLOR = 100    # 最大的可能颜色
 FONT_COLOR_NOISE = 10   # 最大的可能颜色
 ONE_CHARACTOR_WIDTH = 1024# 一个字的宽度
 ROTATE_ANGLE = 4        # 随机旋转角度
-GAUSS_RADIUS_MIN = 0.8  # 高斯模糊的radius最小值
-GAUSS_RADIUS_MAX = 1.1  # 高斯模糊的radius最大值
+GAUSS_RADIUS_MIN = 0.5  # 高斯模糊的radius最小值
+GAUSS_RADIUS_MAX = 0.8  # 高斯模糊的radius最大值
 
 # 之前的设置，太大，我决定改改
 # MAX_BACKGROUND_WIDTH = 1600
@@ -90,6 +90,19 @@ def _get_random_point(x_scope,y_scope):
     y1 = random.randint(0,y_scope)
     return x1,y1
 
+# 加载字符集，charset.txt，最后一个是空格
+# 为了兼容charset.txt和charset6k.txt，增加鲁棒性，改一下
+# 先读入内存，除去
+def _get_charset(charset_file):
+    charset = open(charset_file, 'r', encoding='utf-8').readlines()
+    charset = [ch.strip("\n") for ch in charset]
+    charset = "".join(charset)
+    charset = list(charset)
+    if charset[-1]!=" ":
+        charset.append(" ")
+    return charset
+
+
 # 画干扰线
 def randome_intefer_line(img,possible,line_num,weight):
 
@@ -121,7 +134,7 @@ def randome_intefer_point(img,possible,num):
         draw.point([x,y], _get_random_color())
     del draw
 
-
+# 专门用来产生数字，可能有负数
 def _generate_num():
     num = random.randint(-MAX_GENERATE_NUM,MAX_GENERATE_NUM)
     # print(num)
@@ -132,6 +145,8 @@ def _generate_num():
 
     return str(num)
 
+
+# 专门用来产生日期，各种格式的
 def _generate_date():
     import time
     now = time.time()
@@ -155,9 +170,19 @@ def _generate_date():
 
     return time.strftime(_format, time_local)
 
+# 随机生成文字，长度是10-30个之间，512像素
+def _generate_words(charset):
+    length = random.randint(MIN_LENGTH,MAX_LENGTH)
+    s = ""
+    for i in range(length):
+        j = random.randint(0, len(charset))
+        s += charset[j]
+    if DEBUG: print("随机生成的汉字字符串[%s]，%d" %(s,length))
+    return s,length
+
 
 # 从文字库中随机选择n个字符
-def _get_random_text():
+def _get_random_text(charset):
 
     # 产生随机数字
     if _random_accept(POSSIBILITY_PURE_NUM):
@@ -169,20 +194,19 @@ def _get_random_text():
         s_date = _generate_date()
         return s_date, len(s_date)
 
-    start = random.randint(0, len(info_str)-MAX_LENGTH-1)
-    length = random.randint(MIN_LENGTH, MAX_LENGTH)
-
-    # 是否产生单字
-    if _random_accept(POSSIBILITY_SINGLE):length = 1
-
-    end = start + length
-    random_word = info_str[start:end]
-    if DEBUG: print("截取内容[%s]，%d" %(random_word,length))
-    import re
-    rex = re.compile(' ')
-    random_word = rex.sub('', random_word)
-
-    return random_word,len(random_word)
+    # start = random.randint(0, len(info_str)-MAX_LENGTH-1)
+    # length = random.randint(MIN_LENGTH, MAX_LENGTH)
+    #
+    # # 是否产生单字
+    # if _random_accept(POSSIBILITY_SINGLE):length = 1
+    #
+    # end = start + length
+    # random_word = info_str[start:end]
+    # if DEBUG: print("截取内容[%s]，%d" %(random_word,length))
+    # import re
+    # rex = re.compile(' ')
+    # random_word = rex.sub('', random_word)
+    return _generate_words(charset)
 
 # 产生随机颜色
 def _get_random_color():
@@ -232,19 +256,17 @@ def random_blur(image,font_size):
     # 随机选取模糊参数
     radius = random.uniform(GAUSS_RADIUS_MIN,GAUSS_RADIUS_MAX)
     filter_ = random.choice(
-                            [ImageFilter.SMOOTH,
-                             ImageFilter.DETAIL,
+                            [
+                             # ImageFilter.SMOOTH, 太模糊
+                             # ImageFilter.DETAIL, 太模糊
                              ImageFilter.GaussianBlur(radius=radius),
-                             ImageFilter.EDGE_ENHANCE,      #边缘增强滤波,这个效果不好，暂时注释掉，边缘扣掉的太多
+                             # ImageFilter.EDGE_ENHANCE,      #边缘增强滤波,这个效果不好，暂时注释掉，边缘扣掉的太多
                              ImageFilter.SHARPEN
                              ]) #为深度边缘增强滤波
+
+
     if DEBUG: print("模糊函数：%s" % str(filter_))
 
-    if (font_size < 13):return image
-
-    if (font_size<16):
-        if filter_ == ImageFilter.EDGE_ENHANCE: return image
-        if filter_ == ImageFilter.SHARPEN: return image
 
     image = image.filter(filter_)
     return image
@@ -385,7 +407,7 @@ def random_font(font_path):
 # 产生一张图的所有的文字
 #
 #
-def generate_all(bground_list, image_name,label_name):
+def generate_all(bground_list, image_name,label_name,charset):
 
     # 先创建一张图，宽度和高度都是随机的
     image, w, h = create_backgroud_image(bground_list)
@@ -405,7 +427,7 @@ def generate_all(bground_list, image_name,label_name):
 
     while True:
         # 产生一行的标签,格式是[x1,y1,x2,y2,x3,y3,x4,y4]
-        one_row_labels = generate_row( i, y ,background_image = image, image_width=w)
+        one_row_labels = generate_row( i, y ,background_image = image, image_width=w,charset=charset)
         one_image_labels += one_row_labels
 
         # 主要是提前看看高度是否超过底边了，超过了，就算产生完了
@@ -427,7 +449,7 @@ def generate_all(bground_list, image_name,label_name):
             label_file.write("\n")
 
 # 产生一行的文字，里面又有一个循环，是产生多个句子
-def generate_row(i,y, background_image,image_width):
+def generate_row(i,y, background_image,image_width,charset):
     # logger.debug("---------------------------------")
     # logger.debug("开始准备产生第%d行", i)
     next_x = 0
@@ -440,7 +462,7 @@ def generate_row(i,y, background_image,image_width):
     while True:
 
         # 产生一个句子，并返回这个句子的文字，还有这个句子句尾巴的x坐标，如果是None，说明已经到最右面了，也就是说，这行生成结束了
-        next_x,label = process_one_sentence(next_x, y,background_image,image_width)
+        next_x,label = process_one_sentence(next_x, y,background_image,image_width,charset)
         if next_x is None: break
 
         one_row_labels.append(label) # 把产生的4个坐标加入到这张图片的标签数组中
@@ -501,12 +523,9 @@ def _rotate_points(points,center, degree):
 
     return rotated_points
 
-
-# 生成的最小颗粒度，生成一句话
-def process_one_sentence(x, y, background_image, image_width):
-
+def create_one_sentence_image(charset):
     # 随机选取10个字符，是从info.txt那个词库里，随机挑的长度的句子
-    random_word,length = _get_random_text()
+    random_word,length = _get_random_text(charset)
 
     # 字号随机
     font_size = random_font_size()
@@ -519,10 +538,6 @@ def process_one_sentence(x, y, background_image, image_width):
     # 因为有数字啊，英文字母啊，他的宽度比中文短，所以为了框套的更严丝合缝，好好算算宽度
     width, height = caculate_text_shape(random_word.strip(),font)
 
-    # 一算，句子的宽度超了，得嘞，这行咱就算生成完毕
-    if x + width > image_width:
-        # logger.debug("生成句子的右侧位置[%d]超过行宽[%d]，此行终结", x+words_image_width, image_width)
-        return None,None
 
     words_image = Image.new('RGBA', (width, height))
     draw = ImageDraw.Draw(words_image)
@@ -537,6 +552,17 @@ def process_one_sentence(x, y, background_image, image_width):
     randome_intefer_line(words_image, POSSIBILITY_WORD_INTEFER,INTERFER_WORD_LINE_NUM,INTERFER_WORD_LINE_WIGHT)           # 给单个文字做做干扰
     randome_intefer_point(words_image,POSSIBILITY_WORD_INTEFER,INTERFER_WORD_POINT_NUM)
     ############### PIPELINE ###########################
+
+    return words_image,width,height,random_word,points#<----points不一定在是width/height组成的矩形里面了，做仿射和旋转了嘛
+
+# 生成的最小颗粒度，生成一句话
+def process_one_sentence(x, y, background_image, image_width,charset):
+    words_image, width, _, _, points = create_one_sentence_image(charset)
+
+    # 一算，句子的宽度超了，得嘞，这行咱就算生成完毕
+    if x + width > image_width:
+        # logger.debug("生成句子的右侧位置[%d]超过行宽[%d]，此行终结", x+words_image_width, image_width)
+        return None,None
 
     background_image.paste(words_image, (x,y), words_image)
 
@@ -592,6 +618,8 @@ if __name__ == '__main__':
     if not os.path.exists(data_images_dir): os.makedirs(data_images_dir)
     if not os.path.exists(data_labels_dir): os.makedirs(data_labels_dir)
 
+    charset = _get_charset("../crnn/charset6k.txt")
+
     # 预先加载所有的纸张背景
     all_bg_images = load_all_backgroud_images(os.path.join(ROOT,'background/'))
 
@@ -600,7 +628,7 @@ if __name__ == '__main__':
         image_name = os.path.join(data_images_dir,str(num)+".png")
         label_name = os.path.join(data_labels_dir,str(num)+".txt")
 
-        generate_all(all_bg_images,image_name,label_name)
+        generate_all(all_bg_images,image_name,label_name,charset)
         logger.info("已产生[%s]",image_name)
 
 
