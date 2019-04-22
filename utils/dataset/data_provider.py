@@ -26,7 +26,7 @@ def get_training_data():
     return img_files
 
 
-# 这个很重要，去寻找这张图片对应的标注
+# 这个很重要，去寻找这张图片对应的标注，是4个值的，2个点的小矩形，是由GT切割出来的
 # https://github.com/eragonruan/text-detection-ctpn/blob/banjin-dev/data/readme/
 #
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -48,10 +48,14 @@ def load_big_GT(p):
     bbox = []
     with open(p, "r") as f:
         lines = f.readlines()
-    for line in lines:
-        line = line.strip().split(",")
-        points = list(map(lambda x: int(float(x)), line))  # 用map自动做int转型, float->int是为了防止320.0这样的字符串
-        bbox.append(points[:8])  # 去掉最后的一列 置信度
+        for line in lines:
+            line_xy = line.strip().strip("\n").split(",")[:8] # 只取前8列，坐标值
+            if len(line_xy)!=8:
+                logger.error("这个样本有问题：[%s]",line)
+                continue
+            for xy in line_xy:
+                v = int(float(xy.strip()))
+                bbox.append(v)
     return bbox # 返回四个坐标的数组
 
 
@@ -80,16 +84,16 @@ def generator(vis=False):
                 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 #
                 #
-                txt_fn = os.path.join(DATA_FOLDER, "split", fn + '.txt')
+                split_file_name = os.path.join(DATA_FOLDER, "split", fn + '.txt')
                 big_gt_fn = os.path.join(DATA_FOLDER, "labels", fn + '.txt')
 
-                if not os.path.exists(txt_fn):
+                if not os.path.exists(split_file_name):
                     print("Ground truth for image {} not exist!".format(im_fn))
                     continue
                 if not os.path.exists(big_gt_fn):
                     print("大框 Big Ground truth for image {} not exist!".format(big_gt_fn))
                     continue
-                bbox = load_annoataion(txt_fn)
+                bbox = load_annoataion(split_file_name)
                 big_gt = load_big_GT(big_gt_fn)
                 if len(bbox) == 0:
                     print("Ground truth for image {} empty!".format(im_fn))
