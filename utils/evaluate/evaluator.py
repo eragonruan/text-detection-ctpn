@@ -169,6 +169,7 @@ def evaluate(gt_points, detect_points, conf):
         gtRects.append(gtRect)
         # gtPolPoints.append(points)
 
+    print(gtRects)
     logger.debug("一共有样本框（GT）:%d", len(gtRects))
 
     # 这个是探测的点，记住，是CTPN合并后的矩形的4个点
