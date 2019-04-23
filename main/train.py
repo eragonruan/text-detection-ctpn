@@ -5,16 +5,20 @@ import tensorflow as tf
 from tensorflow.contrib import slim
 from nets import model_train as model
 from utils.dataset import data_provider as data_provider
-from utils.rpn_msr.proposal_layer import proposal_layer
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
+from main import pred
 
 tf.app.flags.DEFINE_float('learning_rate', 0.01, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
 tf.app.flags.DEFINE_integer('decay_steps', 2000, '')#？？？
 tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.5, '')#？？？
-tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')#、、、
+tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
+tf.app.flags.DEFINE_string('train_dir','data/train','')
+tf.app.flags.DEFINE_string('validate_dir','data/validate','')
+tf.app.flags.DEFINE_integer('validate_batch',30,'')
+tf.app.flags.DEFINE_integer('early_stop',5,'')
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
 tf.app.flags.DEFINE_string('gpu', '1', '') #使用第#1个GPU
 tf.app.flags.DEFINE_string('model', 'model', '')
@@ -25,7 +29,6 @@ tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_boolean('debug', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
-
 
 tf.logging.set_verbosity(tf.logging.DEBUG)
 
@@ -93,11 +96,14 @@ def main(argv=None):
             # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
 
             # input_bbox，就是GT，就是样本、标签
-            total_loss, model_loss, rpn_cross_entropy, rpn_loss_box = model.loss(bbox_pred, #预测出来的bbox位移
-                                                                                 cls_pred,  #预测出来是否是前景的概率
-                                                                                 input_bbox,#标签
-                                                                                 input_im_info, # 图像信息
-                                                                                 input_image_name)
+            total_loss, model_loss, \
+            rpn_cross_entropy, rpn_loss_box = \
+                model.loss(bbox_pred, #预测出来的bbox位移
+                         cls_pred,  #预测出来是否是前景的概率
+                         input_bbox,#标签
+                         input_im_info, # 图像信息
+                         input_image_name)
+
             # tf.group，是把逻辑上的几个操作定义成一个操作
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
             grads = adam_opt.compute_gradients(total_loss)
@@ -132,6 +138,7 @@ def main(argv=None):
         variable_restore_op = slim.assign_from_checkpoint_fn(FLAGS.pretrained_model_path,
                                                              slim.get_trainable_variables(),
                                                              ignore_missing_vars=True)
+
 # 上面是定义计算图，下面是真正运行session.run()
 #################################################################################
 
@@ -151,7 +158,7 @@ def main(argv=None):
                 variable_restore_op(sess)
 
         # 是的，get_batch返回的是一个generator
-        data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers)
+        data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,data_dir=FLAGS.train_dir)
         start = time.time()
         train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(start))
         for step in range(FLAGS.max_steps):
@@ -176,10 +183,6 @@ def main(argv=None):
             logger.info("结束第%d步训练，结束sess.run",step)
             summary_writer.add_summary(summary_str, global_step=step)
 
-            # 修改成为自动的方式，不需要手工调整了，使用了exponential_decay
-            # if step != 0 and step % FLAGS.decay_steps == 0:
-            #     sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
-
             if step % FLAGS.evaluate_steps == 0:
                 avg_time_per_step = (time.time() - start) / FLAGS.evaluate_steps
                 start = time.time()
@@ -189,53 +192,60 @@ def main(argv=None):
 
                 # data[4]是大框的坐标，是个数组，8个值
                 f1_value,recall_value,precision_value = \
-                    generate_big_GT_and_evaluate(bboxs,classes,data[2],data[4])
+                    validate(bbox_pred, cls_prob, input_im_info, input_image)
+
                 # 更新F1,Recall和Precision
                 sess.run([tf.assign(v_f1, f1_value),
                           tf.assign(v_recall, recall_value),
                           tf.assign(v_precision, precision_value)])
                 logger.info("在第%d步，模型评估结束", step)
 
-            if(FLAGS.debug) or (step + 1) % FLAGS.save_checkpoint_steps == 0:
-
+            if FLAGS.debug or (step + 1) % FLAGS.save_checkpoint_steps == 0:
                 # 每次训练的模型不要覆盖，前缀是训练启动时间
                 filename = ('ctpn-{:s}-{:d}'.format(train_start_time,step + 1) + '.ckpt')
                 filename = os.path.join(FLAGS.model, filename)
                 saver.save(sess, filename)
                 logger.info("在第%d步，保存了模型文件(checkout point)：%s",step,filename)
 
-
             if step != 0 and step % FLAGS.decay_steps == 0:
                 logger.info("学习率(learning rate)衰减：%f=>%f",learning_rate.eval(),learning_rate.eval() * FLAGS.decay_rate)
                 sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
 
 
-# 评估,之前写的，我好像没有评估小框，只评估大框了
-# 为什么只评估大框呢？我忘了...
-def generate_big_GT_and_evaluate(bboxs,classes,im_info,big_box_labels):
-    # 返回所有的base anchor调整后的小框，是矩形
-    textsegs, _ = proposal_layer(classes, bboxs, im_info)
-    scores = textsegs[:, 0]
-    textsegs = textsegs[:, 1:5]  # 这个是小框，是一个矩形
 
-    # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）, im_info[H,W,C]
-    im_info = im_info[0] # 其实就一行，但是为了统一，还是将im_info做成了矩阵
-    big_boxes = textdetector.detect(textsegs, scores[:, np.newaxis], (im_info[0],im_info[1]))
+# 用来批量验证
+# 入参： t_xxxx，都是张量
+def validate(sess,
+             t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image):
 
-    # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
-    big_boxes = np.array(big_boxes, dtype=np.int)
-    metrics = evaluate(big_box_labels, big_boxes[:, :8], conf())
-    # result = {
-    #     'precision': precision,
-    #     'recall': recall,
-    #     'hmean': hmean,
-    #     # 'pairs': pairs,
-    # }
-    f1_value = metrics['hmean']
-    recall_value = metrics['recall']
-    precision_value = metrics['precision']
-    return f1_value,recall_value,precision_value
+    #### 加载验证数据,随机加载FLAGS.validate_batch张
+    image_list, image_names = data_provider.get_validate_images_data(FLAGS.validate_dir,FLAGS.validate_batch)
 
+    precision_sum=recall_sum=f1_sum = 0
+    for i in range(len(image_list)):
+
+        image = image_list[i]
+        image_name = image_names[i]
+
+        # session, t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image, d_img
+        boxes, scores, textsegs = pred.predict_by_network(
+            sess,t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image,image
+        )
+        # 得到标签名字
+        GT_labels = pred.get_gt_label_by_image_name(image_name,FLAGS.validate_dir)
+        metrics = evaluate(GT_labels, boxes[:, :8], conf())
+        precision_sum += metrics['precision']
+        recall_sum += metrics['recall']
+        f1_sum += metrics['hmean']
+        logger.debug("图片%s的探测结果的精确度:%f,召回率:%f,F1:%f",metrics['precision'],metrics['recall'],metrics['hmean'])
+
+    precision_mean = precision_sum / len(image_list)
+    recall_mean = recall_sum / len(image_list)
+    f1_mean = f1_sum / len(image_list)
+    logger.debug("这批%d个图片的平均的精确度:%f,召回率:%f,F1:%f",
+                 len(image_list),precision_mean,recall_mean,f1_mean)
+
+    return precision_mean,recall_mean,f1_mean
 
 if __name__ == '__main__':
     init_logger()

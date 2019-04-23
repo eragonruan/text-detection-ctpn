@@ -3,20 +3,16 @@ import os
 import time
 import logging
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+from utils.dataset.data_util import GeneratorEnqueuer
 
 logger = logging.getLogger("data provider")
 
-from utils.dataset.data_util import GeneratorEnqueuer
-
-DATA_FOLDER = "data/train/"
-
 # 扎到image目录下所有的图片文件，返回的是一个文件列表
-def get_training_data():
+def get_dir_images(data_dir):
     img_files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for parent, dirnames, filenames in os.walk(os.path.join(DATA_FOLDER, "images")):
+    for parent, dirnames, filenames in os.walk(os.path.join(data_dir, "images")):
         for filename in filenames:
             for ext in exts:
                 if filename.endswith(ext):
@@ -58,10 +54,23 @@ def load_big_GT(p):
                 bbox.append(v)
     return bbox # 返回四个坐标的数组
 
+# 按照FLAGS.validate_num 随机从目录中产生批量的数据，用于做验证集
+def get_validate_images_data(validate_dir,batch_num):
+    val_image_names = get_dir_images(validate_dir)
+    image_list = []
+    image_names = []
+    val_image_names = np.random.choice(val_image_names,batch_num)
+    for image_name in val_image_names:
+        im = cv2.imread(image_name)
+        image_list.append(im)
+        image_names.append(image_name)
+    logger.debug("加载验证集图片%d张",len(image_list))
+    return image_list,image_names
 
-def generator(vis=False):
-    image_list = np.array(get_training_data())
-    print('{} training images in {}'.format(image_list.shape[0], DATA_FOLDER))
+
+def generator(data_dir):
+    image_list = np.array(get_dir_images(data_dir))
+    print('{} training images in {}'.format(image_list.shape[0], data_dir))
     index = np.arange(0, image_list.shape[0])
 
     while True:
@@ -84,34 +93,25 @@ def generator(vis=False):
                 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 #
                 #
-                split_file_name = os.path.join(DATA_FOLDER, "split", fn + '.txt')
-                big_gt_fn = os.path.join(DATA_FOLDER, "labels", fn + '.txt')
+                split_file_name = os.path.join(data_dir, "split", fn + '.txt')
+                big_gt_fn = os.path.join(data_dir, "labels", fn + '.txt')
 
                 if not os.path.exists(split_file_name):
                     print("Ground truth for image {} not exist!".format(im_fn))
                     continue
-                if not os.path.exists(big_gt_fn):
-                    print("大框 Big Ground truth for image {} not exist!".format(big_gt_fn))
-                    continue
                 bbox = load_annoataion(split_file_name)
-                big_gt = load_big_GT(big_gt_fn)
                 if len(bbox) == 0:
                     print("Ground truth for image {} empty!".format(im_fn))
                     continue
+
+                if not os.path.exists(big_gt_fn):
+                    print("大框 Big Ground truth for image {} not exist!".format(big_gt_fn))
+                    continue
+                big_gt = load_big_GT(big_gt_fn)
                 if len(big_gt) == 0:
                     print("Big Ground truth for image {} empty!".format(im_fn))
                     continue
 
-                if vis: # 给丫画出来
-                    for p in bbox:
-                        cv2.rectangle(im, (p[0], p[1]), (p[2], p[3]), color=(0, 0, 255), thickness=1)
-                    fig, axs = plt.subplots(1, 1, figsize=(30, 30))
-                    axs.imshow(im[:, :, ::-1])
-                    axs.set_xticks([])
-                    axs.set_yticks([])
-                    plt.tight_layout()
-                    plt.show()
-                    plt.close()
 
                 logger.debug("generator yield了一个它读出的图片[%s]",im_fn)
                 # 卧槽，注意看，这次返回的只有一张图
@@ -122,12 +122,12 @@ def generator(vis=False):
                 continue
 
 
-def get_batch(num_workers, **kwargs):
+def get_batch(num_workers,data_dir,**kwargs):
     try:
         # 这里又藏着一个generator，注意，这个函数get_batch()本身就是一个generator
         # 但是，这里，他的肚子里，还藏着一个generator()
         # 这个generator实际上就是真正去读一张图片，返回回来了
-        enqueuer = GeneratorEnqueuer(generator(**kwargs), use_multiprocessing=True)
+        enqueuer = GeneratorEnqueuer(generator(data_dir,**kwargs), use_multiprocessing=True)
         enqueuer.start(max_queue_size=24, workers=num_workers)
         generator_output = None
         while True:

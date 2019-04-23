@@ -58,7 +58,7 @@ def split_labels(data_home, type):
                 splitted_line = line.split(',')
 
                 if len(splitted_line)<8: continue
-                print(splitted_line)
+                # print(splitted_line)
                 # if len(splitted_line)==0: continue
                 x1, y1, x2, y2, x3, y3, x4, y4 = map(float, splitted_line[:8])
                 poly = np.array([x1, y1, x2, y2, x3, y3, x4, y4]).reshape([4, 2])

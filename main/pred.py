@@ -94,8 +94,8 @@ def get_gt_label_by_image_name(image_name,label_path):
         lines = f.readlines()
         for line in lines:
             # logger.debug("line:%s",line)
-            line = line.strip().split(",")
-            points = list(map(lambda x: int(float(x)), line)) # 用map自动做int转型, float->int是为了防止320.0这样的字符串
+            line = line.strip().split(",")[:8]
+            points = list(map(lambda x: int(float(x.strip())), line)) # 用map自动做int转型, float->int是为了防止320.0这样的字符串
             if len(points)>=8: # 处理8个点
                 bbox.append(points[:8]) # 去掉最后的一列 置信度
             else:
@@ -246,35 +246,14 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         # img = im
         # (rh,rw) = im.shape
 
-        h, w, c = img.shape
-        logger.debug('图像的h,w,c:%d,%d,%d',h,w,c)
-        im_info = np.array([h, w, c]).reshape([1, 3])
-        bbox_pred_val, cls_prob_val = sess.run([bbox_pred, cls_prob],
-                                               feed_dict={input_image: [img],
-                                                          input_im_info: im_info})
-        # 统计一下前景概率值的情况
-        # cls_prob_val的shape: (1, H, W, Ax2)，所以需要先reshape成 (1, H, W, A, 2),然后去掉前景的概率值
-        cls_prob_for_debug = cls_prob_val.reshape(1,
-                             cls_prob_val.shape[1], # H
-                             cls_prob_val.shape[2]//10, # W
-                             10, # 每个点上扩展的10个anchors
-                             -1) # <---2个值, 0:背景概率 1:前景概率
-        _stat = stat(cls_prob_for_debug[:, :, :, :, 1].reshape(-1,1))# 去掉背景，只保留前景，然后传入统计
-        logger.debug("前景返回概率情况:%s",_stat)
+        boxes, scores, textsegs = predict_by_network(
+            sess,
+            bbox_pred,
+            cls_prob,
+            input_im_info,
+            input_image,
+            img)
 
-        # 返回所有的base anchor调整后的小框，是矩形
-        textsegs, _ = proposal_layer(cls_prob_val, bbox_pred_val, im_info)
-        scores = textsegs[:, 0]
-        textsegs = textsegs[:, 1:5]# 这个是小框，是一个矩形 [1:5]=>1,2,3,4
-        # logger.debug('textsegs.shape:%r',textsegs.shape)
-        # logger.debug('score.shape:%r', scores[:, np.newaxis].shape)
-
-        # 做文本检测小框的生成，是根据上面的gt小框合成的
-        textdetector = TextDetector(DETECT_MODE='H')
-        # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）
-        boxes = textdetector.detect(textsegs, scores[:, np.newaxis], img.shape[:2])
-        # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
-        boxes = np.array(boxes, dtype=np.int)
         _image['boxes'] = boxes
 
         cost_time = (time.time() - start)
@@ -319,6 +298,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             if big_box_labels is not None:
                 logger.debug("找到图像（%s）对应的大框样本（%d）个，开始评测",image_name,len(big_box_labels))
                 metrics = evaluate(big_box_labels, boxes[:,:8], conf())
+                _image['F1'] = metrics['hmean']
                 logger.debug("大框的评价：%r",metrics)
                 draw(img, big_box_labels[:, :8], color=GRAY, thick=2)
 
@@ -335,6 +315,37 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         result.append(_image)
 
     return result
+
+# 调用前向运算来计算
+def predict_by_network(session, t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image, d_img ):
+    h, w, c = d_img.shape
+    logger.debug('图像的h,w,c:%d,%d,%d', h, w, c)
+    im_info = np.array([h, w, c]).reshape([1, 3])
+    bbox_pred_val, cls_prob_val = session.run([t_bbox_pred, t_cls_prob],
+                                           feed_dict={t_input_image: [d_img],
+                                                      t_input_im_info: im_info})
+    # 统计一下前景概率值的情况
+    # cls_prob_val的shape: (1, H, W, Ax2)，所以需要先reshape成 (1, H, W, A, 2),然后去掉前景的概率值
+    cls_prob_for_debug = cls_prob_val.reshape(1,
+                                              cls_prob_val.shape[1],  # H
+                                              cls_prob_val.shape[2] // 10,  # W
+                                              10,  # 每个点上扩展的10个anchors
+                                              -1)  # <---2个值, 0:背景概率 1:前景概率
+    _stat = stat(cls_prob_for_debug[:, :, :, :, 1].reshape(-1, 1))  # 去掉背景，只保留前景，然后传入统计
+    logger.debug("前景返回概率情况:%s", _stat)
+    # 返回所有的base anchor调整后的小框，是矩形
+    textsegs, _ = proposal_layer(cls_prob_val, bbox_pred_val, im_info)
+    scores = textsegs[:, 0]
+    textsegs = textsegs[:, 1:5]  # 这个是小框，是一个矩形 [1:5]=>1,2,3,4
+    # logger.debug('textsegs.shape:%r',textsegs.shape)
+    # logger.debug('score.shape:%r', scores[:, np.newaxis].shape)
+    # 做文本检测小框的生成，是根据上面的gt小框合成的
+    textdetector = TextDetector(DETECT_MODE='H')
+    # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）
+    boxes = textdetector.detect(textsegs, scores[:, np.newaxis], img.shape[:2])
+    # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
+    boxes = np.array(boxes, dtype=np.int)
+    return boxes, scores, textsegs
 
 
 if __name__ == '__main__':
