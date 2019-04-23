@@ -342,7 +342,7 @@ def predict_by_network(session, t_bbox_pred, t_cls_prob, t_input_im_info, t_inpu
     # 做文本检测小框的生成，是根据上面的gt小框合成的
     textdetector = TextDetector(DETECT_MODE='H')
     # 文本检测算法，用于把小框合并成一个4边型（不一定是矩形）
-    boxes = textdetector.detect(textsegs, scores[:, np.newaxis], img.shape[:2])
+    boxes = textdetector.detect(textsegs, scores[:, np.newaxis], d_img.shape[:2])
     # box是9个值，4个点，8个值了吧，还有个置信度：全部小框得分的均值作为文本行的均值
     boxes = np.array(boxes, dtype=np.int)
     return boxes, scores, textsegs
