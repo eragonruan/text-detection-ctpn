@@ -33,7 +33,7 @@ fi
 
 if [ "$1" = "gpu0" ]; then
     echo "生产模式:GPU0"
-    python -m main.train \
+    nohup python -m main.train \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=100000 \
         --decay_steps=10000 \
@@ -51,13 +51,13 @@ if [ "$1" = "gpu0" ]; then
         --moving_average_decay=0.997 \
         --restore=False \
         --early_stop=5 \
-        >> ./logs/ctpn_gpu0_$Date.log 2>&1
+        >> ./logs/ctpn_gpu0_$Date.log 2>&1 &
     exit
 fi
 
 if [ "$1" = "gpu1" ]; then
     echo "生产模式:GPU1"
-    python -m main.train \
+    nohup python -m main.train \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=50000 \
         --decay_steps=8000 \
@@ -75,6 +75,6 @@ if [ "$1" = "gpu1" ]; then
         --moving_average_decay=0.997 \
         --restore=False \
         --early_stop=5 \
-        >> ./logs/ctpn_gpu1_$Date.log 2>&1
+        >> ./logs/ctpn_gpu1_$Date.log 2>&1 &
     exit
 fi
