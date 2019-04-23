@@ -20,15 +20,6 @@ import logging
 
 logger = logging.getLogger("Evaluator")
 
-Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
-Point = namedtuple('Point', 'x y')
-recall = 0
-precision = 0
-hmean = 0
-gtRects = []
-detRects = []
-pairs = []
-evaluationLog = ""
 
 def conf():
     """
@@ -145,6 +136,11 @@ def evaluate(gt_points, detect_points, conf):
         - method (required)  Global method metrics. Ex: { 'Precision':0.8,'Recall':0.9 }
         - samples (optional) Per sample metrics. Ex: {'sample1' : { 'Precision':0.8,'Recall':0.9 } , 'sample2' : { 'Precision':0.8,'Recall':0.9 }
     """
+
+    Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
+    gtRects = []
+    detRects = []
+    pairs = []
 
     # 得到所有的GT坐标，注意，这里的GT不是split的小框，是大框，即8个值，4个坐标点，就是对应的4边形的4个顶点
     for n in range(len(gt_points)):
