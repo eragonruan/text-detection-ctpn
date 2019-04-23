@@ -232,7 +232,7 @@ def validate(sess,
             sess,t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image,image
         )
         # 得到标签名字
-        GT_labels = pred.get_gt_label_by_image_name(image_name,FLAGS.validate_dir)
+        GT_labels = pred.get_gt_label_by_image_name(image_name, os.path.join(FLAGS.validate_dir,"labels"))
         metrics = evaluate(GT_labels, boxes[:, :8], conf())
         precision_sum += metrics['precision']
         recall_sum += metrics['recall']

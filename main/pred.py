@@ -10,6 +10,7 @@ from utils.rpn_msr.proposal_layer import proposal_layer
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from utils import stat
+from utils.dataset import data_provider as data_provider
 
 logger = logging.getLogger("Train")
 
@@ -89,18 +90,8 @@ def get_gt_label_by_image_name(image_name,label_path):
         logger.error("标签文件不存在：%s",label_name)
         return None
 
-    bbox = []
-    with open(label_name, "r") as f:
-        lines = f.readlines()
-        for line in lines:
-            # logger.debug("line:%s",line)
-            line = line.strip().split(",")[:8]
-            points = list(map(lambda x: int(float(x.strip())), line)) # 用map自动做int转型, float->int是为了防止320.0这样的字符串
-            if len(points)>=8: # 处理8个点
-                bbox.append(points[:8]) # 去掉最后的一列 置信度
-            else:
-                bbox.append(points)
-    logger.info("加载标签文件完毕:%s",label_name)
+    bbox = data_provider.load_big_GT(label_name)
+
     return np.array(bbox)
 
 

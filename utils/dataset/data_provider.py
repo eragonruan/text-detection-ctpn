@@ -40,9 +40,9 @@ def load_annoataion(p):
     return bbox # 返回四个坐标的数组
 
 # 装载大框
-def load_big_GT(p):
+def load_big_GT(gt_file):
     bbox = []
-    with open(p, "r") as f:
+    with open(gt_file, "r") as f:
         lines = f.readlines()
         for line in lines:
             line_xy = line.strip().strip("\n").split(",")[:8] # 只取前8列，坐标值
@@ -52,6 +52,7 @@ def load_big_GT(p):
             for xy in line_xy:
                 v = int(float(xy.strip()))
                 bbox.append(v)
+    logger.info("加载标签文件完毕:%s", gt_file)
     return bbox # 返回四个坐标的数组
 
 # 按照FLAGS.validate_num 随机从目录中产生批量的数据，用于做验证集
