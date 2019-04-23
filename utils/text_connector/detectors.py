@@ -67,7 +67,7 @@ class TextDetector:
             widths[index] = w
             scores[index] = box[8]
             index += 1
-            logger.debug("宽[%d]高[%d]置信度[%f]",w,h,box[8])
+            # logger.debug("宽[%d]高[%d]置信度[%f]",w,h,box[8])
 
         # MIN_RATIO=0.5 ，
         # LINE_MIN_SCORE = 0.9 ，

@@ -59,9 +59,9 @@ if [ "$1" = "gpu1" ]; then
     echo "生产模式:GPU1"
     python -m main.train \
         --pretrained_model_path=data/vgg_16.ckpt \
-        --max_steps=40000 \
+        --max_steps=50000 \
         --decay_steps=8000 \
-        --evaluate_steps=5000 \
+        --evaluate_steps=1000 \
         --validate_dir=data/validate \
         --validate_batch=30 \
         --train_dir=data/train \

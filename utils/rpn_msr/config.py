@@ -21,7 +21,7 @@ class Config:
     RPN_NEGATIVE_OVERLAP = 0.3
     RPN_POSITIVE_OVERLAP = 0.7
     RPN_FG_FRACTION = 0.5
-    RPN_BATCHSIZE = 10
+    RPN_BATCHSIZE = 1200    # 真实样本我观察在150个左右的大框，800+大框，所以，我保守的用1200，也就是600个小框正样本
     RPN_BBOX_INSIDE_WEIGHTS = (0, 1.0, 0, 1.0) # (x,y,dx,dy),之前作者都写成了[1,1,1,1]，不对，只保留y和dy
     RPN_POSITIVE_WEIGHT = -1.0
 

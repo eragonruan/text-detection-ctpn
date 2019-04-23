@@ -138,6 +138,10 @@ def main(argv=None):
         variable_restore_op = slim.assign_from_checkpoint_fn(FLAGS.pretrained_model_path,
                                                              slim.get_trainable_variables(),
                                                              ignore_missing_vars=True)
+    # 早停用的变量
+    best_f1 = 0
+    early_stop_counter = 0
+    early_stop = False
 
 # 上面是定义计算图，下面是真正运行session.run()
 #################################################################################
@@ -162,6 +166,7 @@ def main(argv=None):
         start = time.time()
         train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(start))
         for step in range(FLAGS.max_steps):
+
             # 注意! 这次返回的只有一张图，以及这张图对应的所有的bbox
             data = next(data_generator) # next(<迭代器>）来返回下一个结果
             logger.debug("在Train中，调用generator从queue中取出一个图片:%r",type(data))
@@ -194,11 +199,25 @@ def main(argv=None):
                 f1_value,recall_value,precision_value = \
                     validate(sess,bbox_pred, cls_prob, input_im_info, input_image)
 
+                if f1_value>best_f1:
+                    logger.info("新F1值[%f]大于过去最好的F1值[%f]，早停计数器重置",f1_value,best_f1)
+                    best_f1 = f1_value
+                    early_stop_counter = 0
+                else:
+                    logger.info("新F1值[%f]小于过去最好的F1值[%f]，早停计数器+1", f1_value, best_f1)
+                    early_stop_counter+= 1
+
                 # 更新F1,Recall和Precision
                 sess.run([tf.assign(v_f1, f1_value),
                           tf.assign(v_recall, recall_value),
                           tf.assign(v_precision, precision_value)])
                 logger.info("在第%d步，模型评估结束", step)
+
+                if early_stop_counter> FLAGS.early_stop:
+                    early_stop = True
+                    logger.warning("达到了早停计数次数：%d次，训练提前结束",early_stop_counter)
+                    break
+
 
             if FLAGS.debug or (step + 1) % FLAGS.save_checkpoint_steps == 0:
                 # 每次训练的模型不要覆盖，前缀是训练启动时间
