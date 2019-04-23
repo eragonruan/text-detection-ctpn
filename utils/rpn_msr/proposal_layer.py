@@ -58,7 +58,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     min_size = cfg.RPN_MIN_SIZE  # 候选box的最小尺寸，目前是16，高宽均要大于16j,RPN_MIN_SIZE = 8
     # ？？？说是16，为何RPN_MIN_SIZE=8呢？
 
-    logger.debug("传入的前后景概率:%r",rpn_cls_prob_reshape)
+    logger.debug("传入的前后景概率:%r",rpn_cls_prob_reshape.shape)
     height, width = rpn_cls_prob_reshape.shape[1:3]  # feature-map的高宽 [1:3]=>1,2
 
     # https://github.com/eragonruan/text-detection-ctpn/issues/311
