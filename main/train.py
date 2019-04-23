@@ -188,7 +188,7 @@ def main(argv=None):
             logger.info("结束第%d步训练，结束sess.run",step)
             summary_writer.add_summary(summary_str, global_step=step)
 
-            if step % FLAGS.evaluate_steps == 0:
+            if step!=0 and step % FLAGS.evaluate_steps == 0:
                 avg_time_per_step = (time.time() - start) / FLAGS.evaluate_steps
                 start = time.time()
                 print('Step {:06d}, model loss {:.4f}, total loss {:.4f}, {:.2f} seconds/step'.format(
