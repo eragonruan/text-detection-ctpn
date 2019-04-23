@@ -91,6 +91,7 @@ def get_gt_label_by_image_name(image_name,label_path):
         return None
 
     bbox = data_provider.load_big_GT(label_name)
+    logger.debug("加载了%d个GT(4个点,8个值)",len(bbox))
 
     return np.array(bbox)
 

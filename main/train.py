@@ -237,7 +237,8 @@ def validate(sess,
         precision_sum += metrics['precision']
         recall_sum += metrics['recall']
         f1_sum += metrics['hmean']
-        logger.debug("图片%s的探测结果的精确度:%f,召回率:%f,F1:%f",metrics['precision'],metrics['recall'],metrics['hmean'])
+        logger.debug("图片%s的探测结果的精确度:%f,召回率:%f,F1:%f",image_name,
+                     metrics['precision'],metrics['recall'],metrics['hmean'])
 
     precision_mean = precision_sum / len(image_list)
     recall_mean = recall_sum / len(image_list)
