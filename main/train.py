@@ -9,6 +9,7 @@ from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from main import pred
 from utils.prepare import utils
+from utils.rpn_msr.config import Config
 
 tf.app.flags.DEFINE_float('learning_rate', 0.01, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
@@ -175,7 +176,7 @@ def main(argv=None):
             # im_info是[w,h,c]
 
 
-            image,scale = utils.resize_image(data[0])
+            image,scale = utils.resize_image(data[0],Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
             bbox_label = utils.resize_labels(data[1],scale)
 
             logger.debug("开始第%d步训练，运行sess.run",step)
@@ -252,16 +253,14 @@ def validate(sess,
 
         # 图像尺寸调整>>>>>>
         # 为了防止OOM，先把原图resize变小
-        image, scale = utils.resize_image(image)
+        image, scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
 
         # session, t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image, d_img
-        boxes, scores, textsegs = pred.predict_by_network(
-            sess,t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image,image
-        )
+        boxes, scores, textsegs = pred.predict_by_network(sess,t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image,image)
 
         # 图像尺寸调整<<<<<<
         # 还原回来原图的坐标
-        bbox_pred = utils.resize_labels(boxes[:, :8], 1/scale)
+        bbox_pred = utils.resize_labels(boxes[:,:8], 1/scale)
 
         # 得到标签名字
         GT_labels = pred.get_gt_label_by_image_name(image_name,os.path.join(FLAGS.validate_dir,"labels"))

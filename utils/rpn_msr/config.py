@@ -29,3 +29,6 @@ class Config:
     RPN_POST_NMS_TOP_N = 1000
     RPN_NMS_THRESH = 0.7
     RPN_MIN_SIZE = 8
+
+    RPN_IMAGE_WIDTH  = 1200
+    RPN_IMAGE_HEIGHT = 1600
