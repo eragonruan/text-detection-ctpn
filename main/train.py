@@ -271,9 +271,11 @@ def validate(sess,
         logger.debug("图片%s的探测结果的精确度:%f,召回率:%f,F1:%f",image_name,
                      metrics['precision'],metrics['recall'],metrics['hmean'])
 
-    precision_mean = precision_sum / len(image_list)
-    recall_mean = recall_sum / len(image_list)
-    f1_mean = f1_sum / len(image_list)
+    if len(image_list)>0:
+        precision_mean = precision_sum / len(image_list)
+        recall_mean = recall_sum / len(image_list)
+        f1_mean = f1_sum / len(image_list)
+        
     logger.debug("这批%d个图片的平均的精确度:%f,召回率:%f,F1:%f",
                  len(image_list),precision_mean,recall_mean,f1_mean)
 

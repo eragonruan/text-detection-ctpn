@@ -18,7 +18,7 @@ def get_dir_images(data_dir):
                 if filename.endswith(ext):
                     img_files.append(os.path.join(parent, filename))
                     break
-    print('Find {} images'.format(len(img_files)))
+    logger.debug('在%s找到%d张图片',data_dir,len(img_files))
     return img_files
 
 
@@ -63,7 +63,13 @@ def get_validate_images_data(validate_dir,batch_num):
     val_image_names = get_dir_images(validate_dir)
     image_list = []
     image_names = []
+
+    if len(val_image_names)==0:
+        logger.error("无法在目录[%s]找到任何图片文件",validate_dir)
+        return image_list,image_names
+
     val_image_names = np.random.choice(val_image_names,batch_num)
+
     for image_name in val_image_names:
         im = cv2.imread(image_name)
         image_list.append(im)
