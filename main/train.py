@@ -188,7 +188,7 @@ def main(argv=None):
                                                cls_prob],
                                               feed_dict={input_image: [image],
                                                          input_bbox: bbox_label,
-                                                         input_im_info: image.shape,
+                                                         input_im_info: np.array(image.shape).reshape([1, 3]),
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
             logger.info("结束第%d步训练，结束sess.run",step)
             summary_writer.add_summary(summary_str, global_step=step)
