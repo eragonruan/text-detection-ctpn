@@ -1,5 +1,8 @@
 import numpy as np
 from shapely.geometry import Polygon
+import cv2,logging
+
+logger = logging
 
 # 就是把左上点调整到数组的第一个
 def pickTopLeft(poly):
@@ -80,3 +83,30 @@ def shrink_poly(poly, r=16):
                     int(k2 * p + b2)])      # 下方的y4
 
     return np.array(res, dtype=np.int).reshape([-1, 8])
+
+# 看哪个大了，就缩放哪个，规定最大的宽和高：max_width,max_height
+def resize_image(image,max_width,max_height):
+    h,w,_ = image.shape # H,W
+
+    if h<max_height and w<max_width:
+        logger.debug("图片的宽高[%d,%d]比最大要求[%d,%d]小，无需resize",h,w,max_height,max_width)
+        return image,1
+
+    h_scale = max_height/h
+    w_scale = max_width/w
+    # print("h_scale",h_scale,"w_scale",w_scale)
+    scale = min(h_scale,w_scale) # scale肯定是小于1的，越小说明缩放要厉害，所以谁更小，取谁
+
+    # https://www.jianshu.com/p/11879a49d1a0 关于resize
+    image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    logger.debug("图片从[%d,%d]被resize成为%r",h,w,image.shape)
+
+    return image,scale
+
+# 看哪个大了，就缩放哪个，规定最大的宽和高：max_width,max_height
+def resize_labels(labels,scale):
+    if scale==1: return labels
+    resized_labels = []
+    for label in labels:
+        resized_labels.append([x*scale for x in label])
+    return list(resized_labels)

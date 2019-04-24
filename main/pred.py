@@ -179,7 +179,8 @@ def main():
         logger.info("探测图片[%s]的文字区域开始", image_name)
         try:
             img = cv2.imread(image_name)
-            img = img[:, :, ::-1]  # bgr是opencv通道默认顺序，转成标准的RGB方式
+            # 好像网络用的就是OpenCV的BGR顺序，所以也不用转了
+            # img = img[:, :, ::-1]  # bgr是opencv通道默认顺序，转成标准的RGB方式
             image_list.append(img)
             image_names.append(image_name)
         except:
@@ -232,11 +233,6 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
 
         logger.info("探测图片[%s]的文字区域开始",image_name)
         start = time.time()
-
-        # 之前的代码是resize，归一化一下，我觉得没有必要，不resize了
-        # img, (rh, rw) = resize_image(im
-        # img = im
-        # (rh,rw) = im.shape
 
         boxes, scores, textsegs = predict_by_network(
             sess,

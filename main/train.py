@@ -8,6 +8,7 @@ from utils.dataset import data_provider as data_provider
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from main import pred
+from utils.prepare import utils
 
 tf.app.flags.DEFINE_float('learning_rate', 0.01, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
@@ -173,17 +174,20 @@ def main(argv=None):
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 
+
+            image,scale = utils.resize_image(data[0])
+            bbox_label = utils.resize_labels(data[1],scale)
+
             logger.debug("开始第%d步训练，运行sess.run",step)
-            ml, tl, _, summary_str,bboxs,classes = sess.run([
+            ml, tl, _, summary_str,classes = sess.run([
                                                model_loss,
                                                total_loss,
                                                train_op,
                                                summary_op,
-                                               bbox_pred,
                                                cls_prob],
-                                              feed_dict={input_image: data[0],
-                                                         input_bbox: data[1],
-                                                         input_im_info: data[2],
+                                              feed_dict={input_image: image,
+                                                         input_bbox: bbox_label,
+                                                         input_im_info: image.shape,
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
             logger.info("结束第%d步训练，结束sess.run",step)
             summary_writer.add_summary(summary_str, global_step=step)
@@ -246,13 +250,22 @@ def validate(sess,
         image = image_list[i]
         image_name = image_names[i]
 
+        # 图像尺寸调整>>>>>>
+        # 为了防止OOM，先把原图resize变小
+        image, scale = utils.resize_image(image)
+
         # session, t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image, d_img
         boxes, scores, textsegs = pred.predict_by_network(
             sess,t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image,image
         )
+
+        # 图像尺寸调整<<<<<<
+        # 还原回来原图的坐标
+        bbox_pred = utils.resize_labels(boxes[:, :8], 1/scale)
+
         # 得到标签名字
         GT_labels = pred.get_gt_label_by_image_name(image_name,os.path.join(FLAGS.validate_dir,"labels"))
-        metrics = evaluate(GT_labels, boxes[:, :8], conf())
+        metrics = evaluate(GT_labels,bbox_pred,conf())
         precision_sum += metrics['precision']
         recall_sum += metrics['recall']
         f1_sum += metrics['hmean']

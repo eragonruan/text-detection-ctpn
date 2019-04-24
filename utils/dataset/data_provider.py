@@ -83,8 +83,8 @@ def generator(data_dir):
             try:
                 im_fn = image_list[i] # fn file name，文件名
                 im = cv2.imread(im_fn)
-                h, w, c = im.shape
-                im_info = np.array([[h, w, c]]) # shape(1,3)
+                # h, w, c = im.shape
+                # im_info = np.array([[h, w, c]]) # shape(1,3)
 
                 _, fn = os.path.split(im_fn)
                 fn, _ = os.path.splitext(fn)
@@ -116,10 +116,9 @@ def generator(data_dir):
                     print("Big Ground truth for image {} empty!".format(im_fn))
                     continue
 
-
-                logger.debug("generator yield了一个它读出的图片[%s]",im_fn)
+                logger.debug("generator yield了一个它读出的图片[%s]", im_fn)
                 # 卧槽，注意看，这次返回的只有一张图
-                yield [im], bbox, im_info,[im_fn],big_gt  # yield很最重要，产生一个generator，可以遍历所有的图片
+                yield [im], bbox, im.shape,[im_fn],big_gt  # yield很最重要，产生一个generator，可以遍历所有的图片
 
             except Exception as e:
                 print(e)
