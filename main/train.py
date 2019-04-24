@@ -175,8 +175,8 @@ def main(argv=None):
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 
-
-            image,scale = utils.resize_image(data[0],Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
+            # data[0][0]写死，没关系，因为这个本身就是固定的
+            image,scale = utils.resize_image(data[0][0],Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
             bbox_label = utils.resize_labels(data[1],scale)
 
             logger.debug("开始第%d步训练，运行sess.run",step)
@@ -186,7 +186,7 @@ def main(argv=None):
                                                train_op,
                                                summary_op,
                                                cls_prob],
-                                              feed_dict={input_image: image,
+                                              feed_dict={input_image: [image],
                                                          input_bbox: bbox_label,
                                                          input_im_info: image.shape,
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
