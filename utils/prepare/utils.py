@@ -108,5 +108,5 @@ def resize_labels(labels,scale):
     if scale==1: return labels
     resized_labels = []
     for label in labels:
-        resized_labels.append([x*scale for x in label])
+        resized_labels.append([round(x*scale) for x in label])
     return list(resized_labels)
