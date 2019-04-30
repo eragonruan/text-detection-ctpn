@@ -249,8 +249,8 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             img)
 
         # scale 放大 back回去
-        boxes = utils.resize_labels(boxes[:, :8], 1 / scale)
-        textsegs = utils.resize_labels(textsegs, 1 / scale)
+        boxes = np.array(utils.resize_labels(boxes[:, :8], 1 / scale))
+        textsegs = np.array(utils.resize_labels(textsegs, 1 / scale))
 
         _image['boxes'] = boxes
 
@@ -265,7 +265,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                 split_box_labels = get_gt_label_by_image_name(image_name, split_path)
                 draw(img,split_box_labels,BLUE)
             # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-            draw(img, boxes[:,:8], color=RED,thick=2)
+            draw(img, boxes, color=RED,thick=2)
             out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
             cv2.imwrite(out_image_path,img)
 
