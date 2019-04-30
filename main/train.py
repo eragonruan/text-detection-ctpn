@@ -58,8 +58,9 @@ def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
 
     logger.info(
-        "本次使用的参数：\nlearning_rate:%f\nmax_steps:%d\nevaluate_steps:%d\nmodel:%s\nlambda1:%d\nlogs_path:%s\nrestore:%r\ndebug:%r\nsave_checkpoint_steps:%d", \
+        "本次使用的参数：\nlearning_rate:%f\ndecay_steps:%f\nmax_steps:%d\nevaluate_steps:%d\nmodel:%s\nlambda1:%d\nlogs_path:%s\nrestore:%r\ndebug:%r\nsave_checkpoint_steps:%d", \
         FLAGS.learning_rate,
+        FLAGS.decay_steps,
         FLAGS.max_steps,
         FLAGS.evaluate_steps,
         FLAGS.model,
