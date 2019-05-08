@@ -264,8 +264,12 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                 draw(img,textsegs,GREEN)
                 split_box_labels = get_gt_label_by_image_name(image_name, split_path)
                 draw(img,split_box_labels,BLUE)
+                logger.debug("将小框画上去了")
+
             # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-            draw(img, boxes, color=RED,thick=2)
+            draw(img, boxes, color=RED,thick=1)
+            logger.debug("将大框画上去了")
+
             out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
             cv2.imwrite(out_image_path,img)
 
@@ -275,19 +279,24 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
 
         # 是否保存预测结果（包括大框和小框）=> data/pred目录
         if FLAGS.save :
+            big_box_file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt"
             # 输出大框到文件
             save(
                 pred_gt_path,
-                os.path.splitext(os.path.basename(image_name))[0] + ".txt",
+                big_box_file_name,
                 boxes
             )
+            logger.debug("保存了大框的坐标到：%s",big_box_file_name)
+
             # 输出小框到文件
+            bbox_file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt",
             save(
                 pred_bbox_path,
-                os.path.splitext(os.path.basename(image_name))[0] + ".txt",
+                bbox_file_name,
                 textsegs,
                 scores
             )
+            logger.debug("保存了小框的坐标到：%s",bbox_file_name)
 
         # 是否做评价
         if FLAGS.evaluate:
