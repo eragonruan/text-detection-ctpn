@@ -280,24 +280,24 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
 
         # 是否保存预测结果（包括大框和小框）=> data/pred目录
         if FLAGS.save :
-            big_box_file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt"
+            file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt"
             # 输出大框到文件
             save(
                 pred_gt_path,
-                big_box_file_name,
+                file_name,
                 boxes
             )
-            logger.debug("保存了大框的坐标到：%s/%s",pred_gt_path,big_box_file_name)
+            logger.debug("保存了大框的坐标到：%s/%s",pred_gt_path,file_name)
 
             # 输出小框到文件
-            bbox_file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt",
+
             save(
                 pred_bbox_path,
-                bbox_file_name,
+                file_name,
                 textsegs,
                 scores
             )
-            logger.debug("保存了小框的坐标到：%s/%s",pred_bbox_path,bbox_file_name)
+            logger.debug("保存了小框的坐标到：%s/%s",pred_bbox_path,file_name)
 
         # 是否做评价
         if FLAGS.evaluate:
