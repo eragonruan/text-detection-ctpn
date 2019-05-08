@@ -101,6 +101,7 @@ def get_gt_label_by_image_name(image_name,label_path):
 # 保存预测的输出结果，保存大框和小框，都用这个函数，保存大框的时候不需要scores这个参数
 def save(path, file_name,data,scores=None):
     # 输出
+    logger.debug("保存坐标文件，目录：%s，名字：%s",path, file_name)
     with open(os.path.join(path, file_name),"w") as f:
         for i, one in enumerate(data):
             line = ",".join([str(value) for value in one])
@@ -286,7 +287,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                 big_box_file_name,
                 boxes
             )
-            logger.debug("保存了大框的坐标到：%s",big_box_file_name)
+            logger.debug("保存了大框的坐标到：%s/%s",pred_gt_path,big_box_file_name)
 
             # 输出小框到文件
             bbox_file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt",
@@ -296,7 +297,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                 textsegs,
                 scores
             )
-            logger.debug("保存了小框的坐标到：%s",bbox_file_name)
+            logger.debug("保存了小框的坐标到：%s/%s",pred_bbox_path,bbox_file_name)
 
         # 是否做评价
         if FLAGS.evaluate:
