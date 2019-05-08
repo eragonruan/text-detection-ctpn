@@ -175,7 +175,7 @@ def _generate_words(charset):
     length = random.randint(MIN_LENGTH,MAX_LENGTH)
     s = ""
     for i in range(length):
-        j = random.randint(0, len(charset))
+        j = random.randint(0, len(charset) - 1)
         s += charset[j]
     if DEBUG: print("随机生成的汉字字符串[%s]，%d" %(s,length))
     return s,length
