@@ -1,5 +1,3 @@
-# 默认CTPN用GPU1，CRNN用GPU0
-
 Date=$(date +%Y%m%d%H%M)
 
 if [ "$1" = "stop" ]; then
@@ -31,50 +29,24 @@ if [ "$1" = "console" ]; then
     exit
 fi
 
-if [ "$1" = "gpu0" ]; then
-    echo "生产模式:GPU0"
-    nohup python -m main.train \
-        --pretrained_model_path=data/vgg_16.ckpt \
-        --max_steps=100000 \
-        --decay_steps=10000 \
-        --evaluate_steps=1000 \
-        --validate_dir=data/validate \
-        --validate_batch=10 \
-        --train_dir=data/train \
-        --learning_rate=0.0001 \
-        --save_checkpoint_steps=5000 \
-        --decay_rate=0.5 \
-        --lambda1=1000 \
-        --gpu=0 \
-        --debug=False \
-        --logs_path=logs \
-        --moving_average_decay=0.997 \
-        --restore=False \
-        --early_stop=5 \
-        >> ./logs/ctpn_gpu0_$Date.log 2>&1 &
-    exit
-fi
-
-if [ "$1" = "gpu1" ]; then
-    echo "生产模式:GPU1"
-    nohup python -m main.train \
-        --pretrained_model_path=data/vgg_16.ckpt \
-        --max_steps=50000 \
-        --decay_steps=8000 \
-        --evaluate_steps=1000 \
-        --validate_dir=data/validate \
-        --validate_batch=10 \
-        --train_dir=data/train \
-        --learning_rate=0.0001 \
-        --save_checkpoint_steps=5000 \
-        --lambda1=1000 \
-        --gpu=1 \
-        --decay_rate=0.3 \
-        --debug=False \
-        --logs_path=logs \
-        --moving_average_decay=0.997 \
-        --restore=False \
-        --early_stop=5 \
-        >> ./logs/ctpn_gpu1_$Date.log 2>&1 &
-    exit
-fi
+echo "生产模式,使用GPU#$1"
+nohup python -m main.train \
+    --pretrained_model_path=data/vgg_16.ckpt \
+    --max_steps=100000 \
+    --decay_steps=10000 \
+    --evaluate_steps=1000 \
+    --validate_dir=data/validate \
+    --validate_batch=10 \
+    --train_dir=data/train \
+    --learning_rate=0.0001 \
+    --save_checkpoint_steps=5000 \
+    --decay_rate=0.5 \
+    --lambda1=1000 \
+    --gpu=$1 \
+    --debug=False \
+    --logs_path=logs \
+    --moving_average_decay=0.997 \
+    --restore=False \
+    --early_stop=5 \
+    --max_lr_decay=3 \
+    >> ./logs/ctpn_gpu$1_$Date.log 2>&1 &
