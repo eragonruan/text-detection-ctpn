@@ -117,8 +117,7 @@ def save(path, file_name,data,scores=None):
 def draw(image,boxes,color,thick=1):
 
     # 先将RGB格式转成BGR，也就是OpenCV要求的格式
-    image = image[:,:,::-1]
-
+    # image = image[:,:,::-1]
     if boxes.shape[1]==4: #矩形
         for box in boxes:
             cv2.rectangle(image,
@@ -182,7 +181,6 @@ def main():
         logger.info("探测图片[%s]的文字区域开始", image_name)
         try:
             img = cv2.imread(image_name)
-            # 好像网络用的就是OpenCV的BGR顺序，所以也不用转了
             # img = img[:, :, ::-1]  # bgr是opencv通道默认顺序，转成标准的RGB方式
             image_list.append(img)
             image_names.append(image_name)
@@ -229,10 +227,10 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
     # }, ]
     result = []
     for i in range(len(image_list)):
-        img = image_list[i]
+        original_img = image_list[i]
 
         # resize,防止显卡OOM
-        img,scale = utils.resize_image(img, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
+        resized_img,scale = utils.resize_image(original_img, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
 
         image_name = image_names[i]
         _image = {}
@@ -247,7 +245,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             cls_prob,
             input_im_info,
             input_image,
-            img)
+            resized_img)
 
         # scale 放大 back回去
         boxes = np.array(utils.resize_labels(boxes[:, :8], 1 / scale))
@@ -262,19 +260,19 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         if FLAGS.draw :
             if FLAGS.split:
                 # 把预测小框画上去
-                draw(img,textsegs,GREEN)
+                draw(original_img,textsegs,GREEN)
                 split_box_labels = get_gt_label_by_image_name(image_name, split_path)
-                draw(img,split_box_labels,BLUE)
+                draw(original_img,split_box_labels,BLUE)
                 logger.debug("将小框画上去了")
 
             # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-            draw(img, boxes, color=RED,thick=1)
+            draw(original_img, boxes, color=RED,thick=1)
             logger.debug("将大框画上去了")
 
             out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
-            cv2.imwrite(out_image_path,img)
+            cv2.imwrite(out_image_path,original_img)
 
-            _image['image'] = img
+            _image['image'] = original_img
 
             logger.debug("绘制预测和GT到图像完毕：%s", out_image_path)
 
@@ -308,7 +306,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                 metrics = evaluate(big_box_labels, boxes[:,:8], conf())
                 _image['F1'] = metrics['hmean']
                 logger.debug("大框的评价：%r",metrics)
-                draw(img, big_box_labels[:, :8], color=GRAY, thick=2)
+                draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
 
             # 对4个值（2个点）的矩形小框做评价
             if FLAGS.split:
@@ -318,7 +316,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                     metrics = evaluate(split_box_labels, textsegs, conf())
                     logger.debug("小框的评价：%r", metrics)
                     logger.debug("将小框标签画到图片上去")
-                    draw(img, split_box_labels[:,:4], color=GRAY, thick=1)
+                    draw(original_img, split_box_labels[:,:4], color=GRAY, thick=1)
 
         result.append(_image)
 
