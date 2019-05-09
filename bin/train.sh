@@ -2,7 +2,7 @@ Date=$(date +%Y%m%d%H%M)
 
 if [ "$1" = "stop" ]; then
     echo "停止训练"
-    ps aux|grep python|grep vgg|awk '{print $2}'|xargs kill -9
+    ps aux|grep python|grep ctpn|awk '{print $2}'|xargs kill -9
     exit
 fi
 
@@ -31,9 +31,10 @@ fi
 
 echo "生产模式,使用GPU#$1"
 nohup python -m main.train \
+    --name=ctpn \
     --pretrained_model_path=data/vgg_16.ckpt \
     --max_steps=100000 \
-    --decay_steps=10000 \
+    --decay_steps=8000 \
     --evaluate_steps=100 \
     --validate_dir=data/validate \
     --validate_batch=50 \

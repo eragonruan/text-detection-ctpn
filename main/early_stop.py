@@ -4,10 +4,11 @@ FLAGS = tf.app.flags.FLAGS
 logger = logging.getLogger("Ealiy Stop")
 
 class EarlyStop():
-    BEST = 0
-    CONTINUE = 1
-    LEARNING_RATE_DECAY = 2
-    STOP = 3
+    ZERO=0
+    BEST = 1
+    CONTINUE = 2
+    LEARNING_RATE_DECAY = 3
+    STOP = -1
 
     def __init__(self,max_retry,max_learning_rate_decay):
         self.best_f1_value = 0
@@ -17,6 +18,9 @@ class EarlyStop():
         self.max_learning_rate_decay = max_learning_rate_decay
 
     def decide(self,f1_value):
+
+        if f1_value ==0:
+            return EarlyStop.ZERO
 
         if f1_value>= self.best_f1_value:
             logger.debug("[早停]新F1值%f>旧F1值%f，记录最好的F1，继续训练",f1_value,self.best_f1_value)

@@ -12,6 +12,7 @@ from utils.prepare import utils
 from utils.rpn_msr.config import Config
 from main.early_stop import  EarlyStop
 
+tf.app.flags.DEFINE_string('name', 'ctpn', '')
 tf.app.flags.DEFINE_float('learning_rate', 0.01, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
 tf.app.flags.DEFINE_integer('decay_steps', 2000, '')#？？？
@@ -167,9 +168,11 @@ def main(argv=None):
 
         # 是的，get_batch返回的是一个generator
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,data_dir=FLAGS.train_dir)
-        start = time.time()
         train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(start))
+        average_train_time = 0
+
         for step in range(FLAGS.max_steps):
+            train_start = time.time()
 
             # 注意! 这次返回的只有一张图，以及这张图对应的所有的bbox
             data = next(data_generator) # next(<迭代器>）来返回下一个结果
@@ -181,7 +184,7 @@ def main(argv=None):
             image,scale = utils.resize_image(data[0][0],Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
             bbox_label = utils.resize_labels(data[1],scale)
 
-            logger.debug("开始第%d步训练，运行sess.run",step)
+            logger.info("开始第%d步训练，运行sess.run",step)
             ml, tl, _, summary_str,classes = sess.run([
                                                model_loss,
                                                total_loss,
@@ -192,45 +195,61 @@ def main(argv=None):
                                                          input_bbox: bbox_label,
                                                          input_im_info: np.array(image.shape).reshape([1, 3]),
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
-            logger.info("结束第%d步训练，结束sess.run",step)
+            average_train_time = average_time(train_start,average_train_time,step)
+            logger.info("结束第%d步训练，结束sess.run，平均每个step时间：%f",step,average_train_time)
             summary_writer.add_summary(summary_str, global_step=step)
 
             if step!=0 and step % FLAGS.evaluate_steps == 0:
-                avg_time_per_step = (time.time() - start) / FLAGS.evaluate_steps
-                start = time.time()
-                print('Step {:06d}, model loss {:.4f}, total loss {:.4f}, {:.2f} seconds/step'.format(
-                    step, ml, tl, avg_time_per_step))
+                validate_start = time.time()
                 logger.info("在第%d步，开始进行模型评估",step)
-
                 # data[4]是大框的坐标，是个数组，8个值
                 f1_value,recall_value,precision_value = \
                     validate(sess,bbox_pred, cls_prob, input_im_info, input_image)
-
                 # 更新F1,Recall和Precision
                 sess.run([tf.assign(v_f1, f1_value),
                           tf.assign(v_recall, recall_value),
                           tf.assign(v_precision, precision_value)])
+                logger.info("在第%d步，模型评估结束，耗时：%f", step, time.time() - validate_start)
 
-                logger.info("在第%d步，模型评估结束", step)
+                if early_stop(f1_value,saver,sess,step,learning_rate,train_start_time): break
 
-                decision = early_stop.decide(f1_value)
 
-                if decision== EarlyStop.CONTINUE:
-                    continue
+def average_time(start_time,avg_time,step):
+    _time = time.time() - start_time
+    if avg_time == 0:
+        avg_time = _time
+    else:
+        # 移动平均
+        avg_time = avg_time - avg_time / step + _time / step
+    return avg_time
 
-                if decision == EarlyStop.BEST:
-                    logger.info("新F1值[%f]大于过去最好的F1值，早停计数器重置，并保存模型",f1_value)
-                    save_model(saver, sess, step, train_start_time)
-                    continue
 
-                if decision == EarlyStop.STOP:
-                    logger.warning("超过早停最大次数，也尝试了多次学习率Decay，无法在提高：第%d次，训练提前结束",step)
-                    break
+def early_stop(f1_value,saver,sess,step,learning_rate,train_start_time):
+    decision = early_stop.decide(f1_value)
 
-                if decision == EarlyStop.LEARNING_RATE_DECAY:
-                    logger.info("学习率(learning rate)衰减：%f=>%f",learning_rate.eval(),learning_rate.eval() * FLAGS.decay_rate)
-                    sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
+    if decision == EarlyStop.ZERO: # 当前F1是0，啥也甭说了，继续训练
+        return False
 
+    if decision == EarlyStop.CONTINUE:
+        logger.info("新F1值比最好的要小，继续训练...")
+        return False
+
+    if decision == EarlyStop.BEST:
+        logger.info("新F1值[%f]大于过去最好的F1值，早停计数器重置，并保存模型", f1_value)
+        save_model(saver, sess, step, train_start_time)
+        return False
+
+    if decision == EarlyStop.STOP:
+        logger.warning("超过早停最大次数，也尝试了多次学习率Decay，无法在提高：第%d次，训练提前结束", step)
+        return True
+
+    if decision == EarlyStop.LEARNING_RATE_DECAY:
+        logger.info("学习率(learning rate)衰减：%f=>%f", learning_rate.eval(), learning_rate.eval() * FLAGS.decay_rate)
+        sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
+        return False
+
+    logger.error("无法识别的EarlyStop结果：%r",decision)
+    return True
 
 def save_model(saver, sess, step, train_start_time):
     # 每次训练的模型不要覆盖，前缀是训练启动时间
