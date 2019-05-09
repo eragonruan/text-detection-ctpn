@@ -37,7 +37,7 @@ nohup python -m main.train \
     --decay_steps=8000 \
     --evaluate_steps=100 \
     --validate_dir=data/validate \
-    --validate_batch=50 \
+    --validate_batch=10 \
     --train_dir=data/train \
     --learning_rate=0.0001 \
     --save_checkpoint_steps=5000 \

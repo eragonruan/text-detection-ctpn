@@ -196,7 +196,7 @@ def main(argv=None):
                                                          input_im_info: np.array(image.shape).reshape([1, 3]),
                                                          input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
             average_train_time = average_time(train_start,average_train_time,step)
-            logger.info("结束第%d步训练，结束sess.run，平均每个step时间：%f",step,average_train_time)
+            logger.info("结束第%d步训练，结束sess.run，平均每个step时间：%f,modeloss:%f,totaloss:%f",step,average_train_time,ml,tl)
             summary_writer.add_summary(summary_str, global_step=step)
 
             if step!=0 and step % FLAGS.evaluate_steps == 0:
@@ -211,7 +211,7 @@ def main(argv=None):
                           tf.assign(v_precision, precision_value)])
                 logger.info("在第%d步，模型评估结束，耗时：%f", step, time.time() - validate_start)
 
-                if early_stop(f1_value,saver,sess,step,learning_rate,train_start_time): break
+                if is_need_early_stop(early_stop,f1_value,saver,sess,step,learning_rate,train_start_time): break
 
 
 def average_time(start_time,avg_time,step):
@@ -224,7 +224,7 @@ def average_time(start_time,avg_time,step):
     return avg_time
 
 
-def early_stop(f1_value,saver,sess,step,learning_rate,train_start_time):
+def is_need_early_stop(early_stop,f1_value,saver,sess,step,learning_rate,train_start_time):
     decision = early_stop.decide(f1_value)
 
     if decision == EarlyStop.ZERO: # 当前F1是0，啥也甭说了，继续训练
