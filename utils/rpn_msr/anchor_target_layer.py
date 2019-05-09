@@ -242,6 +242,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
     __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
     logger.debug("现在有%d个前景样本（anchors）",(labels==1).sum())
+
+
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
 
     # 开始按照batch要求，削减样本正样本数量，以及增加负样本
@@ -254,6 +256,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
         disable_inds = npr.choice(
             fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
         labels[disable_inds] = -1  # 变为-1，-1就是disable，就是这次不用的样本，既不能当正样本，也不能当负样本
+
+    logger.debug("现在有%d个前景样本（anchors）", (labels == 1).sum())
     #上面是找到正样本，可能找出很多，这个时候要采样
     num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
     bg_inds = np.where(labels == 0)[0]
@@ -292,14 +296,19 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
                             (np.sum(labels == 0)) + 1)
     bbox_outside_weights[labels == 1, :] = positive_weights  # 外部权重，前景是1，背景是0
     bbox_outside_weights[labels == 0, :] = negative_weights
+
+    logger.debug("现在有%d个前景样本（anchors）", (labels == 1).sum())
     inside_labels = labels.copy()
     labels = _unmap(labels, total_anchors_num, inds_inside, fill=-1)  # 这些anchor的label是-1，也即dontcare
+    logger.debug("现在有%d个前景样本（anchors）", (labels == 1).sum())
+
     # bbox_targets是4个差
     bbox_targets = _unmap(bbox_targets, total_anchors_num, inds_inside, fill=0)  # 这些anchor的真值是0，也即没有值
     bbox_inside_weights = _unmap(bbox_inside_weights, total_anchors_num, inds_inside, fill=0)  # 内部权重以0填充
     bbox_outside_weights = _unmap(bbox_outside_weights, total_anchors_num, inds_inside, fill=0)  # 外部权重以0填充
     # labels
     labels = labels.reshape((1, height, width, A))  # reshap一下label
+    logger.debug("现在有%d个前景样本（anchors）", (labels == 1).sum())
     rpn_labels = labels
     # bbox_targets
     bbox_targets = bbox_targets \
