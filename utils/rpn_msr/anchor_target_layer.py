@@ -213,7 +213,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
     logger.debug("argmax_overlaps存着gt索引，一共anchors行:%r", argmax_overlaps.shape)
     max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
-    logger.debug("max_overlaps是个数组，存放着每个anchor最大的IoU值：:%r", stat(max_overlaps.shape))
+    logger.debug("max_overlaps是个数组，存放着每个anchor最大的IoU值：:%r", stat(max_overlaps))
 
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
     logger.debug("gt_argmax_overlaps是个一位数组，存放着每GT最大IoU的anchor的行号:%r", gt_argmax_overlaps.shape)
