@@ -185,6 +185,7 @@ def main(argv=None):
             bbox_label = utils.resize_labels(data[1],scale)
 
             logger.info("开始第%d步训练，运行sess.run",step)
+            image = image[:,:,::-1]
             ml, tl, _, summary_str,classes = sess.run([
                                                model_loss,
                                                total_loss,

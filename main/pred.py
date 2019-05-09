@@ -327,6 +327,7 @@ def predict_by_network(session, t_bbox_pred, t_cls_prob, t_input_im_info, t_inpu
     h, w, c = d_img.shape
     logger.debug('图像的h,w,c:%d,%d,%d', h, w, c)
     im_info = np.array([h, w, c]).reshape([1, 3])
+    d_img = d_img[:, :, ::-1]
     bbox_pred_val, cls_prob_val = session.run([t_bbox_pred, t_cls_prob],
                                            feed_dict={t_input_image: [d_img],
                                                       t_input_im_info: im_info})
