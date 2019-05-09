@@ -328,6 +328,6 @@ def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
     tf.summary.scalar('model_loss', model_loss)
     tf.summary.scalar('total_loss', total_loss)
     tf.summary.scalar('rpn_cross_entropy', rpn_cross_entropy)
-    tf.summary.scalar('rpn_loss_box', rpn_loss_box)
+    tf.summary.scalar('rpn_loss_box', rpn_loss_box * FLAGS.lambda1) # 这里故意乘一下，好看对应调整了lambda的值
 
     return total_loss, model_loss, rpn_cross_entropy, rpn_loss_box

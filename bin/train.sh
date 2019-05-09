@@ -34,19 +34,19 @@ nohup python -m main.train \
     --pretrained_model_path=data/vgg_16.ckpt \
     --max_steps=100000 \
     --decay_steps=10000 \
-    --evaluate_steps=1000 \
+    --evaluate_steps=100 \
     --validate_dir=data/validate \
-    --validate_batch=10 \
+    --validate_batch=50 \
     --train_dir=data/train \
     --learning_rate=0.0001 \
     --save_checkpoint_steps=5000 \
-    --decay_rate=0.5 \
-    --lambda1=1000 \
+    --decay_rate=0.3 \
+    --lambda1=10000 \
     --gpu=$1 \
     --debug=False \
     --logs_path=logs \
     --moving_average_decay=0.997 \
     --restore=False \
     --early_stop=5 \
-    --max_lr_decay=3 \
+    --max_lr_decay=5 \
     >> ./logs/ctpn_gpu$1_$Date.log 2>&1 &

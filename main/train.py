@@ -10,6 +10,7 @@ from utils.evaluate.evaluator import *
 from main import pred
 from utils.prepare import utils
 from utils.rpn_msr.config import Config
+from main.early_stop import  EarlyStop
 
 tf.app.flags.DEFINE_float('learning_rate', 0.01, '') #学习率
 tf.app.flags.DEFINE_integer('max_steps', 40000, '') #我靠，人家原来是50000的设置
@@ -37,50 +38,6 @@ tf.logging.set_verbosity(tf.logging.DEBUG)
 
 logger = logging.getLogger("Train")
 textdetector = TextDetector(DETECT_MODE='H')
-
-class EarlyStop():
-    BEST = 0
-    CONTINUE = 1
-    LEARNING_RATE_DECAY = 2
-    STOP = 3
-
-    def __init__(self,max_retry=FLAGS.early_stop,max_learning_rate_decay=FLAGS.max_lr_decay):
-        self.old_f1_value = 0
-        self.learning_rate_counter = 0
-        self.retry_counter = 0
-        self.max_retry= max_retry
-        self.max_learning_rate_decay = max_learning_rate_decay
-
-    def decide(self,f1_value):
-
-        if f1_value>= self.old_f1_value:
-            logger.debug("[早停]新F1值%f>旧F1值%f，继续训练",f1_value,self.old_f1_value)
-            # 所有的都重置
-            self.retry_counter = 0
-            self.learning_rate_counter = 0
-            return EarlyStop.BEST
-
-        # 甭管怎样，先把计数器++
-        self.retry_counter+=1
-        logger.debug("[早停]新F1值%f<旧F1值%f,早停计数器:%d", f1_value, self.old_f1_value,self.retry_counter)
-
-        # 如果还没有到达最大尝试次数，那就继续
-        if self.retry_counter <= self.max_retry:
-            logger.debug("[早停]早停计数器%d未达到最大尝试次数%d，继续训练",self.retry_counter,self.max_retry)
-            return EarlyStop.CONTINUE
-
-        self.learning_rate_counter+=1
-        logger.debug("[早停]早停计数器大于最大尝试次数%d，学习率Decay计数器现在是:%d", self.max_retry,self.learning_rate_counter)
-
-        # 如果还没有到达最大尝试次数，那就继续
-        if self.learning_rate_counter <= self.learning_rate_counter:
-            self.retry_counter = 0 # 需要重置一下retry计数器
-            logger.debug("[早停]学习率Decay计数器现在是:%d，未达到最大值%d,重置早停计数器，继续训练",self.learning_rate_counter, self.max_learning_rate_decay)
-            return EarlyStop.LEARNING_RATE_DECAY
-
-        logger.debug("[早停]学习率Decay计数器%d、早停计数器%d都已经达到最大，退出训练", self.retry_counter,self.learning_rate_counter)
-        # 如果到达最大尝试次数，并且也到达了最大decay次数
-        return EarlyStop.STOP
 
 
 def init_logger():
@@ -187,7 +144,7 @@ def main(argv=None):
                                                              slim.get_trainable_variables(),
                                                              ignore_missing_vars=True)
     # 早停用的变量
-    early_stop = EarlyStop()
+    early_stop = EarlyStop(FLAGS.early_stop,FLAGS.max_lr_decay)
 
 
 # 上面是定义计算图，下面是真正运行session.run()
@@ -238,9 +195,6 @@ def main(argv=None):
             logger.info("结束第%d步训练，结束sess.run",step)
             summary_writer.add_summary(summary_str, global_step=step)
 
-
-
-
             if step!=0 and step % FLAGS.evaluate_steps == 0:
                 avg_time_per_step = (time.time() - start) / FLAGS.evaluate_steps
                 start = time.time()
@@ -252,12 +206,20 @@ def main(argv=None):
                 f1_value,recall_value,precision_value = \
                     validate(sess,bbox_pred, cls_prob, input_im_info, input_image)
 
+                # 更新F1,Recall和Precision
+                sess.run([tf.assign(v_f1, f1_value),
+                          tf.assign(v_recall, recall_value),
+                          tf.assign(v_precision, precision_value)])
+
+                logger.info("在第%d步，模型评估结束", step)
+
                 decision = early_stop.decide(f1_value)
 
-                if decision== EarlyStop.CONTINUE: continue
+                if decision== EarlyStop.CONTINUE:
+                    continue
 
                 if decision == EarlyStop.BEST:
-                    logger.info("新F1值[%f]大于过去最好的F1值[%f]，早停计数器重置，并保存模型",f1_value)
+                    logger.info("新F1值[%f]大于过去最好的F1值，早停计数器重置，并保存模型",f1_value)
                     save_model(saver, sess, step, train_start_time)
                     continue
 
@@ -265,22 +227,9 @@ def main(argv=None):
                     logger.warning("超过早停最大次数，也尝试了多次学习率Decay，无法在提高：第%d次，训练提前结束",step)
                     break
 
-                #TODO:
-                if
-                logger.info("学习率(learning rate)衰减：%f=>%f",learning_rate.eval(),learning_rate.eval() * FLAGS.decay_rate)
-                sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
-
-
-                #TODO:
-                # 更新F1,Recall和Precision
-                sess.run([tf.assign(v_f1, f1_value),
-                          tf.assign(v_recall, recall_value),
-                          tf.assign(v_precision, precision_value)])
-                logger.info("在第%d步，模型评估结束", step)
-
-
-
-
+                if decision == EarlyStop.LEARNING_RATE_DECAY:
+                    logger.info("学习率(learning rate)衰减：%f=>%f",learning_rate.eval(),learning_rate.eval() * FLAGS.decay_rate)
+                    sess.run(tf.assign(learning_rate, learning_rate.eval() * FLAGS.decay_rate))
 
 
 def save_model(saver, sess, step, train_start_time):
@@ -324,7 +273,9 @@ def validate(sess,
         f1_sum += metrics['hmean']
         logger.debug("图片%s的探测结果的精确度:%f,召回率:%f,F1:%f",image_name,
                      metrics['precision'],metrics['recall'],metrics['hmean'])
-
+    precision_mean = 0
+    recall_mean = 0
+    f1_mean =  0
     if len(image_list)>0:
         precision_mean = precision_sum / len(image_list)
         recall_mean = recall_sum / len(image_list)
