@@ -40,14 +40,14 @@ class TextDetector:
         # 当然如果差很多就不刨除，反倒保留着，根据阈值
         keep_inds = nms(np.hstack((text_proposals, scores)), TextLineCfg.TEXT_PROPOSALS_NMS_THRESH)
         text_proposals, scores = text_proposals[keep_inds], scores[keep_inds]
-        logger.debug("NMS过滤后的小框有%d个", len(text_proposals))
+        logger.info("NMS过滤后的小框有%d个", len(text_proposals))
 
         # 获取检测结果，返回的是4个点的4边形框
         text_recs = self.text_proposal_connector.get_text_lines(text_proposals, scores, size)
         logger.debug("探测出来的备选框：%d",len(text_recs))
 
         keep_inds = self.filter_boxes(text_recs)
-        logger.debug("需要保留(宽/高比>0.5,置信度>0.9,宽>32)下来的框%d个",len(keep_inds))
+        logger.info("需要保留(宽/高比>0.5,置信度>0.9,宽>32)下来的框%d个",len(keep_inds))
         return text_recs[keep_inds]
 
     #     0  1  2  3  4  5  6  7

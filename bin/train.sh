@@ -22,7 +22,7 @@ if [ "$1" = "console" ]; then
         --lambda1=1000 \
         --gpu=1\
         --debug=True \
-        --logs_path=logs \
+        --logs_path=logs/tboard \
         --moving_average_decay=0.997 \
         --restore=False \
         --early_stop=5
@@ -45,7 +45,7 @@ nohup python -m main.train \
     --lambda1=10000 \
     --gpu=$1 \
     --debug=False \
-    --logs_path=logs \
+    --logs_path=logs/tboard \
     --moving_average_decay=0.997 \
     --restore=False \
     --early_stop=5 \

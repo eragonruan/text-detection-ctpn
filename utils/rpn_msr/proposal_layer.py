@@ -120,7 +120,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # Same story for the scores:
     # >>>>> 结果维度是[ HxWx10, 1]
     scores = scores.reshape((-1, 1))
-    logger.debug("原始前景score的概率分布情况：%s",stat(scores))
+    logger.info("原始前景score的概率分布情况：%s",stat(scores))
 
     # Convert anchors into proposals via bbox transformations
     # >>>>> anchors     结果维度是[ HxWx10, 4] 4是4个点的坐标
@@ -174,7 +174,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     scores = scores[keep]
     bbox_deltas = bbox_deltas[keep, :]
     logger.debug("然后再删除后，保留的框%d个", len(proposals))
-    logger.debug("最后剩下的1000个前景score的概率分布情况：%s",stat(scores))
+    logger.info("最后剩下的1000个前景score的概率分布情况：%s",stat(scores))
 
     # Output rois blob
     # Our RPN implementation only supports a single input image, so all

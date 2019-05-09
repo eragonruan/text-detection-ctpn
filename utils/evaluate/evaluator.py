@@ -295,7 +295,7 @@ def evaluate(gt_points, detect_points, conf):
             gtRectMat[gtNum] = 1
     logger.debug("m:1一共%d个",m2one)
 
-    logger.debug("一共%d个探测框匹配不上任何GT(r>0.8/p>0.4)",np.sum(gtRectMat))
+    logger.info("一共%d个探测框匹配不上任何GT(r>0.8/p>0.4)",np.sum(gtRectMat))
 
     # 用recall除以所有的gt个数
     recall = 0    if len(gtRects)==0  else float(recallAccum)    / len(gtRects)
