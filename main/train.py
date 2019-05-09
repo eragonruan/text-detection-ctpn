@@ -209,7 +209,7 @@ def main(argv=None):
                 sess.run([tf.assign(v_f1, f1_value),
                           tf.assign(v_recall, recall_value),
                           tf.assign(v_precision, precision_value)])
-                logger.info("在第%d步，模型评估结束，耗时：%f", step, time.time() - validate_start)
+                logger.info("在第%d步，模型评估结束，耗时：%f，f1=%f,recall=%f,precision=%f", step, time.time() - validate_start,f1_value,recall_value,precision_value)
 
                 if is_need_early_stop(early_stop,f1_value,saver,sess,step,learning_rate,train_start_time): break
 
