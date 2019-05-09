@@ -241,13 +241,19 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("overlap大于0.7的认为是前景，一共有%d个",(max_overlaps >= cfg.RPN_POSITIVE_OVERLAP).sum())
     logger.debug("max_overlaps(每个anchor里最大的那个gt对应的IoU):%r",max_overlaps)
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
+
+    np.set_printoptions(threshold='nan')
+    logger.debug(max_overlaps[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP])
+
     __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
     logger.debug("现在有%d个前景样本1（anchors）",(labels==1).sum())
 
 
     logger.debug("label shape:%r,max_overlaps shape:%r",labels.shape,max_overlaps.shape)
-    logger.debug(max_overlaps)
+
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
+    logger.debug("overlap小于0.3的认为是背景，一共有%d个", (max_overlaps < cfg.RPN_NEGATIVE_OVERLAP).sum())
+
     logger.debug("现在有%d个前景样本2（anchors）", (labels == 1).sum())
 
     # 开始按照batch要求，削减样本正样本数量，以及增加负样本

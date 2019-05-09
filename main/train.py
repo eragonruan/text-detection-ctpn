@@ -183,6 +183,7 @@ def main(argv=None):
             # data[0][0]写死，没关系，因为这个本身就是固定的
             image,scale = utils.resize_image(data[0][0],Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
             bbox_label = utils.resize_labels(data[1],scale)
+            logger.debug(bbox_label)
 
             logger.info("开始第%d步训练，运行sess.run",step)
             image = image[:,:,::-1]
