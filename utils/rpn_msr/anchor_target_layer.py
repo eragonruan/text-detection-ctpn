@@ -244,6 +244,8 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("现在有%d个前景样本1（anchors）",(labels==1).sum())
 
 
+    logger.debug("label shape:%r,max_overlaps shape:%f",labels.shape,max_overlaps.shape)
+    logger.debug(max_overlaps)
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
     logger.debug("现在有%d个前景样本2（anchors）", (labels == 1).sum())
 
