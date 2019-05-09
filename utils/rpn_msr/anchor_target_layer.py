@@ -7,6 +7,7 @@ from utils.rpn_msr.config import Config as cfg
 from utils.rpn_msr.generate_anchors import generate_anchors
 import tensorflow as tf
 import logging
+from utils import stat
 
 FLAGS = tf.app.flags.FLAGS
 logger = logging.getLogger("anchor")
@@ -212,7 +213,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
     logger.debug("argmax_overlaps存着gt索引，一共anchors行:%r", argmax_overlaps.shape)
     max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
-    logger.debug("max_overlaps是个数组，存放着每个anchor最大的IoU值：:%r", max_overlaps.shape)
+    logger.debug("max_overlaps是个数组，存放着每个anchor最大的IoU值：:%r", stat(max_overlaps.shape))
 
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
     logger.debug("gt_argmax_overlaps是个一位数组，存放着每GT最大IoU的anchor的行号:%r", gt_argmax_overlaps.shape)
@@ -244,7 +245,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("现在有%d个前景样本1（anchors）",(labels==1).sum())
 
 
-    logger.debug("label shape:%r,max_overlaps shape:%f",labels.shape,max_overlaps.shape)
+    logger.debug("label shape:%r,max_overlaps shape:%r",labels.shape,max_overlaps.shape)
     logger.debug(max_overlaps)
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
     logger.debug("现在有%d个前景样本2（anchors）", (labels == 1).sum())
