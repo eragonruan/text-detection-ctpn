@@ -168,7 +168,7 @@ def main(argv=None):
 
         # 是的，get_batch返回的是一个generator
         data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,data_dir=FLAGS.train_dir)
-        train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(start))
+        train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
         average_train_time = 0
 
         for step in range(FLAGS.max_steps):
