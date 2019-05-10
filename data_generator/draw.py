@@ -23,10 +23,11 @@ def _load_label(full_label_file_name_path):
     label_xy = []
     with open(full_label_file_name_path, "r") as label_file:
         for line in label_file:
-            if line.strip('\n')=="": continue
+            if line.strip('\n')=="":
+                continue
             # print("(%s)" % line)
             cord_xy = line.split(",")[0:8] # 有可能最后一列是标签，所以只取前8列
-            label_xy.append([int(p) for p in cord_xy])
+            label_xy.append([int(float(p)) for p in cord_xy])
     return label_xy
 
 
@@ -47,11 +48,11 @@ if __name__ == '__main__':
     type = args.type
 
 
-    # 原图目录
+    # 图目录
     data_images_dir = os.path.join(data_dir,type,"images")
 
     # 大框标签目录（坐标）
-    data_labels_dir = os.path.join(data_dir,type,"labels")
+    data_labels_dir = os.path.join(data_dir,type,"labels.resize")
 
     # 保存小框标签（坐标）的目录
     data_split_labels_dir = os.path.join(data_dir,type,"split")
@@ -84,6 +85,7 @@ if __name__ == '__main__':
 
         # 得到大框和小框的坐标文件数组，注意区别，大框长度是8，小框长度是4
         label_xys = _load_label(label_name)
+        print("%d个大框"%len(label_xys))
         if label_xys:
             # 画一句话最外面大框，8个坐标，画4边型
             for one_img_pos in label_xys:
@@ -94,6 +96,7 @@ if __name__ == '__main__':
                 draw.polygon(cord_xy, outline='red')
 
         split_label_xys = _load_label(split_label_name)
+        print("%d个小框" % len(split_label_xys))
         if split_label_xys:
             # 画每一个anchor，4个坐标，所以画矩形
             for one_img_pos in split_label_xys:

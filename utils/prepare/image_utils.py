@@ -2,6 +2,8 @@ import numpy as np
 from shapely.geometry import Polygon
 import cv2,logging
 
+IGNORE_WIDTH = 2 # 小于等于5像素的框，就忽略掉了，太小了，没意义
+
 logger = logging
 
 # 就是把左上点调整到数组的第一个
@@ -30,6 +32,8 @@ def orderConvex(p):
 #poly还是shape(4,2)的四边形，不规则的可能是
 # 每隔16像素，产生一个小的四边形，返回的是这个4变形的4个坐标
 def shrink_poly(poly, r=16):
+    print("处理一个大框")
+
     # 找最小的x
     x_min = int(np.min(poly[:, 0]))
     # 最大的x
@@ -47,8 +51,7 @@ def shrink_poly(poly, r=16):
 
     # 取整一下吧
     start = int((x_min // 16 + 1) * 16)
-    # end =  x_max # int((x_max // 16) * 16)
-    end = int((x_max // 16) * 16)
+    end = x_max   # int((x_max // 16) * 16) #我没有取整16
 
     p = x_min
     res.append([p, int(k1 * p + b1), # kx+b, p相当于是x，第一个p是最左面，但是第二个p就是16位取整的值了
@@ -65,8 +68,13 @@ def shrink_poly(poly, r=16):
         # if (end-p) < 16:  <-----之前自作聪明的修改，打脸啊
         #     right = end
         # else:
+        # 2019.5.10 再次修改，右面不是直接+16，而是看，如果我和end的距离2个像素内，那么这个GT框我就不算了
         #     right = p + 16
         right = p + 15
+        if (end - p)<= IGNORE_WIDTH:
+            print("宽度太小，最后框不要：%d" % (end - p))
+            continue
+
 
         # 左上，右上，右下，坐下 => [x1,y1,x2,y2,x3,y3,x4,y4]
         # 看，res是一个四边形，不是一个矩形

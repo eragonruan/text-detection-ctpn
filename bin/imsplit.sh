@@ -3,4 +3,4 @@ if [ "$2" = "" ]; then
     exit
 fi
 
-python utils/prepare/split_label.py --type=$1 --dir=$2
+python -m utils.prepare.split_label --type=$1 --dir=$2

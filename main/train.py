@@ -186,10 +186,11 @@ def main(argv=None):
             image = data[0][0]
             bbox_label = data[1]
             scale = 1
-            if FLAGS.resize:
-                image,scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
-                bbox_label = utils.resize_labels(bbox_label,scale)
-                logger.debug("调整图像:缩放比例:%f,大小最大宽：%d，最大高：%d",scale,Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
+
+            # if FLAGS.resize:
+            #     image,scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
+            #     bbox_label = utils.resize_labels(bbox_label,scale)
+            #     logger.debug("调整图像:缩放比例:%f,大小最大宽：%d，最大高：%d",scale,Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
 
             logger.info("开始第%d步训练，运行sess.run",step)
             image = image[:,:,::-1]

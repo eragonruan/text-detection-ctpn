@@ -1,23 +1,24 @@
 import os
-import sys
-import  traceback
+import traceback
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
-from utils import orderConvex, shrink_poly
-
+from utils.prepare.image_utils import orderConvex, shrink_poly
+from utils.rpn_msr.config import Config
+from utils.prepare import image_utils
 '''
     这个程序用来把label，也就是大框
     生成一堆的小框（anchor）
 '''
-
 IGNORE_WIDTH = 2 # 小于等于5像素的框，就忽略掉了，太小了，没意义
 
 def split_labels(data_home, type):
 
-    LABEL = "labels"  # 默认的存放大边框的地方
-    IMAGES = "images" # 默认存放样本图片的地方
-    SPLIT = "split"   # 默认存放小框的地方
+    LABEL = "labels" # 存放大边框的地方
+    RAW   = "raw"    # 存放原样本图片的地方
+    IMAGES= "images" # 存放Resize后样本图片的地方
+    SPLIT = "split"  # 存放小框的地方
+    LABEL_RESIZE = "labels.resize"
 
     # 生成的图片的根目录，是根据train/test/validate来区分的
     data_home_dir = os.path.join(data_home,type)
@@ -25,12 +26,14 @@ def split_labels(data_home, type):
     data_labels_dir = os.path.join(data_home_dir,LABEL)
     data_images_dir = os.path.join(data_home_dir,IMAGES)
     data_split_dir = os.path.join(data_home_dir,SPLIT)
+    data_raw_dir = os.path.join(data_home_dir,RAW)
+    data_labels_resize_dir = os.path.join(data_home_dir, LABEL_RESIZE)
 
     if not os.path.exists(data_images_dir): os.makedirs(data_images_dir)
-    if not os.path.exists(data_labels_dir): os.makedirs(data_labels_dir)
     if not os.path.exists(data_split_dir): os.makedirs(data_split_dir)
+    if not os.path.exists(data_labels_resize_dir): os.makedirs(data_labels_resize_dir)
 
-    image_names = os.listdir(data_images_dir)
+    image_names = os.listdir(data_raw_dir)
     image_names.sort()
 
     for image_name in tqdm(image_names):
@@ -42,17 +45,22 @@ def split_labels(data_home, type):
 
             # 根据图片目录生成样本文件名
             label_path = os.path.join(data_labels_dir, label_name + '.txt')
-            img_path = os.path.join(data_images_dir, image_name)
+            img_path = os.path.join(data_raw_dir, image_name)
 
-            img = cv.imread(img_path)
+            image = cv.imread(img_path)
             print("读取图片:%s" % img_path)
-            img_size = img.shape # H,W
+
+            resized_image, scale = image_utils.resize_image(image, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
+            print("调整图像:缩放比例:%f,大小最大宽：%d，最大高：%d" % (scale, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT))
+
+            img_size = resized_image.shape # H,W
 
             polys = []
             with open(label_path, 'r') as f:
                 lines = f.readlines()
-            print("读取大框的标签文件：%s" % label_path)
+            print("读取大框的标签文件：%s，大框标签%d个" % (label_path,len(lines)))
 
+            resized_label_file = open(os.path.join(data_labels_resize_dir, label_name) + ".txt", "w")
             # 对每一个大框，都完成他的隔16个像素，产生的小框
             for line in lines:
                 splitted_line = line.split(',')
@@ -60,7 +68,9 @@ def split_labels(data_home, type):
                 if len(splitted_line)<8: continue
                 # print(splitted_line)
                 # if len(splitted_line)==0: continue
-                x1, y1, x2, y2, x3, y3, x4, y4 = map(float, splitted_line[:8])
+                x1, y1, x2, y2, x3, y3, x4, y4 =  map(lambda x : scale*x, map(float, splitted_line[:8]))
+                resized_label_file.write(",".join(str(x) for x in [x1, y1, x2, y2, x3, y3, x4, y4]))
+                resized_label_file.write("\n")
                 poly = np.array([x1, y1, x2, y2, x3, y3, x4, y4]).reshape([4, 2])
 
                 # poly是[4,2]
@@ -75,6 +85,7 @@ def split_labels(data_home, type):
 
                 # cv.polylines(re_im, [poly.astype(np.int32).reshape((-1, 1, 2))], True,color=(0, 255, 0), thickness=2)
 
+            resized_label_file.close()
             res_polys = []
 
             # 对于
@@ -82,14 +93,12 @@ def split_labels(data_home, type):
                 # delete polys with width less than 10 pixel
                 # np.linalg.norm(求范数) https://blog.csdn.net/hqh131360239/article/details/79061535
                 # 求范数就是求欧氏距离
-                if np.linalg.norm(poly[0] - poly[1]) < 10 or np.linalg.norm(poly[3] - poly[0]) < 10:
+                if np.linalg.norm(poly[0] - poly[1]) < 5 or np.linalg.norm(poly[3] - poly[0]) < 5:
                     continue
 
                 # 每隔16像素，产生一个小的四边形，返回的是这个4变形的4个坐标
                 # 注意，是四边形，不是矩形
                 res = shrink_poly(poly)
-                # for p in res:
-                   # cv.polylines(re_im, [p.astype(np.int32).reshape((-1, 1, 2))], True, color=(0, 255, 0), thickness=1)
 
                 # 注意，res是一个[-1,8]的形状，
                 res = res.reshape([-1, 4, 2])
@@ -115,15 +124,16 @@ def split_labels(data_home, type):
                     else:
                         print("小框宽度%d，删除掉" % (x_max-x_min))
 
-            # cv.imwrite(os.path.join(split_images_path, fn), re_im)
+
+            resize_image_path = os.path.join(data_images_dir,image_name)
+            cv.imwrite(resize_image_path, resized_image)
+            print("将resized图像保存到：%s" %resize_image_path )
+
+            print("小框标签一个%d个" % len(res_polys))
             with open(os.path.join(data_split_dir, label_name) + ".txt", "w") as f:
                 for p in res_polys:
                     line = ",".join(str(p[i]) for i in range(4))
                     f.writelines(line + "\r\n")
-                    # for p in res_polys:
-                    #    cv.rectangle(re_im,(p[0],p[1]),(p[2],p[3]),color=(0,0,255),thickness=1)
-                    # cv.imshow("demo",re_im)
-                    # cv.waitKey(0)
 
         except Exception as e:
             traceback.print_exc()
