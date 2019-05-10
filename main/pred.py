@@ -11,7 +11,7 @@ from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from utils import stat
 from utils.dataset import data_provider as data_provider
-from utils.prepare import utils
+from utils.prepare import image_utils
 from utils.rpn_msr.config import Config
 
 logger = logging.getLogger("Train")
@@ -230,7 +230,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         original_img = image_list[i]
 
         # resize,防止显卡OOM
-        resized_img,scale = utils.resize_image(original_img, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
+        resized_img,scale = image_utils.resize_image(original_img, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
 
         image_name = image_names[i]
         _image = {}
@@ -248,8 +248,8 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             resized_img)
 
         # scale 放大 back回去
-        boxes = np.array(utils.resize_labels(boxes[:, :8], 1 / scale))
-        textsegs = np.array(utils.resize_labels(textsegs, 1 / scale))
+        boxes = np.array(image_utils.resize_labels(boxes[:, :8], 1 / scale))
+        textsegs = np.array(image_utils.resize_labels(textsegs, 1 / scale))
 
         _image['boxes'] = boxes
 
