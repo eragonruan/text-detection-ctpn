@@ -9,23 +9,18 @@ fi
 if [ "$1" = "console" ]; then
     echo "调试模式:只训练一次"
     python -m main.train \
+        --name=ctpn \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=2 \
         --decay_steps=1 \
         --evaluate_steps=1 \
-        --validate_dir=data/validate \
         --validate_batch=1 \
-        --train_dir=data/train \
         --learning_rate=0.01 \
-        --save_checkpoint_steps=2000 \
         --decay_rate=0.1 \
         --lambda1=1000 \
-        --gpu=1\
+        --resize=True \
+        --num_readers=1 \
         --debug=True \
-        --logs_path=logs/tboard \
-        --moving_average_decay=0.997 \
-        --restore=False \
-        --early_stop=5
     exit
 fi
 

@@ -32,6 +32,7 @@ tf.app.flags.DEFINE_string('logs_path', 'logs/tboard', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG16的预训练好的模型，这个是直接拿来用的
 tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_boolean('debug', False, '')
+tf.app.flags.DEFINE_boolean('resize', False, '')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
 
@@ -86,6 +87,7 @@ def main(argv=None):
     input_image_name    = tf.placeholder(tf.string,  shape=[None,], name='input_image_name')
     input_bbox          = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox') # 为何是5列？
     input_im_info       = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
+    tscale              = tf.placeholder(tf.float32, shape=[None,], name='scale')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
@@ -108,7 +110,8 @@ def main(argv=None):
                          cls_pred,  #预测出来是否是前景的概率
                          input_bbox,#标签
                          input_im_info, # 图像信息
-                         input_image_name)
+                         input_image_name,
+                         tscale)
 
             # tf.group，是把逻辑上的几个操作定义成一个操作
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
@@ -180,10 +183,12 @@ def main(argv=None):
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 
-            # data[0][0]写死，没关系，因为这个本身就是固定的
-            image,scale = utils.resize_image(data[0][0],Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
-            bbox_label = utils.resize_labels(data[1],scale)
-            logger.debug(bbox_label)
+            image = data[0][0]
+            bbox_label = data[1]
+            if FLAGS.resize:
+                image,scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
+                bbox_label = utils.resize_labels(bbox_label,scale)
+                logger.debug("调整图像:缩放比例:%f,大小最大宽：%d，最大高：%d",scale,Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
 
             logger.info("开始第%d步训练，运行sess.run",step)
             image = image[:,:,::-1]
@@ -196,7 +201,8 @@ def main(argv=None):
                                               feed_dict={input_image: [image],
                                                          input_bbox: bbox_label,
                                                          input_im_info: np.array(image.shape).reshape([1, 3]),
-                                                         input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
+                                                         input_image_name: data[3],
+                                                         tscale: [scale]}) # data[3]是图像的路径，传入sess是为了调试画图用
             average_train_time = average_time(train_start,average_train_time,step)
             logger.info("结束第%d步训练，结束sess.run，平均每个step时间：%f,modeloss:%f,totaloss:%f",step,average_train_time,ml,tl)
             summary_writer.add_summary(summary_str, global_step=step)

@@ -190,7 +190,7 @@ def model(image):
 # 计算IOU >=0.7 为正样本，IOU <0.3为负样本，
 # 得到在理想情况下应该各自一半的256个正负样本
 # （实际上正样本大多只有10-100个之间，相对负样本偏少）。
-def anchor_target_layer(cls_pred, bbox, im_info, input_image_name, scope_name):
+def anchor_target_layer(cls_pred, bbox, im_info, input_image_name, scale,scope_name):
     with tf.variable_scope(scope_name) as scope:
         # 'rpn_cls_score', 'gt_boxes', 'im_info'
         # tf.py_func是把普通函数改造成TF运行用的函数：包装一个普通的 Python 函数，这个函数接受 numpy 的数组作为输入和输出，
@@ -198,7 +198,7 @@ def anchor_target_layer(cls_pred, bbox, im_info, input_image_name, scope_name):
         # https://zhuanlan.zhihu.com/p/32970370
         rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights = \
             tf.py_func(anchor_target_layer_py,
-                       [cls_pred,bbox,im_info,[16, ],[16],input_image_name],
+                       [cls_pred,bbox,im_info,[16, ],[16],input_image_name,scale],
                        [tf.float32, tf.float32, tf.float32, tf.float32])
 
         rpn_labels = tf.convert_to_tensor(tf.cast(rpn_labels, tf.int32),
@@ -234,14 +234,14 @@ def smooth_l1_dist(deltas, sigma2=9.0, name='smooth_l1_dist'):
 # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
 # cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）
 # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
-def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
+def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name,scale):
 
     bbox_pred = _p_shape(bbox_pred,"Loss输入：bbox_pred")
 
     #返回 [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
     #rpn_labels anchor是否包含前景
     #rpn_bbox_targets 所有的anchor对应的4个标签回归值，所有对应在图像内的anchors
-    rpn_data = anchor_target_layer(cls_pred, bbox, im_info,input_image_name, "anchor_target_layer")
+    rpn_data = anchor_target_layer(cls_pred, bbox, im_info,input_image_name,scale, "anchor_target_layer")
 
     # classification loss
     # transpose: (1, H, W, A x d) -> (1, H, WxA, d)

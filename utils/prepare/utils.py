@@ -99,6 +99,7 @@ def resize_image(image,max_width,max_height):
 
     # https://www.jianshu.com/p/11879a49d1a0 关于resize
     image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    cv2.imwrite("data/test.jpg",image)
     logger.debug("图片从[%d,%d]被resize成为%r",h,w,image.shape)
 
     return image,scale
@@ -108,5 +109,8 @@ def resize_labels(labels,scale):
     if scale==1: return labels
     resized_labels = []
     for label in labels:
-        resized_labels.append([round(x*scale) for x in label])
+        logger.debug("未缩放bbox label坐标：%r",label)
+        _resized_label = [round(x*scale) for x in label]
+        resized_labels.append(_resized_label)
+        logger.debug("缩放后bbox label坐标：%r", _resized_label)
     return list(resized_labels)
