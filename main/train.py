@@ -185,6 +185,7 @@ def main(argv=None):
 
             image = data[0][0]
             bbox_label = data[1]
+            scale = 1
             if FLAGS.resize:
                 image,scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
                 bbox_label = utils.resize_labels(bbox_label,scale)
