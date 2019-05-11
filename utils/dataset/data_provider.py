@@ -38,6 +38,7 @@ def load_annoataion(p):
 
         x_min, y_min, x_max, y_max = map(lambda x : int(x),map(float,line)) # 用map自动做int转型
         bbox.append([x_min, y_min, x_max, y_max, 1])
+    logger.info("加载小框标签文件:%s,%d条", p, len(bbox))
     return bbox # 返回四个坐标的数组
 
 # 装载大框
@@ -56,7 +57,7 @@ def load_big_GT(gt_file):
                 v = int(float(xy.strip()))
                 xys.append(v)
             bbox.append(xys)
-    logger.info("加载标签文件完毕:%s,GT有%d条", gt_file,len(bbox))
+    logger.info("加载大框标签文件:%s,%d条", gt_file,len(bbox))
     return bbox # 返回四个坐标的数组
 
 # 按照FLAGS.validate_num 随机从目录中产生批量的数据，用于做验证集
@@ -108,19 +109,19 @@ def generator(data_dir,label_dir,label_split_dir):
                 big_gt_fn = os.path.join(label_dir, fn + '.txt')
 
                 if not os.path.exists(split_file_name):
-                    print("Ground truth for image {} not exist!".format(split_file_name))
+                    print("小框标签bbox文件{}不存在".format(split_file_name))
                     continue
                 bbox = load_annoataion(split_file_name)
                 if len(bbox) == 0:
-                    print("Ground truth for image {} empty!".format(im_fn))
+                    print("小框标签bbox{}为空!".format(im_fn))
                     continue
 
                 if not os.path.exists(big_gt_fn):
-                    print("大框 Big Ground truth for image {} not exist!".format(big_gt_fn))
+                    print("大框标签文件{}不存在!".format(big_gt_fn))
                     continue
                 big_gt = load_big_GT(big_gt_fn)
                 if len(big_gt) == 0:
-                    print("Big Ground truth for image {} empty!".format(big_gt_fn))
+                    print("大框标签文件{} empty!".format(big_gt_fn))
                     continue
 
                 logger.debug("generator yield了一个它读出的图片[%s]", im_fn)
