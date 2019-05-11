@@ -12,28 +12,19 @@ from utils.prepare import image_utils
 '''
 IGNORE_WIDTH = 2 # 小于等于5像素的框，就忽略掉了，太小了，没意义
 
-def split_labels(data_home, type):
+def split_labels(raw_images_dir, raw_labels_dir, images_dir, labels_split_dir,labels_dir):
+    if not os.path.exists(raw_images_dir):
+        print("ERROR:图片目录不存在%s" % raw_images_dir)
+        exit()
+    if not os.path.exists(raw_labels_dir):
+        print("ERROR:标签目录不存在%s" % labels_dir)
+        exit()
 
-    LABEL = "labels" # 存放大边框的地方
-    RAW   = "raw"    # 存放原样本图片的地方
-    IMAGES= "images" # 存放Resize后样本图片的地方
-    SPLIT = "split"  # 存放小框的地方
-    LABEL_RESIZE = "labels.resize"
+    if not os.path.exists(images_dir): os.makedirs(images_dir)
+    if not os.path.exists(labels_split_dir): os.makedirs(labels_split_dir)
+    if not os.path.exists(labels_dir): os.makedirs(labels_dir)
 
-    # 生成的图片的根目录，是根据train/test/validate来区分的
-    data_home_dir = os.path.join(data_home,type)
-    # 生成各自的目录
-    data_labels_dir = os.path.join(data_home_dir,LABEL)
-    data_images_dir = os.path.join(data_home_dir,IMAGES)
-    data_split_dir = os.path.join(data_home_dir,SPLIT)
-    data_raw_dir = os.path.join(data_home_dir,RAW)
-    data_labels_resize_dir = os.path.join(data_home_dir, LABEL_RESIZE)
-
-    if not os.path.exists(data_images_dir): os.makedirs(data_images_dir)
-    if not os.path.exists(data_split_dir): os.makedirs(data_split_dir)
-    if not os.path.exists(data_labels_resize_dir): os.makedirs(data_labels_resize_dir)
-
-    image_names = os.listdir(data_raw_dir)
+    image_names = os.listdir(raw_images_dir)
     image_names.sort()
 
     for image_name in tqdm(image_names):
@@ -44,8 +35,8 @@ def split_labels(data_home, type):
             if ext.lower() not in ['.jpg', '.png']:continue
 
             # 根据图片目录生成样本文件名
-            label_path = os.path.join(data_labels_dir, label_name + '.txt')
-            img_path = os.path.join(data_raw_dir, image_name)
+            label_path = os.path.join(raw_labels_dir, label_name + '.txt')
+            img_path = os.path.join(raw_images_dir, image_name)
 
             image = cv.imread(img_path)
             print("读取图片:%s" % img_path)
@@ -60,7 +51,7 @@ def split_labels(data_home, type):
                 lines = f.readlines()
             print("读取大框的标签文件：%s，大框标签%d个" % (label_path,len(lines)))
 
-            resized_label_file = open(os.path.join(data_labels_resize_dir, label_name) + ".txt", "w")
+            resized_label_file = open(os.path.join(labels_dir, label_name) + ".txt", "w")
             # 对每一个大框，都完成他的隔16个像素，产生的小框
             for line in lines:
                 splitted_line = line.split(',')
@@ -125,12 +116,12 @@ def split_labels(data_home, type):
                         print("小框宽度%d，删除掉" % (x_max-x_min))
 
 
-            resize_image_path = os.path.join(data_images_dir,image_name)
+            resize_image_path = os.path.join(images_dir,image_name)
             cv.imwrite(resize_image_path, resized_image)
             print("将resized图像保存到：%s" %resize_image_path )
 
             print("小框标签一个%d个" % len(res_polys))
-            with open(os.path.join(data_split_dir, label_name) + ".txt", "w") as f:
+            with open(os.path.join(labels_split_dir, label_name) + ".txt", "w") as f:
                 for p in res_polys:
                     line = ",".join(str(p[i]) for i in range(4))
                     f.writelines(line + "\r\n")
@@ -146,13 +137,17 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--type") # 啥类型的数据啊，train/validate/test
-    parser.add_argument("--dir")  # 这个程序的主目录
-
+    parser.add_argument("--images_dir")
+    parser.add_argument("--labels_split_dir")
+    parser.add_argument("--labels_dir")
+    parser.add_argument("--raw_images_dir")
+    parser.add_argument("--raw_labels_dir")
     args = parser.parse_args()
 
-    data_dir = args.dir
-    type = args.type
-
-    split_labels(data_dir,type)
+    split_labels(
+        args.raw_images_dir,
+        args.raw_labels_dir,
+        args.images_dir,
+        args.labels_split_dir,
+        args.labels_dir)
 

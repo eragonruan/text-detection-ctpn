@@ -8,8 +8,6 @@ from utils.dataset import data_provider as data_provider
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from main import pred
-from utils.prepare import image_utils
-from utils.rpn_msr.config import Config
 from main.early_stop import  EarlyStop
 
 tf.app.flags.DEFINE_string('name', 'ctpn', '')
@@ -20,10 +18,12 @@ tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.5, '')    #？？？
 tf.app.flags.DEFINE_float('max_lr_decay', 3, '')    #？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
-tf.app.flags.DEFINE_string('train_data_dir','data/train/images','')
-tf.app.flags.DEFINE_string('train_label_dir','data/train/split','')
-tf.app.flags.DEFINE_string('validate_data_dir','data/validate/images','')
-tf.app.flags.DEFINE_string('validate_label_dir','data/validate/split','')
+tf.app.flags.DEFINE_string('train_images_dir','','')
+tf.app.flags.DEFINE_string('train_labels_dir','','')
+tf.app.flags.DEFINE_string('train_labels_split_dir','','')
+tf.app.flags.DEFINE_string('validate_images_dir','','')
+tf.app.flags.DEFINE_string('validate_labels_dir','','')
+tf.app.flags.DEFINE_string('validate_labels_split_dir','','')
 tf.app.flags.DEFINE_integer('validate_batch',30,'')
 tf.app.flags.DEFINE_integer('early_stop',5,'')
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
@@ -170,7 +170,9 @@ def main(argv=None):
                 variable_restore_op(sess)
 
         # 是的，get_batch返回的是一个generator
-        data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,data_dir=FLAGS.train_data_dir,label_dir=FLAGS.train_label_dir)
+        data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,
+                                                 data_dir=FLAGS.train_images_dir,
+                                                 label_dir=FLAGS.train_labels_dir)
         train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
         average_train_time = 0
 
@@ -198,8 +200,7 @@ def main(argv=None):
                                               feed_dict={input_image: [image],
                                                          input_bbox: bbox_label,
                                                          input_im_info: np.array(image.shape).reshape([1, 3]),
-                                                         input_image_name: data[3],
-                                                         tscale: [scale]}) # data[3]是图像的路径，传入sess是为了调试画图用
+                                                         input_image_name: data[3]}) # data[3]是图像的路径，传入sess是为了调试画图用
             average_train_time = average_time(train_start,average_train_time,step)
             logger.info("结束第%d步训练，结束sess.run，平均每个step时间：%f,modeloss:%f,totaloss:%f",step,average_train_time,ml,tl)
             summary_writer.add_summary(summary_str, global_step=step)
@@ -270,7 +271,8 @@ def validate(sess,
              t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image):
 
     #### 加载验证数据,随机加载FLAGS.validate_batch张
-    image_list, image_names = data_provider.get_validate_images_data(FLAGS.validate_data_dir,FLAGS.validate_batch)
+    image_list, image_names = data_provider.get_validate_images_data(FLAGS.validate_images_dir,
+                                                                     FLAGS.validate_batch)
 
     precision_sum=recall_sum=f1_sum = 0
     for i in range(len(image_list)):
@@ -284,7 +286,7 @@ def validate(sess,
         bbox_pred = boxes[:,:8]
 
         # 得到标签名字
-        GT_labels = pred.get_gt_label_by_image_name(image_name,FLAGS.validate_label_dir)
+        GT_labels = pred.get_gt_label_by_image_name(image_name,FLAGS.validate_labels_dir)
         metrics = evaluate(GT_labels,bbox_pred,conf())
         precision_sum += metrics['precision']
         recall_sum += metrics['recall']

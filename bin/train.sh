@@ -1,5 +1,7 @@
 Date=$(date +%Y%m%d%H%M)
 
+. bin/env.sh
+
 if [ "$1" = "stop" ]; then
     echo "停止训练"
     ps aux|grep python|grep ctpn|awk '{print $2}'|xargs kill -9
@@ -21,6 +23,12 @@ if [ "$1" = "console" ]; then
         --resize=True \
         --num_readers=1 \
         --debug=True \
+        --train_images_dir=$train_images_dir \
+        --train_labels_split_dir=$train_labels_split_dir \
+        --train_labels_dir=$train_labels_dir \
+        --validate_images_dir=$validate_images_dir \
+        --validate_labels_split_dir=$validate_labels_split_dir \
+        --validate_labels_dir=$validate_labels_dir
     exit
 fi
 
@@ -31,10 +39,12 @@ nohup python -m main.train \
     --max_steps=100000 \
     --decay_steps=8000 \
     --evaluate_steps=100 \
-    --train_data_dir=data/train/images \
-    --train_label_dir=data/train/split \
-    --validate_data_dir=data/validate/images \
-    --validate_label_dir=data/validate/split \
+    --train_images_dir=$train_images_dir \
+    --train_labels_split_dir=$train_labels_split_dir \
+    --train_labels_dir=$train_labels_dir \
+    --validate_images_dir=$validate_images_dir \
+    --validate_labels_split_dir=$validate_labels_split_dir \
+    --validate_labels_dir=$validate_labels_dir \
     --validate_batch=100 \
     --learning_rate=0.0001 \
     --save_checkpoint_steps=5000 \
