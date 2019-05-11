@@ -35,7 +35,8 @@ def load_annoataion(p):
         lines = f.readlines()
     for line in lines:
         line = line.strip().split(",")
-        x_min, y_min, x_max, y_max = map(int, line) # 用map自动做int转型
+
+        x_min, y_min, x_max, y_max = map(lambda x : int(x),map(float,line)) # 用map自动做int转型
         bbox.append([x_min, y_min, x_max, y_max, 1])
     return bbox # 返回四个坐标的数组
 
@@ -78,7 +79,7 @@ def get_validate_images_data(validate_dir,batch_num):
     return image_list,image_names
 
 
-def generator(data_dir,label_dir):
+def generator(data_dir,label_dir,label_split_dir):
     image_list = np.array(get_dir_images(data_dir))
     print('{} training images in {}'.format(image_list.shape[0], data_dir))
     index = np.arange(0, image_list.shape[0])
@@ -103,7 +104,7 @@ def generator(data_dir,label_dir):
                 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 #
                 #
-                split_file_name = os.path.join(label_dir, fn + '.txt')
+                split_file_name = os.path.join(label_split_dir, fn + '.txt')
                 big_gt_fn = os.path.join(label_dir, fn + '.txt')
 
                 if not os.path.exists(split_file_name):
@@ -131,12 +132,12 @@ def generator(data_dir,label_dir):
                 continue
 
 
-def get_batch(num_workers,data_dir,label_dir,**kwargs):
+def get_batch(num_workers,data_dir,label_dir,label_split_dir,**kwargs):
     try:
         # 这里又藏着一个generator，注意，这个函数get_batch()本身就是一个generator
         # 但是，这里，他的肚子里，还藏着一个generator()
         # 这个generator实际上就是真正去读一张图片，返回回来了
-        enqueuer = GeneratorEnqueuer(generator(data_dir,label_dir,**kwargs), use_multiprocessing=True)
+        enqueuer = GeneratorEnqueuer(generator(data_dir,label_dir,label_split_dir,**kwargs), use_multiprocessing=True)
         enqueuer.start(max_queue_size=24, workers=num_workers)
         generator_output = None
         while True:
