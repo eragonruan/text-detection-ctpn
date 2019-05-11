@@ -12,7 +12,7 @@ logger = logging.getLogger("data provider")
 def get_dir_images(data_dir):
     img_files = []
     exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for parent, dirnames, filenames in os.walk(os.path.join(data_dir, "images")):
+    for parent, dirnames, filenames in os.walk(data_dir):
         for filename in filenames:
             for ext in exts:
                 if filename.endswith(ext):
@@ -78,7 +78,7 @@ def get_validate_images_data(validate_dir,batch_num):
     return image_list,image_names
 
 
-def generator(data_dir):
+def generator(data_dir,label_dir):
     image_list = np.array(get_dir_images(data_dir))
     print('{} training images in {}'.format(image_list.shape[0], data_dir))
     index = np.arange(0, image_list.shape[0])
@@ -103,11 +103,11 @@ def generator(data_dir):
                 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                 #
                 #
-                split_file_name = os.path.join(data_dir, "split", fn + '.txt')
-                big_gt_fn = os.path.join(data_dir, "labels", fn + '.txt')
+                split_file_name = os.path.join(label_dir, fn + '.txt')
+                big_gt_fn = os.path.join(label_dir, fn + '.txt')
 
                 if not os.path.exists(split_file_name):
-                    print("Ground truth for image {} not exist!".format(im_fn))
+                    print("Ground truth for image {} not exist!".format(split_file_name))
                     continue
                 bbox = load_annoataion(split_file_name)
                 if len(bbox) == 0:
@@ -119,7 +119,7 @@ def generator(data_dir):
                     continue
                 big_gt = load_big_GT(big_gt_fn)
                 if len(big_gt) == 0:
-                    print("Big Ground truth for image {} empty!".format(im_fn))
+                    print("Big Ground truth for image {} empty!".format(big_gt_fn))
                     continue
 
                 logger.debug("generator yield了一个它读出的图片[%s]", im_fn)
@@ -131,12 +131,12 @@ def generator(data_dir):
                 continue
 
 
-def get_batch(num_workers,data_dir,**kwargs):
+def get_batch(num_workers,data_dir,label_dir,**kwargs):
     try:
         # 这里又藏着一个generator，注意，这个函数get_batch()本身就是一个generator
         # 但是，这里，他的肚子里，还藏着一个generator()
         # 这个generator实际上就是真正去读一张图片，返回回来了
-        enqueuer = GeneratorEnqueuer(generator(data_dir,**kwargs), use_multiprocessing=True)
+        enqueuer = GeneratorEnqueuer(generator(data_dir,label_dir,**kwargs), use_multiprocessing=True)
         enqueuer.start(max_queue_size=24, workers=num_workers)
         generator_output = None
         while True:

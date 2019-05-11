@@ -28,7 +28,7 @@ DEBUG = False
 # rpn_cls_score是啥，是神经网络跑出来的一个分类结果，是包含文字，还是不包含文字的一个概率值，
 #       因为有9个框，而且有包含和不包含2个值，所以是(1, H, W, Ax2)维度的，对H,W的含义是，对每一个feature map中的点，都做了预测
 # 另，这个太神奇了，参数本来都是张量
-def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ],image_name=None, scale=1):
+def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ],image_name=None):
     logger.debug("开始调用anchor_target_layer，这个函数是来算anchor们和gt的差距")
 
     logger.debug("传入的参数：")
@@ -336,7 +336,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
 
     debug_draw(__debug_iou_max_with_gt_anchors, __debug_iou_more_0_7_anchors, anchors, gt_boxes, image_name,
-               inside_labels,scale)
+               inside_labels)
 
     # 得到一个新的RPN的标签，对比
     return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
@@ -347,8 +347,7 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
                anchors,
                gt_boxes,
                image_name,
-               inside_labels,
-               scale):
+               inside_labels):
 
     if not FLAGS.debug: return
 
@@ -362,7 +361,6 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
     # 先打开原图
     logger.debug("当前处理的文件名字：%s", image_name[0])
     image = Image.open(image_name[0])
-    image = image.resize( (image.size[0]*scale, image.size[1]*scale) )# (width, height)
     draw = ImageDraw.Draw(image)
 
     # 根据索引得到，要画的前景anchor，inside_labels是因为label现在已经包含了超出图片范围的anchor的指示了

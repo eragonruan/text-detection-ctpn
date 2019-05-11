@@ -8,7 +8,7 @@ from utils.dataset import data_provider as data_provider
 from utils.text_connector.detectors import TextDetector
 from utils.evaluate.evaluator import *
 from main import pred
-from utils.prepare import utils
+from utils.prepare import image_utils
 from utils.rpn_msr.config import Config
 from main.early_stop import  EarlyStop
 
@@ -20,8 +20,10 @@ tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.5, '')    #？？？
 tf.app.flags.DEFINE_float('max_lr_decay', 3, '')    #？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
-tf.app.flags.DEFINE_string('train_dir','data/train','')
-tf.app.flags.DEFINE_string('validate_dir','data/validate','')
+tf.app.flags.DEFINE_string('train_data_dir','data/train/images','')
+tf.app.flags.DEFINE_string('train_label_dir','data/train/split','')
+tf.app.flags.DEFINE_string('validate_data_dir','data/validate/images','')
+tf.app.flags.DEFINE_string('validate_label_dir','data/validate/split','')
 tf.app.flags.DEFINE_integer('validate_batch',30,'')
 tf.app.flags.DEFINE_integer('early_stop',5,'')
 tf.app.flags.DEFINE_integer('num_readers', 4, '')#同时启动的进程4个
@@ -87,7 +89,6 @@ def main(argv=None):
     input_image_name    = tf.placeholder(tf.string,  shape=[None,], name='input_image_name')
     input_bbox          = tf.placeholder(tf.float32, shape=[None, 5], name='input_bbox') # 为何是5列？
     input_im_info       = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
-    tscale              = tf.placeholder(tf.float32, shape=[None,], name='scale')
 
     global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
@@ -110,8 +111,7 @@ def main(argv=None):
                          cls_pred,  #预测出来是否是前景的概率
                          input_bbox,#标签
                          input_im_info, # 图像信息
-                         input_image_name,
-                         tscale)
+                         input_image_name)
 
             # tf.group，是把逻辑上的几个操作定义成一个操作
             batch_norm_updates_op = tf.group(*tf.get_collection(tf.GraphKeys.UPDATE_OPS, scope))
@@ -170,7 +170,7 @@ def main(argv=None):
                 variable_restore_op(sess)
 
         # 是的，get_batch返回的是一个generator
-        data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,data_dir=FLAGS.train_dir)
+        data_generator = data_provider.get_batch(num_workers=FLAGS.num_readers,data_dir=FLAGS.train_data_dir,label_dir=FLAGS.train_label_dir)
         train_start_time = time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time()))
         average_train_time = 0
 
@@ -186,11 +186,6 @@ def main(argv=None):
             image = data[0][0]
             bbox_label = data[1]
             scale = 1
-
-            # if FLAGS.resize:
-            #     image,scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
-            #     bbox_label = utils.resize_labels(bbox_label,scale)
-            #     logger.debug("调整图像:缩放比例:%f,大小最大宽：%d，最大高：%d",scale,Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
 
             logger.info("开始第%d步训练，运行sess.run",step)
             image = image[:,:,::-1]
@@ -275,7 +270,7 @@ def validate(sess,
              t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image):
 
     #### 加载验证数据,随机加载FLAGS.validate_batch张
-    image_list, image_names = data_provider.get_validate_images_data(FLAGS.validate_dir,FLAGS.validate_batch)
+    image_list, image_names = data_provider.get_validate_images_data(FLAGS.validate_data_dir,FLAGS.validate_batch)
 
     precision_sum=recall_sum=f1_sum = 0
     for i in range(len(image_list)):
@@ -283,19 +278,13 @@ def validate(sess,
         image = image_list[i]
         image_name = image_names[i]
 
-        # 图像尺寸调整>>>>>>
-        # 为了防止OOM，先把原图resize变小
-        image, scale = utils.resize_image(image,Config.RPN_IMAGE_WIDTH,Config.RPN_IMAGE_HEIGHT)
-
         # session, t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image, d_img
         boxes, scores, textsegs = pred.predict_by_network(sess,t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image,image)
 
-        # 图像尺寸调整<<<<<<
-        # 还原回来原图的坐标
-        bbox_pred = utils.resize_labels(boxes[:,:8], 1/scale)
+        bbox_pred = boxes[:,:8]
 
         # 得到标签名字
-        GT_labels = pred.get_gt_label_by_image_name(image_name,os.path.join(FLAGS.validate_dir,"labels"))
+        GT_labels = pred.get_gt_label_by_image_name(image_name,FLAGS.validate_label_dir)
         metrics = evaluate(GT_labels,bbox_pred,conf())
         precision_sum += metrics['precision']
         recall_sum += metrics['recall']
