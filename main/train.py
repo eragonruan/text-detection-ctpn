@@ -18,6 +18,9 @@ tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.5, '')    #？？？
 tf.app.flags.DEFINE_float('max_lr_decay', 3, '')    #？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
+tf.app.flags.DEFINE_string('train_images_dir','','')
+tf.app.flags.DEFINE_string('train_labels_dir','','')
+tf.app.flags.DEFINE_string('train_labels_split_dir','','')
 tf.app.flags.DEFINE_string('validate_images_dir','','')
 tf.app.flags.DEFINE_string('validate_labels_dir','','')
 tf.app.flags.DEFINE_string('validate_labels_split_dir','','')
