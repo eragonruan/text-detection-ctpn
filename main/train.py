@@ -18,9 +18,6 @@ tf.app.flags.DEFINE_integer('evaluate_steps',10, '')#？？？
 tf.app.flags.DEFINE_float('decay_rate', 0.5, '')    #？？？
 tf.app.flags.DEFINE_float('max_lr_decay', 3, '')    #？？？
 tf.app.flags.DEFINE_float('moving_average_decay', 0.997, '')
-tf.app.flags.DEFINE_string('train_images_dir','','')
-tf.app.flags.DEFINE_string('train_labels_dir','','')
-tf.app.flags.DEFINE_string('train_labels_split_dir','','')
 tf.app.flags.DEFINE_string('validate_images_dir','','')
 tf.app.flags.DEFINE_string('validate_labels_dir','','')
 tf.app.flags.DEFINE_string('validate_labels_split_dir','','')
@@ -63,7 +60,7 @@ def main(argv=None):
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
 
     logger.info(
-        "本次使用的参数：\nlearning_rate:%f\ndecay_steps:%f\nmax_steps:%d\nevaluate_steps:%d\nmodel:%s\nlambda1:%d\nlogs_path:%s\nrestore:%r\ndebug:%r\nsave_checkpoint_steps:%d", \
+        "本次使用的参数：\nlearning_rate:%f\ndecay_steps:%f\nmax_steps:%d\nevaluate_steps:%d\nmodel:%s\nlambda1:%d\nlogs_path:%s\nrestore:%r\ndebug:%r", \
         FLAGS.learning_rate,
         FLAGS.decay_steps,
         FLAGS.max_steps,
@@ -72,8 +69,7 @@ def main(argv=None):
         FLAGS.lambda1,
         FLAGS.logs_path,
         FLAGS.restore,
-        FLAGS.debug,
-        FLAGS.save_checkpoint_steps)
+        FLAGS.debug)
 
     now = datetime.datetime.now()
     StyleTime = now.strftime("%Y-%m-%d-%H-%M-%S")
