@@ -307,7 +307,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # <------gt_argmax_overlaps是以anchor的某一行的视角来看，找到这个anchor对应的最大的iou的那个GT的index
 
     # fg label: above threshold IOU，
-    logger.debug("overlap大于0.7的认为是前景，一共有%d个",(max_overlaps >= cfg.RPN_POSITIVE_OVERLAP).sum())
+    logger.debug("overlap大于0.7的认为是前景，一共有%d个",len(max_overlaps >= cfg.RPN_POSITIVE_OVERLAP))
     logger.debug("max_overlaps(每个anchor里最大的那个gt对应的IoU):%r",max_overlaps)
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
     __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]

@@ -47,7 +47,6 @@ nohup python -m main.train \
     --validate_labels_dir=$validate_labels_dir \
     --validate_batch=100 \
     --learning_rate=0.0001 \
-    --save_checkpoint_steps=5000 \
     --decay_rate=0.3 \
     --lambda1=10000 \
     --gpu=$1 \

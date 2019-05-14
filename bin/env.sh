@@ -9,3 +9,9 @@ export validate_labels_split_dir=data/validate/labels.split
 export validate_labels_dir=data/validate/labels
 export validate_raw_images_dir=data/validate/raw.images
 export validate_raw_labels_dir=data/validate/raw.labels
+
+export test_images_dir=data/test/images
+export test_labels_split_dir=data/test/labels.split
+export test_labels_dir=data/test/labels
+export test_raw_images_dir=data/test/raw.images
+export test_raw_labels_dir=data/test/raw.labels

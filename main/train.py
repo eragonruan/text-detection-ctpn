@@ -35,7 +35,6 @@ tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')#VGG1
 tf.app.flags.DEFINE_boolean('restore', False, '')
 tf.app.flags.DEFINE_boolean('debug', False, '')
 tf.app.flags.DEFINE_boolean('resize', False, '')
-tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 FLAGS = tf.app.flags.FLAGS
 
 tf.logging.set_verbosity(tf.logging.DEBUG)

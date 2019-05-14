@@ -46,6 +46,10 @@ def init_params():
     tf.app.flags.DEFINE_string('ctpn_model_dir', 'model/', '') # model的存放目录，会自动加载最新的那个模型
     tf.app.flags.DEFINE_string('ctpn_model_file', '', '')     # 为了支持单独文件，如果为空，就预测test_dir中的所有文件
 
+    tf.app.flags.DEFINE_string('test_images_dir','','')
+    tf.app.flags.DEFINE_string('test_labels_dir','','')
+    tf.app.flags.DEFINE_string('test_labels_split_dir','','')
+
 
 def init_logger():
     level = logging.DEBUG
@@ -239,7 +243,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         logger.info("探测图片[%s]的文字区域开始",image_name)
         start = time.time()
 
-        boxes, scores, textsegs = predict_by_network(
+        boxes_big, scores, bbox_small = predict_by_network(
             sess,
             bbox_pred,
             cls_prob,
@@ -248,10 +252,10 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             resized_img)
 
         # scale 放大 back回去
-        boxes = np.array(image_utils.resize_labels(boxes[:, :8], 1 / scale))
-        textsegs = np.array(image_utils.resize_labels(textsegs, 1 / scale))
+        boxes_big = np.array(image_utils.resize_labels(boxes_big[:, :8], 1 / scale))
+        bbox_small = np.array(image_utils.resize_labels(bbox_small, 1 / scale))
 
-        _image['boxes'] = boxes
+        _image['boxes'] = boxes_big
 
         cost_time = (time.time() - start)
         logger.info("探测图片[%s]的文字区域完成，耗时: %f" ,image_name, cost_time)
@@ -260,13 +264,16 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         if FLAGS.draw :
             if FLAGS.split:
                 # 把预测小框画上去
-                draw(original_img,textsegs,GREEN)
+                draw(original_img,bbox_small,GREEN)
+                logger.debug("将预测出来的小框画上去了")
+
                 split_box_labels = get_gt_label_by_image_name(image_name, split_path)
-                draw(original_img,split_box_labels,BLUE)
-                logger.debug("将小框画上去了")
+                if split_box_labels:
+                    draw(original_img,split_box_labels,BLUE)
+                    logger.debug("将样本的小框画上去了")
 
             # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-            draw(original_img, boxes, color=RED,thick=1)
+            draw(original_img, boxes_big, color=RED,thick=1)
             logger.debug("将大框画上去了")
 
             out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
@@ -283,7 +290,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             save(
                 pred_gt_path,
                 file_name,
-                boxes
+                boxes_big
             )
             logger.debug("保存了大框的坐标到：%s/%s",pred_gt_path,file_name)
 
@@ -292,7 +299,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             save(
                 pred_bbox_path,
                 file_name,
-                textsegs,
+                bbox_small,
                 scores
             )
             logger.debug("保存了小框的坐标到：%s/%s",pred_bbox_path,file_name)
@@ -303,7 +310,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             big_box_labels   = get_gt_label_by_image_name(image_name,label_path)
             if big_box_labels is not None:
                 logger.debug("找到图像（%s）对应的大框样本（%d）个，开始评测",image_name,len(big_box_labels))
-                metrics = evaluate(big_box_labels, boxes[:,:8], conf())
+                metrics = evaluate(big_box_labels, boxes_big[:,:8], conf())
                 _image['F1'] = metrics['hmean']
                 logger.debug("大框的评价：%r",metrics)
                 draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
@@ -313,7 +320,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
                 split_box_labels = get_gt_label_by_image_name(image_name, split_path)
                 if split_box_labels is not None:
                     logger.debug("找到图像（%s）对应的小框split样本（%d）个，开始评测",image_name, len(split_box_labels))
-                    metrics = evaluate(split_box_labels, textsegs, conf())
+                    metrics = evaluate(split_box_labels, bbox_small, conf())
                     logger.debug("小框的评价：%r", metrics)
                     logger.debug("将小框标签画到图片上去")
                     draw(original_img, split_box_labels[:,:4], color=GRAY, thick=1)
