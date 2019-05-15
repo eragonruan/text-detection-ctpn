@@ -8,7 +8,7 @@ import os
     目录是这么约定的：
     生成的原图：    images
     大框标签：      labels
-    anchor标签：   split
+    anchor标签：   labels.split
     画框的图：      draw
     
     另外，
@@ -52,10 +52,10 @@ if __name__ == '__main__':
     data_images_dir = os.path.join(data_dir,type,"images")
 
     # 大框标签目录（坐标）
-    data_labels_dir = os.path.join(data_dir,type,"labels.resize")
+    data_labels_dir = os.path.join(data_dir,type,"labels")
 
     # 保存小框标签（坐标）的目录
-    data_split_labels_dir = os.path.join(data_dir,type,"split")
+    data_split_labels_dir = os.path.join(data_dir,type,"labels.split")
 
     # 要画出来的图片存放的目录
     data_draws_dir = os.path.join(data_dir, type, "draws")
@@ -78,6 +78,17 @@ if __name__ == '__main__':
         # 得到标签的full path，带目录的全路径
         label_name          = os.path.join(data_labels_dir, lab_name)
         split_label_name    = os.path.join(data_split_labels_dir,lab_name)
+
+        if not os.path.exists(image_name):
+            print("[ERROR]图片不存在%s" % image_name)
+            continue
+        if not os.path.exists(split_label_name):
+            print("[ERROR]小框标签%s" % split_label_name)
+            continue
+        if not os.path.exists(label_name):
+            print("[ERROR]大框标签%s" % label_name)
+            continue
+
 
         # 先打开原图
         image = Image.open(image_name)
