@@ -29,7 +29,7 @@ def _move_file(orignal_file_full_path):
         logger.error("要移动的文件不存在：%s",orignal_file_full_path)
         return
     dir,name = os.path.split(orignal_file_full_path)
-    new_dir = os.path.join(dir,".move")
+    new_dir = dd(dir,".move")
     if not os.path.exists(new_dir): os.makedirs(new_dir)
     shutil.move(orignal_file_full_path, new_dir)
     logger.debug("移动文件%s=>%s",orignal_file_full_path, new_dir)
@@ -50,8 +50,12 @@ def anchor_process(image_name,label_name,split_label_name):
         _move_file(label_name)
         _move_file(split_label_name)
 
+
+def df(a,b):
+    return os.path.join(a,b)
+
 # /test/abc/=> /test/abc.move
-def d(a,b):
+def dd(a,b):
     if a[-1]=='/':
         a = a[:-1]
     return a+b
@@ -79,7 +83,7 @@ def draw_image(image_name,label_name,split_label_name):
         for one_img_pos in split_label_xys:
             draw.rectangle(tuple(one_img_pos), outline='green')
     # 得到要画框后的图片文件的存放路径（大框和小框画到一个文件上）'
-    draw_dir = d(image_dir, ".draw")
+    draw_dir = dd(image_dir, ".draw")
     if not os.path.exists(draw_dir): os.makedirs(draw_dir)
     draw_image_name = os.path.join(draw_dir, img_name)
     # 把画完的图保存到draw目录
@@ -111,9 +115,9 @@ if __name__ == '__main__':
         if ext.lower() not in ['.jpg', '.png']: continue
         # 得到两个标签的文件名：大框：格式是8个数[x1,y1,x2,y2,x3,y3,x4,y4]，小框：格式是4个数 [x1,y1,x2,y2]
         lab_name = name + ".txt"
-        image_name = d(image_dir, img_name)
-        label_name = d(label_dir, lab_name)
-        split_label_name = d(label_split_dir, lab_name)
+        image_name = df(image_dir, img_name)
+        label_name = df(label_dir, lab_name)
+        split_label_name = df(label_split_dir, lab_name)
 
         if not os.path.exists(image_name):
             logger.debug("[ERROR]图片不存在%s" , image_name)
