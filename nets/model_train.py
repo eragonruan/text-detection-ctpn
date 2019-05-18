@@ -307,6 +307,10 @@ def loss(bbox_pred, cls_pred, bbox, im_info,input_image_name):
     # L2对异常点敏感，他里面局那个例子，真实值为1，1000的异常值就会影响巨大，L1因为没有平方，所以这个异常值1000影响就小一些，
     # smooth L1和L1-loss函数的区别在于，L1-loss在0点处导数不唯一，可能影响收敛。smooth L1的解决办法是在0点附近使用平方函数使得它更加平滑。
     # smooth L1 loss让loss对于离群点更加鲁棒，即：相比于L2损失函数，其对离群点、异常值（outlier）不敏感，梯度变化相对更小，训练时不容易跑飞。
+    # bbox_outside_weights[labels == 1, :] = positive_weights  # 外部权重，前景是1，背景是0，
+    # bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)
+    #       RPN_BBOX_INSIDE_WEIGHTS = (0, 1.0, 0, 1.0) # (x,y,dx,dy),之前作者都写成了[1,1,1,1]，不对，只保留y和dy
+    # 最后损失函数，非正例框，都给设置成了0，正例框设置成为1，注意这个细节
     rpn_loss_box_n = tf.reduce_sum(
         rpn_bbox_outside_weights * smooth_l1_dist(
             rpn_bbox_inside_weights * (rpn_bbox_pred - rpn_bbox_targets)),

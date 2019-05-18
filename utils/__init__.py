@@ -1,5 +1,6 @@
 import tensorflow as tf
 FLAGS = tf.app.flags.FLAGS
+import logging
 
 def _p_shape(tensor,msg):
     if (FLAGS.debug):
@@ -24,3 +25,10 @@ def stat(data):
         (data < 0.7).sum(),
         (data==0).sum())
 
+
+
+def init_logger():
+    logging.basicConfig(
+        format='%(asctime)s : %(levelname)s : %(message)s',
+        level=logging.DEBUG,
+        handlers=[logging.StreamHandler()])

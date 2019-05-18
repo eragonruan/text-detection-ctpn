@@ -2,18 +2,7 @@ from PIL import Image, ImageDraw
 import os
 
 '''
-    这个程序用来，把生成的句子的外面的大框画出来（红色），
-    然后，在把小框（anchor）画出来（绿色），
-    
-    目录是这么约定的：
-    生成的原图：    images
-    大框标签：      labels
-    anchor标签：   labels.split
-    画框的图：      draw
-    
-    另外，
-    大框格式是：[x1,y1,x2,y2,x3,y3,x4,y4]，4个点，所以可以是不规则四边形
-    小框格式是：[x1,y1,x2,y2] 2个点，只能是矩形
+   这个类已经被废弃，已经迁移到了image_debug.py去了
 '''
 
 # load 标签坐标
@@ -83,10 +72,10 @@ if __name__ == '__main__':
             print("[ERROR]图片不存在%s" % image_name)
             continue
         if not os.path.exists(split_label_name):
-            print("[ERROR]小框标签%s" % split_label_name)
+            print("[ERROR]小框标签不存在%s" % split_label_name)
             continue
         if not os.path.exists(label_name):
-            print("[ERROR]大框标签%s" % label_name)
+            print("[ERROR]大框标签不存在%s" % label_name)
             continue
 
 

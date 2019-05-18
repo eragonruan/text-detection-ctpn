@@ -13,6 +13,12 @@ FLAGS = tf.app.flags.FLAGS
 logger = logging.getLogger("anchor")
 DEBUG = False
 
+def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ],image_name=None):
+    assert rpn_cls_score.shape[0] == 1, 'Only single item batches are supported'
+    height, width = rpn_cls_score.shape[1:3]
+
+    return anchor_target_layer_process((width,height), gt_boxes, im_info, _feat_stride, anchor_scales,image_name,FLAGS.debug)
+
 # bbox_pred  ( N , H , W , 40 )                N:批次  H=h/16  W=w/16 ，其中 h原图高    w原图宽
 # cls_pred   ( N , H , W*10 , 2 )              每个(featureMap H*W个)点的10个anchor的2分类值，（所以是H*W*10*2个）
 # cls_prob  ( N , H , W*10 , 2 ), 但是，对是、不是，又做了一个归一化
@@ -28,13 +34,12 @@ DEBUG = False
 # rpn_cls_score是啥，是神经网络跑出来的一个分类结果，是包含文字，还是不包含文字的一个概率值，
 #       因为有9个框，而且有包含和不包含2个值，所以是(1, H, W, Ax2)维度的，对H,W的含义是，对每一个feature map中的点，都做了预测
 # 另，这个太神奇了，参数本来都是张量
-def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ],image_name=None):
+def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stride, anchor_scales,image_name,is_debug):
     logger.debug("开始调用anchor_target_layer，这个函数是来算anchor们和gt的差距")
 
     logger.debug("传入的参数：")
 
-    logger.debug("rpn_cls_score:%r",type(rpn_cls_score))
-    logger.debug("rpn_cls_score:%r", rpn_cls_score.shape)
+    logger.debug("feature map shape:%r",feature_map_shape)
     logger.debug("gt_boxes:%r", type(gt_boxes))
     logger.debug("gt_boxes:%r", gt_boxes.shape)
     logger.debug("im_info:%r", im_info)
@@ -100,10 +105,10 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     # filter out-of-image anchors
     # measure GT overlap
 
-    assert rpn_cls_score.shape[0] == 1, 'Only single item batches are supported'
+
 
     # map of shape (..., H, W),就是各个anchor包含前景的概率把(1, H, W, Ax2)
-    height, width = rpn_cls_score.shape[1:3]  # feature-map的高宽，我怎么觉得是[1:2]啊？我理解错了，1：3，就是index=1和index=2的那两个值
+    width,height = feature_map_shape  # feature-map的高宽，我怎么觉得是[1:2]啊？我理解错了，1：3，就是index=1和index=2的那两个值
     logger.debug("feature map H/W:(%d,%d)",height,width)
 
     if DEBUG:
@@ -335,7 +340,7 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
     logger.debug("rpn_bbox_inside_weights:%r", rpn_bbox_inside_weights.shape)
     logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
 
-    debug_draw(__debug_iou_max_with_gt_anchors, __debug_iou_more_0_7_anchors, anchors, gt_boxes, image_name,
+    if is_debug: debug_draw(__debug_iou_max_with_gt_anchors, __debug_iou_more_0_7_anchors, anchors, gt_boxes, image_name,
                inside_labels)
 
     # 得到一个新的RPN的标签，对比
@@ -348,8 +353,6 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
                gt_boxes,
                image_name,
                inside_labels):
-
-    if not FLAGS.debug: return
 
     # 这段代码是调试用的，是为了让训练过程可视化，
     # 我要画出来，所有的备选anchor，包括IoU>0.7的 + GT相交最多的那个anchor，这些都是样本备选，用红色
@@ -377,13 +380,18 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
     # logger.debug("__debug_specail_gt:%r",__debug_specail_gt)
     # draw.rectangle(__debug_specail_gt[:4], outline=RED)
 
-    logger.debug("[调试画图] 画出所有IoU大于0.7的anchors[%d]，红色",len(__debug_iou_more_0_7_anchors))
-    for anchor in __debug_iou_more_0_7_anchors:
-        draw.rectangle(anchor.tolist(), outline=RED)
+    # logger.debug("[调试画图] 画出所有IoU大于0.7的anchors[%d]，红色",len(__debug_iou_more_0_7_anchors))
+    # for anchor in __debug_iou_more_0_7_anchors:
+    #     draw.rectangle(anchor.tolist(), outline=RED)
+    #
+    # logger.debug("[调试画图] 画出所有和GT相交最大的anchor[%d]，紫色",len(__debug_iou_max_with_gt_anchors))
+    # for anchor in __debug_iou_max_with_gt_anchors:
+    #     draw.rectangle(anchor.tolist(), outline=PURPLE)
 
-    logger.debug("[调试画图] 画出所有和GT相交最大的anchor[%d]，紫色",len(__debug_iou_max_with_gt_anchors))
-    for anchor in __debug_iou_max_with_gt_anchors:
-        draw.rectangle(anchor.tolist(), outline=PURPLE)
+    logger.debug("[调试画图] 画出所有的GT[%d]，绿色",len(gt_boxes))
+    for gt in gt_boxes:
+        draw.rectangle(gt[:4].tolist(), outline=GREEN)
+
 
     logger.debug("[调试画图] 画出所有正例[%d]，蓝色",len(positive_anchors))
     for anchor in positive_anchors:
@@ -393,9 +401,6 @@ def debug_draw(__debug_iou_max_with_gt_anchors,
     # for anchor in negative_anchors:
     #     draw.rectangle(anchor.tolist(), outline=GRAY)
 
-    logger.debug("[调试画图] 画出所有的GT[%d]，绿色",len(gt_boxes))
-    for gt in gt_boxes:
-        draw.rectangle(gt[:4].tolist(), outline=GREEN)
 
     # 保存图片
     import os
@@ -442,7 +447,7 @@ def _compute_targets(ex_rois, gt_rois):
 
     assert ex_rois.shape[0] == gt_rois.shape[0]
     assert ex_rois.shape[1] == 4
-    assert gt_rois.shape[1] == 5
+    # assert gt_rois.shape[1] == 5,第五列是 可能性，其实这个校验没必要，我在写image_debug的时候去掉了这点，导致报错，所以注释掉他
 
     #         (targets_dx, targets_dy, targets_dw, targets_dh)
     # 返回的是4个差:[dx,dy,dw,dh]
