@@ -25,6 +25,7 @@ class Config:
     RPN_BBOX_INSIDE_WEIGHTS = (0, 1.0, 0, 1.0) # (x,y,dx,dy),之前作者都写成了[1,1,1,1]，不对，只保留y和dy
     RPN_POSITIVE_WEIGHT = -1.0
 
+    RPN_FG_POSSIBILITY = 0.95 # 概率大于多少认为是前景
     RPN_PRE_NMS_TOP_N = 12000 #12000
     RPN_POST_NMS_TOP_N = 1000 #1000
     RPN_NMS_THRESH = 0.7 # 0.7改了，改的更严苛

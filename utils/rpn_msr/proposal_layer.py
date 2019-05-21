@@ -53,7 +53,8 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
         'Only single item batches are supported'
 
     pre_nms_topN = cfg.RPN_PRE_NMS_TOP_N  # 12000,在做nms之前，最多保留的候选box数目
-    post_nms_topN = cfg.RPN_POST_NMS_TOP_N  # 1000，做完nms之后，最多保留的box的数目
+    # 2019.5.21 之前只保留1000个，根本不够，很多图片的split bbox多大2000+，所以去掉这个限制
+    # post_nms_topN = cfg.RPN_POST_NMS_TOP_N  # 1000，做完nms之后，最多保留的box的数目
     nms_thresh = cfg.RPN_NMS_THRESH  # nms用参数，阈值是0.7
     min_size = cfg.RPN_MIN_SIZE  # 候选box的最小尺寸，目前是16，高宽均要大于16j,RPN_MIN_SIZE = 8
     # ？？？说是16，为何RPN_MIN_SIZE=8呢？
@@ -169,16 +170,23 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     # 总之就是会删掉一部分框
     keep = nms(np.hstack((proposals, scores)), nms_thresh)  # 进行nms操作，保留2000个proposal
     logger.debug("经过NMS算法，保留的框有%d个",len(keep))
-    if post_nms_topN > 0:
-        keep = keep[:post_nms_topN]
     proposals = proposals[keep, :]
     scores = scores[keep]
-
-
-
     bbox_deltas = bbox_deltas[keep, :]
-    logger.debug("然后再删除后，保留的框%d个", len(proposals))
-    logger.info("最后剩下的1000个前景score的概率分布情况：%s",stat(scores))
+
+    # 2019.5.21 之前只保留1000个，根本不够，很多图片的split bbox多大2000+，所以去掉这个限制
+    # if post_nms_topN > 0:
+    #     keep = keep[:post_nms_topN]
+    # proposals = proposals[keep, :]
+    # scores = scores[keep]
+    # 但是，需要晒到前景概率小于90%的那些小的bbox
+    keep = np.where(scores > cfg.RPN_FG_POSSIBILITY)[0]
+    logger.debug("筛选前景概率大于%f的框，有%d个",cfg.RPN_FG_POSSIBILITY,len(keep))
+    proposals = proposals[keep, :]
+    scores = scores[keep]
+    bbox_deltas = bbox_deltas[keep, :]
+
+    logger.info("最后剩下%d个前景scores,概率分布：%s",len(scores),stat(scores))
 
     # Output rois blob
     # Our RPN implementation only supports a single input image, so all
