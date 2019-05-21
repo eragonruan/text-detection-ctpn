@@ -31,7 +31,8 @@ def scale_anchor(anchor, h, w): # anchor
 def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
                      scales=2 ** np.arange(3, 6)):
     # 这个是定义不同高度的，11个像素高，16个像素高，。。。，是针对原图的
-    heights = [11, 16, 23, 33, 48, 68, 97, 139, 198, 283]
+    heights = [11, 16, 23, 33, 48, 68, 97, 139, 198, 283] #<-----------没变要要那么大的anchor我们的场景，我改改试试，2019.5.21 piginzoo
+    heights = [11, 16, 23, 33] # 48, 68, 97, 139, 198, 283]
     # 对宽度是16个像素，未来是不是可以调整？对小字块？？？
     widths = [16]
     sizes = []

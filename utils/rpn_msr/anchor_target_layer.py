@@ -73,20 +73,6 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
     _num_anchors = _anchors.shape[0]  # 10个anchor，shape=[10,4]，4是4个坐标，[x1,y1, x2,y2]
     logger.debug("一共%d个anchors",_num_anchors)
 
-    if DEBUG:
-        print('anchors:')
-        print(_anchors)
-        print('anchor shapes:')
-        print(np.hstack((
-            _anchors[:, 2::4] - _anchors[:, 0::4],
-            _anchors[:, 3::4] - _anchors[:, 1::4],
-        )))
-        _counts = cfg.EPS
-        _sums = np.zeros((1, 4))
-        _squared_sums = np.zeros((1, 4))
-        _fg_sum = 0
-        _bg_sum = 0
-        _count = 0
 
     # allow boxes to sit over the edge by a small amount
     _allowed_border = 0
@@ -110,15 +96,6 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
     # map of shape (..., H, W),就是各个anchor包含前景的概率把(1, H, W, Ax2)
     width,height = feature_map_shape  # feature-map的高宽，我怎么觉得是[1:2]啊？我理解错了，1：3，就是index=1和index=2的那两个值
     logger.debug("feature map H/W:(%d,%d)",height,width)
-
-    if DEBUG:
-        print('AnchorTargetLayer: height', height, 'width', width)
-        print('')
-        print('im_size: ({}, {})'.format(im_info[0], im_info[1]))
-        print('scale: {}'.format(im_info[2]))
-        print('height, width: ({}, {})'.format(height, width))
-        print('rpn: gt_boxes.shape', gt_boxes.shape)
-        print('rpn: gt_boxes', gt_boxes)
 
     # 1. Generate proposals from bbox deltas and shifted anchors
     # 这句话是得到 !!!原图!!! 的对应的每个anchor对应的x
@@ -188,16 +165,9 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
     )[0]
     logger.debug("图像内的点的索引inds_inside：%r",inds_inside.shape)
 
-    if DEBUG:
-        print('total_anchors_num', total_anchors_num)
-        print('inds_inside', len(inds_inside))
-
     # keep only inside anchors
     anchors = all_anchors[inds_inside, :]  # 保留那些在图像内的anchor
     logger.debug("图像内部的anchors：%r", anchors.shape)
-
-    if DEBUG:
-        print('anchors.shape', anchors.shape)
 
     # 至此，anchor准备好了
     # --------------------------------------------------------------
@@ -248,8 +218,6 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
     __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
     logger.debug("现在有%d个前景样本1（anchors）",(labels==1).sum())
-
-
     logger.debug("label shape:%r,max_overlaps shape:%r",labels.shape,max_overlaps.shape)
 
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的

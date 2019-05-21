@@ -4,6 +4,7 @@ import logging
 from nets import vgg
 from utils.rpn_msr.anchor_target_layer import anchor_target_layer as anchor_target_layer_py
 from utils import _p_shape,_p
+from utils.rpn_msr.config import Config as cfg
 FLAGS = tf.app.flags.FLAGS
 
 logger = logging.getLogger('model_train')
@@ -140,13 +141,13 @@ def model(image):
 
     #  lstm_fc(net,                    input_channel, output_channel, scope_name):
     #  LSTM出来的东西，灌到一个全连接FC网络里，得出回归的框的坐标
-    bbox_pred = lstm_fc(lstm_output, 512,           10 * 4, scope_name="bbox_pred")
+    bbox_pred = lstm_fc(lstm_output, 512, cfg.NETWORK_ANCHOR_NUM * 4, scope_name="bbox_pred")
     # 输出的bbox_pred [N,H,W,40]，bbox_pred
     # 为何全链接，也就是bbox_pred输出是 10 * 4？？？
     logger.debug("lstm之后又做了一个FC(bbox_pred)，输出的维度:%r", bbox_pred.get_shape())
 
     #  LSTM出来的东西，灌到一个全连接FC网络里，得出是否包含文字的概率
-    cls_pred = lstm_fc(lstm_output, 512, 10 * 2, scope_name="cls_pred")
+    cls_pred = lstm_fc(lstm_output, 512, cfg.NETWORK_ANCHOR_NUM * 2, scope_name="cls_pred")
     # 输出的cls_pred [N,H,W,20]，20个是10个anchor的对于是/不是置信概率
     # 未做softmax归一化之前的隐含层输出
     logger.debug("lstm之后另一分支也做了一个FC(cls_pred)，输出的维度:%r", cls_pred.get_shape())
@@ -218,7 +219,7 @@ def anchor_target_layer(cls_pred, bbox, im_info, input_image_name, scope_name):
 
         return [rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights]
 
-#Smooth_L1：
+#Smooth_L1：https://zhuanlan.zhihu.com/p/48426076
 def smooth_l1_dist(deltas, sigma2=9.0, name='smooth_l1_dist'):
     with tf.name_scope(name=name) as scope:
         deltas_abs = tf.abs(deltas)
