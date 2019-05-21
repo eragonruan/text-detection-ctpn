@@ -4,7 +4,7 @@ Date=$(date +%Y%m%d%H%M)
 
 if [ "$1" = "stop" ]; then
     echo "停止训练"
-    ps aux|grep python|grep ctpn|awk '{print $2}'|xargs kill -9
+    ps aux|grep python|grep name=ctpn|awk '{print $2}'|xargs kill -9
     exit
 fi
 

@@ -117,8 +117,8 @@ def resize_labels(labels,scale):
     if scale==1: return labels
     resized_labels = []
     for label in labels:
-        logger.debug("未缩放bbox label坐标：%r",label)
+        # logger.debug("未缩放bbox label坐标：%r",label)
         _resized_label = [round(x*scale) for x in label]
         resized_labels.append(_resized_label)
-        logger.debug("缩放后bbox label坐标：%r", _resized_label)
+        # logger.debug("缩放后bbox label坐标：%r", _resized_label)
     return list(resized_labels)

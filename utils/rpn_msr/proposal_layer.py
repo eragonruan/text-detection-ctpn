@@ -155,6 +155,7 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
     order = scores.ravel().argsort()[::-1]  # score按得分的高低进行排序
     if pre_nms_topN > 0:  # 保留12000个proposal进去做nms
         order = order[:pre_nms_topN]
+
     proposals = proposals[order, :]
     scores = scores[order]
     bbox_deltas = bbox_deltas[order, :]
@@ -172,6 +173,9 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, _feat_stride=[1
         keep = keep[:post_nms_topN]
     proposals = proposals[keep, :]
     scores = scores[keep]
+
+
+
     bbox_deltas = bbox_deltas[keep, :]
     logger.debug("然后再删除后，保留的框%d个", len(proposals))
     logger.info("最后剩下的1000个前景score的概率分布情况：%s",stat(scores))
@@ -196,6 +200,7 @@ def _filter_boxes(boxes, min_size):
     ws = boxes[:, 2] - boxes[:, 0] + 1 # x2-x1
     hs = boxes[:, 3] - boxes[:, 1] + 1 # y2-y1
     keep = np.where((ws >= min_size) & (hs >= min_size))[0]
+    logger.debug("之前%d个框，剩余%d个,过滤掉了%d个框",len(boxes),len(keep),(len(boxes) - len(keep)))
     return keep # keep是个数组噢~
 
 

@@ -5,9 +5,16 @@ BASEDIR=$(dirname "$0")
 echo "运行环境设置：$BASEDIR/env.sh"
 
 if [ "$1" = "" ]; then
-    echo "Usage: imsplit.sh <type:train|test|validate>"
+    echo "Usage: imsplit.sh <type:train|test|validate|xxxx>"
     exit
 fi
+
+# 默认处理
+images_dir=data/$1/images
+labels_split_dir=data/$1/labels.split
+labels_dir=data/$1/labels
+raw_images_dir=data/$1/raw.images
+raw_labels_dir=data/$1/raw.labels
 
 if [ "$1" = "train" ]; then
     images_dir=$train_images_dir

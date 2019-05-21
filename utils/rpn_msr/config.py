@@ -27,7 +27,7 @@ class Config:
 
     RPN_PRE_NMS_TOP_N = 12000 #12000
     RPN_POST_NMS_TOP_N = 1000 #1000
-    RPN_NMS_THRESH = 0.8 # 0.7改了，改的更严苛
+    RPN_NMS_THRESH = 0.7 # 0.7改了，改的更严苛
     RPN_MIN_SIZE = 8
 
     RPN_IMAGE_WIDTH  = 1200

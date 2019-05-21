@@ -14,10 +14,10 @@ IGNORE_WIDTH = 2 # 小于等于5像素的框，就忽略掉了，太小了，没
 
 def split_labels(raw_images_dir, raw_labels_dir, images_dir, labels_split_dir,labels_dir):
     if not os.path.exists(raw_images_dir):
-        print("ERROR:图片目录不存在%s" % raw_images_dir)
+        print("ERROR:图片目录不存在:[%s]" % raw_images_dir)
         exit()
     if not os.path.exists(raw_labels_dir):
-        print("ERROR:标签目录不存在%s" % labels_dir)
+        print("ERROR:标签目录不存在[%s]" % labels_dir)
         exit()
 
     if not os.path.exists(images_dir): os.makedirs(images_dir)
@@ -143,6 +143,9 @@ if __name__ == '__main__':
     parser.add_argument("--raw_images_dir")
     parser.add_argument("--raw_labels_dir")
     args = parser.parse_args()
+
+    print("参数：")
+    print(args)
 
     split_labels(
         args.raw_images_dir,
