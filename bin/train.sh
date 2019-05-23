@@ -46,7 +46,7 @@ nohup python -m main.train \
     --validate_labels_split_dir=$validate_labels_split_dir \
     --validate_labels_dir=$validate_labels_dir \
     --validate_batch=1 \
-    --learning_rate=0.0001 \
+    --learning_rate=0.00001 \
     --decay_rate=0.3 \
     --lambda1=10000 \
     --gpu=$1 \
