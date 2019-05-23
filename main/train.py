@@ -180,7 +180,7 @@ def main(argv=None):
 
             # 注意! 这次返回的只有一张图，以及这张图对应的所有的bbox
             data = next(data_generator) # next(<迭代器>）来返回下一个结果
-            logger.debug("在Train中，调用generator从queue中取出一个图片:%r",type(data))
+            logger.debug("在Train中，调用generator从queue中取出一个图片:%r",type(data[3]))
             # data_provider. generator()的返回： yield [im], bbox, im_info # yield很最重要，产生一个generator，可以遍历所有的图片
             # im_info是[w,h,c]
 

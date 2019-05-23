@@ -37,15 +37,15 @@ nohup python -m main.train \
     --name=ctpn \
     --pretrained_model_path=data/vgg_16.ckpt \
     --max_steps=100000 \
-    --decay_steps=12000 \
-    --evaluate_steps=500 \
+    --decay_steps=100000000 \
+    --evaluate_steps=50 \
     --train_images_dir=$train_images_dir \
     --train_labels_split_dir=$train_labels_split_dir \
     --train_labels_dir=$train_labels_dir \
     --validate_images_dir=$validate_images_dir \
     --validate_labels_split_dir=$validate_labels_split_dir \
     --validate_labels_dir=$validate_labels_dir \
-    --validate_batch=5 \
+    --validate_batch=1 \
     --learning_rate=0.0001 \
     --decay_rate=0.3 \
     --lambda1=10000 \
@@ -54,6 +54,6 @@ nohup python -m main.train \
     --logs_path=logs/tboard \
     --moving_average_decay=0.997 \
     --restore=False \
-    --early_stop=10 \
-    --max_lr_decay=3 \
+    --early_stop=100 \
+    --max_lr_decay=1 \
     >> ./logs/ctpn_gpu$1_$Date.log 2>&1 &
