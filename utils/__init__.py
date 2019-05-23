@@ -15,6 +15,7 @@ def _p(tensor,msg):
         return tensor
 
 def stat(data):
+    if len(data)==0: return "data size is 0"
     return "num={},mean={},std={},max={},min={},<0.5={},<0.7={},0={}".format(
         len(data),
         data.mean(),
