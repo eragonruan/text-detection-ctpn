@@ -79,11 +79,17 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
         np.ascontiguousarray(gt_boxes, dtype=np.float))  # 假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
     logger.debug("计算了IoU，anchors：%r,gt:%r",anchors.shape,gt_boxes.shape)
     argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
+    logger.debug(".")
     max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
+    logger.debug("..")
     gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
+    logger.debug("...")
     labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
+    logger.debug("....")
     __debug_iou_max_with_gt_anchors = anchors[gt_argmax_overlaps]
+    logger.debug(".....")
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
+    logger.debug("......")
     __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
     logger.debug("经过IoU>0.7筛选，现在有%d个前景样本（anchors）",(labels==1).sum())
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
@@ -243,11 +249,6 @@ def _unmap(data, count, inds, fill=0):
 # 哦，我理解，错了，这个不是在算IoU，而是在算那4个值,x,y,dw,dh，
 # 没关系，注释不删了，有助于理解别的
 def _compute_targets(ex_rois, gt_rois):
-    """Compute bounding-box regression targets for an image."""
-    logger.debug("_compute_targets")
-    logger.debug("ex_rois:anchors:%r",ex_rois.shape)
-    logger.debug("gt_rois:gts:%r", gt_rois.shape)
-
     assert ex_rois.shape[0] == gt_rois.shape[0]
     assert ex_rois.shape[1] == 4
     # assert gt_rois.shape[1] == 5,第五列是 可能性，其实这个校验没必要，我在写image_debug的时候去掉了这点，导致报错，所以注释掉他
