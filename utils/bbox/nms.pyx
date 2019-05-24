@@ -4,7 +4,7 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
 # --------------------------------------------------------
-
+# cython: language_level=3
 import numpy as np
 cimport numpy as np
 
@@ -22,6 +22,7 @@ def nms(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh):
     cdef np.ndarray[np.float32_t, ndim=1] scores = dets[:, 4]
 
     cdef np.ndarray[np.float32_t, ndim=1] areas = (x2 - x1 + 1) * (y2 - y1 + 1)
+    # alter by lwk
     cdef np.ndarray[np.intp_t, ndim=1] order = scores.argsort()[::-1]
 
     cdef int ndets = dets.shape[0]
@@ -75,6 +76,7 @@ def nms_new(np.ndarray[np.float32_t, ndim=2] dets, np.float thresh):
     cdef np.ndarray[np.float32_t, ndim=1] scores = dets[:, 4]
 
     cdef np.ndarray[np.float32_t, ndim=1] areas = (x2 - x1 + 1) * (y2 - y1 + 1)
+    # alter by lwk
     cdef np.ndarray[np.intp_t, ndim=1] order = scores.argsort()[::-1]
 
     cdef int ndets = dets.shape[0]
