@@ -21,7 +21,7 @@ tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints_mlt/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs_mlt/', '')
 tf.app.flags.DEFINE_string('pretrained_model_path', 'data/vgg_16.ckpt', '')
 tf.app.flags.DEFINE_boolean('restore', True, '')
-tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
+tf.app.flags.DEFINE_integer('save_checkpoint_steps', 5000, '')
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -72,7 +72,7 @@ def main(argv=None):
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    config.gpu_options.per_process_gpu_memory_fraction = 0.95
+    config.gpu_options.per_process_gpu_memory_fraction = 0.85
     config.allow_soft_placement = True
     with tf.Session(config=config) as sess:
         if FLAGS.restore:
