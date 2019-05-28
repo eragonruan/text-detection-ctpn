@@ -39,6 +39,7 @@ class Graph:
             # 这是个问题，这种单独的框会被忽略，这种我要留下来，修正这个bug
             if not self.graph[:, index].any() and not self.graph[index, :].any():
                 sub_graphs.append([index])
+                logger.debug("第%d个bbox不链接任何别人，单独处理",index)
                 continue
 
             # any函数，意思是numpy数组中其中有一个元素是true，我结果就返回true

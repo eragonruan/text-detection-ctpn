@@ -1,7 +1,9 @@
 import numpy as np
-
+import logging
 from utils.text_connector.other import clip_boxes
 from utils.text_connector.text_proposal_graph_builder import TextProposalGraphBuilder
+
+logger = logging.getLogger("TextProposalConnector")
 
 # Horizental 连接器，水平连接器
 class TextProposalConnector:
@@ -38,6 +40,10 @@ class TextProposalConnector:
         for index, tp_indices in enumerate(tp_groups):
             # text_line_boxes = [[x11,y11,x12,y12],[x21,y21,x22,y22]],
             text_line_boxes = text_proposals[list(tp_indices)]
+
+            # debug用
+            if len(text_line_boxes)==1:
+                logger.debug("单独一个bbox：%r",text_line_boxes)
 
             # 找到这一嘟噜的左面盒子的x0，和右面的盒子的x1，也就是得到这个一嘟噜的左右的边界
             x0 = np.min(text_line_boxes[:, 0]) # 0 is x_0 , text_line_boxes[[x1,y1,x2,y2],....]
