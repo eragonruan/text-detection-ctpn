@@ -22,6 +22,7 @@ class Graph:
     def __init__(self, graph):
         self.graph = graph
 
+    # 返回一堆的列表，每个列表就是一嘟噜的bbox，说明他们连通着
     def sub_graphs_connected(self):
 
         logger.debug("Graph.shape:%r",self.graph.shape)
@@ -33,6 +34,13 @@ class Graph:
         sub_graphs = []
         # 遍历每一行，记住，graph是proposalxproposal的方阵
         for index in range(self.graph.shape[0]):
+
+            # 2019.5.28 piginzoo 这行表达的是，这个bbox既不指向别人，也不被别人指着，过去这种框就被忽略了，
+            # 这是个问题，这种单独的框会被忽略，这种我要留下来，修正这个bug
+            if not self.graph[:, index].any() and not self.graph[index, :].any():
+                sub_graphs.append([index])
+                continue
+
             # any函数，意思是numpy数组中其中有一个元素是true，我结果就返回true
             # graph[:, index].any()，看谁和我联通
             # graph[index, :].any()，看我和谁联通

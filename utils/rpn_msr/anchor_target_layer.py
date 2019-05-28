@@ -13,6 +13,11 @@ FLAGS = tf.app.flags.FLAGS
 logger = logging.getLogger("anchor")
 DEBUG = False
 
+'''
+    此类注释都删除了，为了集中看代码，如果要看详细注释，可以参看"anchor_target_layer.backup.py"
+'''
+
+
 def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], anchor_scales=[16, ],image_name=None):
     assert rpn_cls_score.shape[0] == 1, 'Only single item batches are supported'
     height, width = rpn_cls_score.shape[1:3]
@@ -35,11 +40,10 @@ def anchor_target_layer(rpn_cls_score, gt_boxes, im_info, _feat_stride=[16, ], a
 #       因为有9个框，而且有包含和不包含2个值，所以是(1, H, W, Ax2)维度的，对H,W的含义是，对每一个feature map中的点，都做了预测
 # 另，这个太神奇了，参数本来都是张量
 def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stride, anchor_scales,image_name,is_debug):
-    logger.debug("feature map shape:%r",feature_map_shape)
-    logger.debug("gt_boxes:%r", type(gt_boxes))
-    logger.debug("gt_boxes:%r", gt_boxes.shape)
-    logger.debug("im_info:%r", im_info)
-    logger.debug("image_name:%r",image_name.shape)
+    logger.debug("<feature map>:\t%r",feature_map_shape)
+    logger.debug("<gt_boxes>:\t%r", gt_boxes.shape)
+    logger.debug("<im_info>:\t%r", im_info)
+    logger.debug("<image_name>:\t%r",image_name)
 
     _anchors = generate_anchors(scales=np.array(anchor_scales))  # 生成基本的anchor,一共10个，每一个是【x1,y1,y2,y2】坐标形式
     _num_anchors = _anchors.shape[0]  # 10个anchor，shape=[10,4]，4是4个坐标，[x1,y1, x2,y2]
@@ -71,50 +75,31 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
     anchors = all_anchors[inds_inside, :]  # 保留那些在图像内的anchor
     logger.debug("图像内部anchors：%r", anchors.shape)
 
-    #label: 1正例,0负例,-1不相关
+    #label: 1正例,0负例,-1不相关，在图像范围内的所有的anchor数量就是label的size，label就是anchor的数量
     labels = np.empty((len(inds_inside),), dtype=np.float32)
     labels.fill(-1)  # 初始化label，均为-1
     overlaps = bbox_overlaps(
         np.ascontiguousarray(anchors, dtype=np.float),   # anchor是[50*37*10,4]
         np.ascontiguousarray(gt_boxes, dtype=np.float))  # 假设anchors有x个，gt_boxes有y个，返回的是一个（x,y）的数组
     logger.debug("计算了IoU，anchors：%r,gt:%r",anchors.shape,gt_boxes.shape)
-    argmax_overlaps = overlaps.argmax(axis=1)  # (A)#找到和每一个gtbox，overlap最大的那个anchor
-    logger.debug(".")
-    max_overlaps = overlaps[np.arange(len(inds_inside)), argmax_overlaps]
-    logger.debug("..")
-    gt_argmax_overlaps = overlaps.argmax(axis=0)  # G#找到每个位置上9个anchor中与gtbox，overlap最大的那个
-    logger.debug("...")
-    labels[gt_argmax_overlaps] = 1   # 每个位置上的9个anchor中overlap最大的认为是前景
-    logger.debug("....")
-    __debug_iou_max_with_gt_anchors = anchors[gt_argmax_overlaps]
-    logger.debug(".....")
+    gt_index_max_IoU_4_each_anchor = overlaps.argmax(axis=1)  #axis=1是按行(anchor)来，找出每行中IoU最大的对应GT列号
+    max_overlaps = overlaps[np.arange(len(inds_inside)), gt_index_max_IoU_4_each_anchor] #根据GT列号，找出每个anchor对应的IoU最大值
+    logger.debug("选出每行anchor（和GT）对应的最大的IoU值,shape:%r",max_overlaps.shape)
     labels[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP] = 1  # overlap大于0.7的认为是前景
-    logger.debug("......")
-    __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
-    logger.debug("经过IoU>0.7筛选，现在有%d个前景样本（anchors）",(labels==1).sum())
     labels[max_overlaps < cfg.RPN_NEGATIVE_OVERLAP] = 0  # 先给背景上标签，小于0.3overlap的
-    logger.debug("overlap小于0.3的认为是背景，一共有%d个", (max_overlaps < cfg.RPN_NEGATIVE_OVERLAP).sum())
+    logger.debug("经过IoU>0.7|<0.3,筛选出%d个前景样本,%d个背景",(labels==1).sum(),(labels==0).sum())
 
-    # 开始按照batch要求，削减样本正样本数量，以及增加负样本
-    num_fg = int(cfg.RPN_FG_FRACTION * cfg.RPN_BATCHSIZE)
-    fg_inds = np.where(labels == 1)[0] #fg_inds，前景的anchors的数量
-    if len(fg_inds) > num_fg:
-        # 随机去掉一些样本，去掉就是置为-1，数量是从前景里面去掉要求的数量num_fg，正样本里就只剩下num_fg这么多了
-        disable_inds = npr.choice(
-            fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
-        labels[disable_inds] = -1  # 变为-1，-1就是disable，就是这次不用的样本，既不能当正样本，也不能当负样本
-        logger.debug("经过最大正样本数量600限定，现有%d个前景样本（anchors）", (labels == 1).sum())
+    #然后，再筛选出和每个GT IoU最大的anchor，直接入选正例，这个论文3.5节专门提到了
+    index_max_iou_4gt = overlaps.argmax(axis=0)  #axis=0看列(GT)中最大的anchor的行号
+    labels[index_max_iou_4gt] = 1   #每个GT对应的最大的anchor标注成正例
+    logger.debug("将labels中GT最大IoU最大的anchor标注为正样本，个数:%d",len(index_max_iou_4gt))
 
+    __debug_iou_max_with_gt_anchors = anchors[index_max_iou_4gt]
+    __debug_iou_more_0_7_anchors = anchors[max_overlaps >= cfg.RPN_POSITIVE_OVERLAP]
 
-    num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
-    bg_inds = np.where(labels == 0)[0]
-    if len(bg_inds) > num_bg:
-        disable_inds = npr.choice(
-            bg_inds, size=(len(bg_inds) - num_bg), replace=False)
-        labels[disable_inds] = -1
-        logger.debug("经过设置负样本后，现在有%d个前景样本（anchors）", (labels == 1).sum())
+    align_negtive_positive_num_4_labels(labels)
 
-    bbox_targets = _compute_targets(anchors, gt_boxes[argmax_overlaps, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
+    bbox_targets = _compute_targets(anchors, gt_boxes[gt_index_max_IoU_4_each_anchor, :])  # 根据anchor和gtbox计算得真值（anchor和gtbox之间的偏差）
     bbox_inside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
     bbox_inside_weights[labels == 1, :] = np.array(cfg.RPN_BBOX_INSIDE_WEIGHTS)
     bbox_outside_weights = np.zeros((len(inds_inside), 4), dtype=np.float32)
@@ -143,17 +128,42 @@ def anchor_target_layer_process(feature_map_shape, gt_boxes, im_info, _feat_stri
     bbox_outside_weights = bbox_outside_weights.reshape((1, height, width, A * 4))
     rpn_bbox_outside_weights = bbox_outside_weights
 
-    logger.debug("rpn_labels:%r",rpn_labels.shape)
     logger.debug("rpn_labels中正例%d个,负例%d个,无效%d个", (rpn_labels==1).sum(),(rpn_labels==0).sum(),(rpn_labels==-1).sum())
-    logger.debug("rpn_bbox_targets:%r", rpn_bbox_targets.shape)
-    logger.debug("rpn_bbox_inside_weights:%r", rpn_bbox_inside_weights.shape)
-    logger.debug("rpn_bbox_outside_weights:%r", rpn_bbox_outside_weights.shape)
+    logger.debug("rpn_labels:\t%r",rpn_labels.shape)
+    logger.debug("rpn_bbox_targets:\t%r", rpn_bbox_targets.shape)
+    logger.debug("rpn_bbox_inside_weights:\t%r", rpn_bbox_inside_weights.shape)
+    logger.debug("rpn_bbox_outside_weights:\t%r", rpn_bbox_outside_weights.shape)
 
-    if is_debug: debug_draw(__debug_iou_max_with_gt_anchors, __debug_iou_more_0_7_anchors, anchors, gt_boxes, image_name,
-               inside_labels)
+    if is_debug: debug_draw(
+        __debug_iou_max_with_gt_anchors,
+        __debug_iou_more_0_7_anchors,
+        anchors,
+        gt_boxes,
+        image_name,
+        inside_labels)
 
     # 得到一个新的RPN的标签，对比
     return rpn_labels, rpn_bbox_targets, rpn_bbox_inside_weights, rpn_bbox_outside_weights
+
+# 让正负例尽量平衡
+def align_negtive_positive_num_4_labels(labels):
+    # 开始按照batch要求，削减样本正样本数量，以及增加负样本
+    num_fg = int(cfg.RPN_FG_FRACTION * cfg.RPN_BATCHSIZE)
+    fg_inds = np.where(labels == 1)[0]  # fg_inds，前景的anchors的数量
+    if len(fg_inds) > num_fg:
+        # 随机去掉一些样本，去掉就是置为-1，数量是从前景里面去掉要求的数量num_fg，正样本里就只剩下num_fg这么多了
+        disable_inds = npr.choice(
+            fg_inds, size=(len(fg_inds) - num_fg), replace=False)  # 随机去除掉一些正样本
+        labels[disable_inds] = -1  # 变为-1，-1就是disable，就是这次不用的样本，既不能当正样本，也不能当负样本
+        logger.debug("经过最大正样本数量600限定，现有%d个前景样本（anchors）", (labels == 1).sum())
+    num_bg = cfg.RPN_BATCHSIZE - np.sum(labels == 1)
+    bg_inds = np.where(labels == 0)[0]
+    if len(bg_inds) > num_bg:
+        disable_inds = npr.choice(
+            bg_inds, size=(len(bg_inds) - num_bg), replace=False)
+        labels[disable_inds] = -1
+        logger.debug("经过设置负样本后，现在有%d个前景样本（anchors）", (labels == 1).sum())
+
 
 #  调试用，把所有的anchor都画出来看看，还有GT
 def debug_draw(__debug_iou_max_with_gt_anchors,

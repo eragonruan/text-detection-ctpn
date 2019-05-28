@@ -49,15 +49,21 @@ def shrink_poly(poly, r=16):
     # 存着切分完的矩形，应该是4个坐标，x1,y1,x2,y2
     res = []
 
-    # 取整一下吧
-    start = int((x_min // 16 + 1) * 16)
+    # # 取整一下吧
+    # start = int((x_min // 16 + 1) * 16)
+    # end = x_max   # int((x_max // 16) * 16) #我没有取整16
+    # p = x_min
+    # res.append([p, int(k1 * p + b1), # kx+b, p相当于是x，第一个p是最左面，但是第二个p就是16位取整的值了
+    #             start - 1, int(k1 * (p + 15) + b1),
+    #             start - 1, int(k2 * (p + 15) + b2),
+    #             p, int(k2 * p + b2)])
+    # 2009.5.27 piginzoo，注释上面的代码，为了是让左面的框，如果不是太窄(3个像素)，都直接扩到16个像素宽
+    start = int((x_min // 16) * 16)
     end = x_max   # int((x_max // 16) * 16) #我没有取整16
+    if (start + 16 - x_min) <= IGNORE_WIDTH:
+        print("左面的框太小，忽略从往右的下一个位置开始：%d" % (start + 16 - x_min))
+        start = start + 16
 
-    p = x_min
-    res.append([p, int(k1 * p + b1), # kx+b, p相当于是x，第一个p是最左面，但是第二个p就是16位取整的值了
-                start - 1, int(k1 * (p + 15) + b1),
-                start - 1, int(k2 * (p + 15) + b2),
-                p, int(k2 * p + b2)])
 
     for p in range(start, end + 1, r):
         # 2019.4.7 我给改成了收紧，让小框紧紧的包裹住大框的右侧边缘

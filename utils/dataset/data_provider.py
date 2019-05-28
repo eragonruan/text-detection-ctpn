@@ -82,11 +82,11 @@ def get_validate_images_data(validate_dir,batch_num):
 
 def generator(data_dir,label_dir,label_split_dir):
     image_list = np.array(get_dir_images(data_dir))
-    print('{} training images in {}'.format(image_list.shape[0], data_dir))
     index = np.arange(0, image_list.shape[0])
 
     while True:
         np.random.shuffle(index)
+        logger.info("对图片进行了shuffle")
         for i in index: # 遍历所有的图片文件
             try:
                 im_fn = image_list[i] # fn file name，文件名

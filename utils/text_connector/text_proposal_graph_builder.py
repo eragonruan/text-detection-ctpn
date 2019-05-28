@@ -53,10 +53,9 @@ class TextProposalGraphBuilder:
     def get_successions(self, index):
         box = self.text_proposals[index]
         results = []
-        # 从box[0],就是小框的x1开始，往右50个像素
+        # 从box[0],就是小框的x1开始，往右50个像素,50个像素内的开始的bbox都考察一遍
         for left in range(int(box[0]) + 1,
-                          min(int(box[0]) + TextLineCfg.MAX_HORIZONTAL_GAP + 1,
-                              self.im_size[1])):
+                          min(int(box[0]) + TextLineCfg.MAX_HORIZONTAL_GAP + 1,self.im_size[1])):
             # boxes_table是所有的x为下标的数组，存着以这个x开头的box index的list
             # 所有adj_box_indices是一个数组
             adj_box_indices = self.boxes_table[left]
@@ -131,7 +130,7 @@ class TextProposalGraphBuilder:
         return overlaps_v(index1, index2) >= TextLineCfg.MIN_V_OVERLAPS and \
                size_similarity(index1, index2) >= TextLineCfg.MIN_SIZE_SIM
 
-    # text_proposals：x1,y1,x2,y2
+    # text_proposals：x1,y1,x2,y2，所有的小框
     # im_size[H,W]
     # 返回的是一个方阵的"图"，图是个隐喻，其实TMD就是个方阵，每一维度是proposal的数量。
     # 这个图形象的可以参考：https://pic1.zhimg.com/80/v2-822f0709d3e30df470a8e17f09a25de0_hd.jpg
@@ -153,7 +152,7 @@ class TextProposalGraphBuilder:
             boxes_table[int(box[0])].append(index)
         self.boxes_table = boxes_table
 
-        # graph是一个proposal数量的方阵，false都是
+        # graph是一个text proposal数量的方阵，false都是
         # 这个图形象的可以参考：https://pic1.zhimg.com/80/v2-822f0709d3e30df470a8e17f09a25de0_hd.jpg
         graph = np.zeros((text_proposals.shape[0], text_proposals.shape[0]), np.bool)
 
