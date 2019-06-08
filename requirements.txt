@@ -4,7 +4,7 @@ Shapely==1.6.4.post1
 python3-tk
 matplotlib==1.5.3
 numpy==1.14.2
-tensorflow-gpu==1.4.0
+tensorflow-gpu==1.8.0
 Cython==0.24.1
 ipython==5.1.0
 Pillow

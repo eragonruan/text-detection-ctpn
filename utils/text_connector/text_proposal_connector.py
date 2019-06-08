@@ -42,8 +42,8 @@ class TextProposalConnector:
             text_line_boxes = text_proposals[list(tp_indices)]
 
             # debug用
-            if len(text_line_boxes)==1:
-                logger.debug("单独一个bbox：%r",text_line_boxes)
+            # if len(text_line_boxes)==1:
+            #     logger.debug("单独一个bbox：%r",text_line_boxes)
 
             # 找到这一嘟噜的左面盒子的x0，和右面的盒子的x1，也就是得到这个一嘟噜的左右的边界
             x0 = np.min(text_line_boxes[:, 0]) # 0 is x_0 , text_line_boxes[[x1,y1,x2,y2],....]

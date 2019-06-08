@@ -206,16 +206,6 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
     logger.info("开始探测图片的文字区域")
     global input_image,input_im_info, bbox_pred, cls_pred, cls_prob
 
-    # 输出的路径
-    pred_draw_path = os.path.join(FLAGS.pred_dir, PRED_DRAW_PATH)
-    pred_gt_path = os.path.join(FLAGS.pred_dir, PRED_GT_PATH)
-    pred_bbox_path = os.path.join(FLAGS.pred_dir, PRED_BBOX_PATH)
-    label_path = os.path.join(FLAGS.test_dir, LABEL_PATH)
-    split_path = os.path.join(FLAGS.test_dir, SPLIT_PATH)
-
-    if not os.path.exists(pred_bbox_path): os.makedirs(pred_bbox_path)
-    if not os.path.exists(pred_draw_path): os.makedirs(pred_draw_path)
-    if not os.path.exists(pred_gt_path): os.makedirs(pred_gt_path)
 
     # [{
     #     name: 'xxx.png',
@@ -223,18 +213,15 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
     #         [1, 1, 1, 1],
     #         [2, 2, 2, 2]
     #     },
-    #     draw: 'data/pred/draws/xxx.png',
-    #     'evaluation': {
-    #         'precision': 0.75,
-    #         'recall': 0.8,
-    #         'hmean': 0.78
+    #     image : <draw image numpy array>,
+    #     'f1': 0.78
     #     }
     # }, ]
     result = []
     for i in range(len(image_list)):
         original_img = image_list[i]
 
-        # resize,防止显卡OOM
+        # resize,防止显卡OOM,resize 到1600Height x 1200width
         resized_img,scale = image_utils.resize_image(original_img, Config.RPN_IMAGE_WIDTH, Config.RPN_IMAGE_HEIGHT)
 
         image_name = image_names[i]
@@ -252,7 +239,7 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
             input_image,
             resized_img)
 
-        # scale 放大 back回去
+        # scale 放大 unresize back回去
         boxes_big = np.array(image_utils.resize_labels(boxes_big[:, :8], 1 / scale))
         bbox_small = np.array(image_utils.resize_labels(bbox_small, 1 / scale))
 
@@ -261,74 +248,95 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         cost_time = (time.time() - start)
         logger.info("探测图片[%s]的文字区域完成，耗时: %f" ,image_name, cost_time)
 
-        # 如果关注小框就把小框画上去
-        if FLAGS.draw :
-            if FLAGS.split:
-                # 把预测小框画上去
-                draw(original_img,bbox_small,GREEN)
-                logger.debug("将预测出来的小框画上去了")
-
-                split_box_labels = get_gt_label_by_image_name(image_name, split_path)
-                if split_box_labels:
-                    draw(original_img,split_box_labels,BLUE)
-                    logger.debug("将样本的小框画上去了")
-
-            # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-            draw(original_img, boxes_big, color=RED,thick=1)
-            logger.debug("将大框画上去了")
-
-            out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
-            cv2.imwrite(out_image_path,original_img)
-
-            _image['image'] = original_img
-
-            logger.debug("绘制预测和GT到图像完毕：%s", out_image_path)
-
-        # 是否保存预测结果（包括大框和小框）=> data/pred目录
-        if FLAGS.save :
-            file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt"
-            # 输出大框到文件
-            save(
-                pred_gt_path,
-                file_name,
-                boxes_big
-            )
-            logger.debug("保存了大框的坐标到：%s/%s",pred_gt_path,file_name)
-
-            # 输出小框到文件
-
-            save(
-                pred_bbox_path,
-                file_name,
-                bbox_small,
-                scores
-            )
-            logger.debug("保存了小框的坐标到：%s/%s",pred_bbox_path,file_name)
-
-        # 是否做评价
-        if FLAGS.evaluate:
-            # 对8个值（4个点）的任意四边形大框做评价
-            big_box_labels   = get_gt_label_by_image_name(image_name,label_path)
-            if big_box_labels is not None:
-                logger.debug("找到图像（%s）对应的大框样本（%d）个，开始评测",image_name,len(big_box_labels))
-                metrics = evaluate(big_box_labels, boxes_big[:,:8], conf())
-                _image['F1'] = metrics['hmean']
-                logger.debug("大框的评价：%r",metrics)
-                draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
-
-            # 对4个值（2个点）的矩形小框做评价
-            if FLAGS.split:
-                split_box_labels = get_gt_label_by_image_name(image_name, split_path)
-                if split_box_labels is not None:
-                    logger.debug("找到图像（%s）对应的小框split样本（%d）个，开始评测",image_name, len(split_box_labels))
-                    metrics = evaluate(split_box_labels, bbox_small, conf())
-                    logger.debug("小框的评价：%r", metrics)
-                    logger.debug("将小框标签画到图片上去")
-                    draw(original_img, split_box_labels[:,:4], color=GRAY, thick=1)
+        draw_image,f1 = post_detect(bbox_small, boxes_big, image_name, original_img, scores)
+        if draw_image: _image['image'] = draw_image
+        if draw_image: _image['f1'] = f1
 
         result.append(_image)
 
     return result
+
+
+def post_detect(bbox_small, boxes_big, image_name, original_img, scores):
+
+    draw_image = None
+    f1_value = None
+
+    # 输出的路径
+    pred_draw_path = os.path.join(FLAGS.pred_dir, PRED_DRAW_PATH)
+    pred_gt_path = os.path.join(FLAGS.pred_dir, PRED_GT_PATH)
+    pred_bbox_path = os.path.join(FLAGS.pred_dir, PRED_BBOX_PATH)
+    label_path = os.path.join(FLAGS.test_dir, LABEL_PATH)
+    split_path = os.path.join(FLAGS.test_dir, SPLIT_PATH)
+    if not os.path.exists(pred_bbox_path): os.makedirs(pred_bbox_path)
+    if not os.path.exists(pred_draw_path): os.makedirs(pred_draw_path)
+    if not os.path.exists(pred_gt_path): os.makedirs(pred_gt_path)
+    # 如果关注小框就把小框画上去
+    if FLAGS.draw:
+        if FLAGS.split:
+            # 把预测小框画上去
+            draw(original_img, bbox_small, GREEN)
+            logger.debug("将预测出来的小框画上去了")
+
+            split_box_labels = get_gt_label_by_image_name(image_name, split_path)
+            if split_box_labels:
+                draw(original_img, split_box_labels, BLUE)
+                logger.debug("将样本的小框画上去了")
+
+        # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
+        draw(original_img, boxes_big, color=RED, thick=1)
+        logger.debug("将大框画上去了")
+
+        out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
+        cv2.imwrite(out_image_path, original_img)
+
+        # _image['image'] = original_img
+        draw_image = original_img
+
+        logger.debug("绘制预测和GT到图像完毕：%s", out_image_path)
+    # 是否保存预测结果（包括大框和小框）=> data/pred目录
+    if FLAGS.save:
+        file_name = os.path.splitext(os.path.basename(image_name))[0] + ".txt"
+        # 输出大框到文件
+        save(
+            pred_gt_path,
+            file_name,
+            boxes_big
+        )
+        logger.debug("保存了大框的坐标到：%s/%s", pred_gt_path, file_name)
+
+        # 输出小框到文件
+
+        save(
+            pred_bbox_path,
+            file_name,
+            bbox_small,
+            scores
+        )
+        logger.debug("保存了小框的坐标到：%s/%s", pred_bbox_path, file_name)
+    # 是否做评价
+    if FLAGS.evaluate:
+        # 对8个值（4个点）的任意四边形大框做评价
+        big_box_labels = get_gt_label_by_image_name(image_name, label_path)
+        if big_box_labels is not None:
+            logger.debug("找到图像（%s）对应的大框样本（%d）个，开始评测", image_name, len(big_box_labels))
+            metrics = evaluate(big_box_labels, boxes_big[:, :8], conf())
+            # _image['F1'] = metrics['hmean']
+            f1_value = metrics['hmean']
+            logger.debug("大框的评价：%r", metrics)
+            draw(original_img, big_box_labels[:, :8], color=GRAY, thick=2)
+
+        # 对4个值（2个点）的矩形小框做评价
+        if FLAGS.split:
+            split_box_labels = get_gt_label_by_image_name(image_name, split_path)
+            if split_box_labels is not None:
+                logger.debug("找到图像（%s）对应的小框split样本（%d）个，开始评测", image_name, len(split_box_labels))
+                metrics = evaluate(split_box_labels, bbox_small, conf())
+                logger.debug("小框的评价：%r", metrics)
+                logger.debug("将小框标签画到图片上去")
+                draw(original_img, split_box_labels[:, :4], color=GRAY, thick=1)
+
+    return draw_image,f1_value
 
 # 调用前向运算来计算
 def predict_by_network(session, t_bbox_pred, t_cls_prob, t_input_im_info, t_input_image, d_img ):
