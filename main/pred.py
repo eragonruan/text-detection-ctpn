@@ -157,11 +157,11 @@ def initialize():
         saver = tf.train.Saver(variable_averages.variables_to_restore())
 
         sess = tf.Session(graph=g,config=tf.ConfigProto(allow_soft_placement=True))
-        ckpt_state = tf.train.get_checkpoint_state(FLAGS.ctpn_model_dir)
-        logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.ctpn_model_dir, ckpt_state)
-        model_path = os.path.join(FLAGS.ctpn_model_dir, os.path.basename(ckpt_state.model_checkpoint_path))
-        logger.info('从%s加载模型', format(model_path))
-        saver.restore(sess, model_path)
+        # ckpt_state = tf.train.get_checkpoint_state(FLAGS.ctpn_model_dir)
+        # logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.ctpn_model_dir, ckpt_state)
+        # model_path = os.path.join(FLAGS.ctpn_model_dir, os.path.basename(ckpt_state.model_checkpoint_path))
+        # logger.info('从%s加载模型', format(model_path))
+        # saver.restore(sess, model_path)
 
         if FLAGS.ctpn_model_file:
             ctpn_model_file_path = os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file)
