@@ -249,8 +249,8 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
         logger.info("探测图片[%s]的文字区域完成，耗时: %f" ,image_name, cost_time)
 
         draw_image,f1 = post_detect(bbox_small, boxes_big, image_name, original_img, scores)
-        if draw_image: _image['image'] = draw_image
-        if draw_image: _image['f1'] = f1
+        if draw_image is not None: _image['image'] = draw_image
+        if draw_image is not None: _image['f1'] = f1
 
         result.append(_image)
 
