@@ -98,18 +98,33 @@ def shrink_poly(poly, r=16):
 
     return np.array(res, dtype=np.int).reshape([-1, 8])
 
-# 看哪个大了，就缩放哪个，规定最大的宽和高：max_width,max_height
-def resize_image(image,max_width,max_height):
+# 看哪个大了，就缩放哪个，规定大边的最大，和小边的最大
+def resize_image(image,smaller_max,larger_max):
     h,w,_ = image.shape # H,W
 
-    if h<max_height and w<max_width:
-        logger.debug("图片的宽高[%d,%d]比最大要求[%d,%d]小，无需resize",h,w,max_height,max_width)
-        return image,1
 
-    h_scale = max_height/h
-    w_scale = max_width/w
-    # print("h_scale",h_scale,"w_scale",w_scale)
-    scale = min(h_scale,w_scale) # scale肯定是小于1的，越小说明缩放要厉害，所以谁更小，取谁
+    # ----
+    # |  |
+    # |  |
+    # |__|
+    if h>w:
+        if h < larger_max and w < smaller_max:
+            logger.debug("图片的宽高[%d,%d]比最大要求[%d,%d]小，无需resize", h, w, larger_max, smaller_max)
+            return image, 1
+        h_scale = larger_max/h
+        w_scale = smaller_max/w
+        # print("h_scale",h_scale,"w_scale",w_scale)
+        scale = min(h_scale,w_scale) # scale肯定是小于1的，越小说明缩放要厉害，所以谁更小，取谁
+    # ___________
+    # |         |
+    # |_________|
+    else: #h<w
+        if h < smaller_max and w < larger_max:
+            logger.debug("图片的宽高[%d,%d]比最大要求[%d,%d]小，无需resize", h, w, smaller_max, larger_max)
+            return image, 1
+        h_scale = smaller_max/h
+        w_scale = larger_max/w
+        scale = min(h_scale,w_scale) # scale肯定是小于1的，越小说明缩放要厉害，所以谁更小，取谁
 
     # https://www.jianshu.com/p/11879a49d1a0 关于resize
     image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
@@ -128,3 +143,5 @@ def resize_labels(labels,scale):
         resized_labels.append(_resized_label)
         # logger.debug("缩放后bbox label坐标：%r", _resized_label)
     return list(resized_labels)
+
+

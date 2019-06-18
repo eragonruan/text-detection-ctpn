@@ -6,9 +6,28 @@ import os,math
 import logging as logger
 
 '''
-1. 从文字库随机选择10个字符
-2. 生成图片
-3. 随机使用函数
+#1. 从文字库随机选择10个字符
+#2. 生成图片
+#3. 随机使用函数
+
+# 改进图片的质量：
+# a、算清楚留白，不多留
+# b、旋转一下，不切去变了
+# c、增加整张纸的脏变形，暗影，干扰线
+# D、造单字的样本
+# F、造数字样本 1,000,00.000类似的
+
+# 2019.6.15 piginzoo，再次改进
+# G、左右留白
+# H、加大纯英文比例
+# I、加大英文和数字的比例
+# K、增加一些变形情况
+# L、增加别的上面或者下面出现一半的文字的干扰
+
+#2019.6.17 piginzoo 再次改进 特殊造一批样本出来
+# - 增加左右留白的，解决符号的问题
+# - 增加纯英文，英文数字混合、英文汉字混合、英文数字汉字混合的，解决英文识别效果差的问题
+# - 增加变形后，上下会有
 '''
 
 # #############
@@ -18,10 +37,10 @@ import logging as logger
 DEBUG=False
 ROOT="data_generator"   # 定义运行时候的数据目录，原因是imgen.sh在根部运行
 DATA_DIR="data"
-MAX_LENGTH=12   # 可能的最大长度（字符数）
-MIN_LENGTH=5    # 可能的最小长度（字符数）
+MAX_LENGTH=25   # 可能的最大长度（字符数）
+MIN_LENGTH=1    # 可能的最小长度（字符数）
 MAX_FONT_SIZE = 20 # 最大的字体
-MIN_FONT_SIZE = 15 # 最小的字体号
+MIN_FONT_SIZE = 16 # 最小的字体号
 MAX_LINE_HEIGHT= 100   # 最大的高度（像素）
 MIN_LINE_HEIGHT= MIN_FONT_SIZE + 12   # 最小的高度（像素）
 
@@ -44,6 +63,7 @@ MIN_BACKGROUND_WIDTH = 500
 MAX_BACKGROUND_HEIGHT = 900
 MIN_BACKGROUND_HEIGHT = 800
 
+MAX_BLANK_NUM=5 #字之间随机的空格数量
 
 MIN_BLANK_WIDTH = 50 # 最小的句子间的随机距离
 MAX_BLANK_WIDTH = 100 # 最长的句子间距离
@@ -55,30 +75,28 @@ INTERFER_WORD_LINE_NUM = 4
 INTERFER_WORD_POINT_NUM = 20
 INTERFER_WORD_LINE_WIGHT = 1
 
-# 改进图片的质量：
-# a、算清楚留白，不多留
-# b、旋转一下，不切去变了
-# c、增加整张纸的脏变形，暗影，干扰线
-# D、造单字的样本
-# F、造数字样本 1,000,00.000类似的
+
+# 各种可能性的概率，测试用！
+# POSSIBILITY_BLANK = 0.5     # 有空格的概率
+# POSSIBILITY_ROTOATE = 0   # 文字的旋转
+# POSSIBILITY_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_WORD_INTEFER = 0 # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_AFFINE  = 0   # 需要被做仿射的文字
+# POSSIBILITY_PURE_NUM = 0.5  # 需要产生的纯数字
+# POSSIBILITY_PURE_ENG = 0.5  # 需要产生的英语
+# POSSIBILITY_DATE = 0.5      # 需要产生的纯数字
+# POSSIBILITY_SINGLE = 0   # 单字的比例
 
 # 各种可能性的概率
+POSSIBILITY_BLANK = 0.5     # 有空格的概率
 POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
 POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
-POSSIBILITY_PURE_NUM = 0.1  # 需要产生的纯数字
-POSSIBILITY_DATE = 0.1      # 需要产生的纯数字
+POSSIBILITY_PURE_NUM = 0.2  # 需要产生的纯数字
+POSSIBILITY_PURE_ENG = 0.1  # 需要产生的英语
+POSSIBILITY_DATE = 0.1      # 需要产生的纯日期
 POSSIBILITY_SINGLE = 0.01   # 单字的比例
-
-# # 测试用
-# POSSIBILITY_ROTOATE = 1   # 文字的旋转
-# POSSIBILITY_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
-# POSSIBILITY_WORD_INTEFER = 0   # 需要被干扰的图片，包括干扰线和点
-# POSSIBILITY_AFFINE  = 0   # 需要被做仿射的文字
-# POSSIBILITY_PURE_NUM = 0  # 需要产生的纯数字
-# POSSIBILITY_DATE = 0      # 需要产生的纯数字
-# POSSIBILITY_SINGLE = 0    # 单字的比例
 
 MAX_GENERATE_NUM = 1000000000
 
@@ -134,17 +152,56 @@ def randome_intefer_point(img,possible,num):
         draw.point([x,y], _get_random_color())
     del draw
 
-# 专门用来产生数字，可能有负数
+# 专门用来产生数字，可能有负数，两边随机加上空格
 def _generate_num():
-    num = random.randint(-MAX_GENERATE_NUM,MAX_GENERATE_NUM)
-    # print(num)
+    num = random.uniform(-MAX_GENERATE_NUM,MAX_GENERATE_NUM)
     need_format = random.choice([True,False])
-
     if (need_format):
         return "{:,}".format(num)
-
     return str(num)
 
+# 产生英文：50%是纯英文，20%是中英，20%是数字英文，10%是中、英、数字
+def _generator_english(charactors):
+    alphabeta = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVW"
+    num = "0123456789"
+
+    s = ""
+    length = random.randint(MIN_LENGTH, MAX_LENGTH)
+    # if POSSIBILITY_PURE_ENG
+    # E:english N:num C:Chinese
+    options = ["E","EN","EC","ENC"]
+    opt = np.random.choice(options, p=[0.5,0.2,0.2,0.1])
+    if opt=="E":
+        for i in range(length):
+            j = random.randint(0, len(alphabeta) - 1)
+            s += alphabeta[j]
+        return s
+
+    s_e = alphabeta[random.randint(0, len(alphabeta) - 1)]
+    s_n = num[random.randint(0, len(num) - 1)]
+    s_c = charactors[random.randint(0, len(charactors) - 1)]
+    en =  [s_e, s_n]
+    ec =  [s_e, s_c]
+    enc = [s_e, s_n, s_c]
+
+    if opt=="EN":
+        for i in range(length):
+            _s = random.choice(en)
+            s += _s
+        return s
+
+    if opt=="EC":
+        for i in range(length):
+            _s = random.choice(ec)
+            s += _s
+        return s
+
+    if opt=="ENC":
+        for i in range(length):
+            _s = random.choice(enc)
+            s += _s
+        return s
+    raise ValueError("无法识别的Option：%s",opt)
 
 # 专门用来产生日期，各种格式的
 def _generate_date():
@@ -177,9 +234,27 @@ def _generate_words(charset):
     for i in range(length):
         j = random.randint(0, len(charset) - 1)
         s += charset[j]
-    if DEBUG: print("随机生成的汉字字符串[%s]，%d" %(s,length))
-    return s,length
+    if DEBUG: print("随机生成的字符串[%s]，%d" %(s,length))
+    return s
 
+# 只在头尾加入空格
+def _generate_blanks_only_head_tail(chars):
+    # 随机前后加上一些空格
+    _blank_num1 = random.randint(1, MAX_BLANK_NUM)
+    _blank_num2 = random.randint(1, MAX_BLANK_NUM)
+    return   (" " * _blank_num1) + chars + (" " * _blank_num2)
+
+# 随机在前后或者中间加入空格
+def _generate_blanks_at_random_pos(chars):
+    # print("%s:%d" % (chars,len(chars)))
+    if not _random_accept(POSSIBILITY_BLANK): return chars
+    _blank_num = random.randint(1,MAX_BLANK_NUM)
+    for i in range(_blank_num):
+        max_pos = len(chars)
+        rand_pos = random.randint(0,max_pos)
+        chars = chars[:rand_pos] + " " + chars[rand_pos:]
+    # print("%s:%d" % (chars, len(chars)))
+    return chars
 
 # 从文字库中随机选择n个字符
 def _get_random_text(charset):
@@ -187,26 +262,25 @@ def _get_random_text(charset):
     # 产生随机数字
     if _random_accept(POSSIBILITY_PURE_NUM):
         s_num = _generate_num()
-        return s_num,len(s_num)
+        s = _generate_blanks_only_head_tail(s_num)
+        return s,len(s)
 
     # 产生随机日期
     if _random_accept(POSSIBILITY_DATE):
         s_date = _generate_date()
-        return s_date, len(s_date)
+        s = _generate_blanks_only_head_tail(s_date)
+        return s,len(s)
 
-    # start = random.randint(0, len(info_str)-MAX_LENGTH-1)
-    # length = random.randint(MIN_LENGTH, MAX_LENGTH)
-    #
-    # # 是否产生单字
-    # if _random_accept(POSSIBILITY_SINGLE):length = 1
-    #
-    # end = start + length
-    # random_word = info_str[start:end]
-    # if DEBUG: print("截取内容[%s]，%d" %(random_word,length))
-    # import re
-    # rex = re.compile(' ')
-    # random_word = rex.sub('', random_word)
-    return _generate_words(charset)
+    # 产生一些英文，因为26个字母在几千个字库中比例太小，所以必须要加强
+    if _random_accept(POSSIBILITY_PURE_ENG):
+        s_eng = _generator_english(charset)
+        s = _generate_blanks_at_random_pos(s_eng)
+        return s,len(s)
+
+    chars = _generate_words(charset)
+    s = _generate_blanks_at_random_pos(chars)
+    return s,len(s)
+
 
 # 产生随机颜色
 def _get_random_color():
@@ -401,7 +475,7 @@ def random_font_size():
 def random_font(font_path):
     font_list = os.listdir(font_path)
     random_font = random.choice(font_list)
-
+    print(random_font)
     return font_path + random_font
 
 # 产生一张图的所有的文字
@@ -480,9 +554,9 @@ def generate_row(i,y, background_image,image_width,charset):
 def caculate_text_shape(text,font):
 
     #获得文字的offset位置
+    print(text)
     offsetx, offsety = font.getoffset(text)
-
-    #获得文件的大小
+    #获得文件的大小,font.getsize计算的比较准
     width, height=font.getsize(text)
 
     width = width #- offsetx
@@ -525,7 +599,7 @@ def _rotate_points(points,center, degree):
 
 def create_one_sentence_image(charset):
     # 随机选取10个字符，是从info.txt那个词库里，随机挑的长度的句子
-    random_word,length = _get_random_text(charset)
+    random_word,_ = _get_random_text(charset)
 
     # 字号随机
     font_size = random_font_size()
@@ -536,7 +610,7 @@ def create_one_sentence_image(charset):
     # logger.debug("字体的颜色是：[%r]",font_color)
 
     # 因为有数字啊，英文字母啊，他的宽度比中文短，所以为了框套的更严丝合缝，好好算算宽度
-    width, height = caculate_text_shape(random_word.strip(),font)
+    width, height = caculate_text_shape(random_word,font)
 
 
     words_image = Image.new('RGBA', (width, height))
