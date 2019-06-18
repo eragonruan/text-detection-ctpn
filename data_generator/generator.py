@@ -88,14 +88,25 @@ INTERFER_WORD_LINE_WIGHT = 1
 # POSSIBILITY_SINGLE = 0   # 单字的比例
 
 # 各种可能性的概率
+# POSSIBILITY_BLANK = 0.5     # 有空格的概率
+# POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
+# POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
+# POSSIBILITY_PURE_NUM = 0.2  # 需要产生的纯数字
+# POSSIBILITY_PURE_ENG = 0.1  # 需要产生的英语
+# POSSIBILITY_DATE = 0.1      # 需要产生的纯日期
+# POSSIBILITY_SINGLE = 0.01   # 单字的比例
+
+# 做数字迁移训练用的，主要训练数字和英文
 POSSIBILITY_BLANK = 0.5     # 有空格的概率
 POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
 POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
-POSSIBILITY_PURE_NUM = 0.2  # 需要产生的纯数字
-POSSIBILITY_PURE_ENG = 0.1  # 需要产生的英语
-POSSIBILITY_DATE = 0.1      # 需要产生的纯日期
+POSSIBILITY_PURE_NUM = 0.6  # 需要产生的纯数字
+POSSIBILITY_PURE_ENG = 0.8  # 需要产生的英语
+POSSIBILITY_DATE = 0.2      # 需要产生的纯日期
 POSSIBILITY_SINGLE = 0.01   # 单字的比例
 
 MAX_GENERATE_NUM = 1000000000
@@ -475,6 +486,7 @@ def random_font_size():
 def random_font(font_path):
     font_list = os.listdir(font_path)
     random_font = random.choice(font_list)
+    # print(random_font)
     return font_path + random_font
 
 # 产生一张图的所有的文字
