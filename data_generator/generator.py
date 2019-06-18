@@ -475,7 +475,6 @@ def random_font_size():
 def random_font(font_path):
     font_list = os.listdir(font_path)
     random_font = random.choice(font_list)
-    print(random_font)
     return font_path + random_font
 
 # 产生一张图的所有的文字
