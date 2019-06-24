@@ -1,9 +1,10 @@
-from PIL import Image, ImageDraw, ImageFont, ImageFilter,ImageOps
+from PIL import Image, ImageDraw, ImageFont
 import random
 import cv2
 import numpy as np
 import os,math
 import logging as logger
+
 
 '''
 #1. 从文字库随机选择10个字符
@@ -37,7 +38,7 @@ import logging as logger
 DEBUG=False
 ROOT="data_generator"   # 定义运行时候的数据目录，原因是imgen.sh在根部运行
 DATA_DIR="data"
-MAX_LENGTH=25   # 可能的最大长度（字符数）
+MAX_LENGTH=20   # 可能的最大长度（字符数）
 MIN_LENGTH=1    # 可能的最小长度（字符数）
 MAX_FONT_SIZE = 20 # 最大的字体
 MIN_FONT_SIZE = 16 # 最小的字体号
@@ -63,8 +64,9 @@ MIN_BACKGROUND_WIDTH = 500
 MAX_BACKGROUND_HEIGHT = 900
 MIN_BACKGROUND_HEIGHT = 800
 
-MAX_BLANK_NUM=5 #字之间随机的空格数量
+MAX_SPECIAL_NUM = 5 # 特殊字符的个数
 
+MAX_BLANK_NUM=5 #字之间随机的空格数量
 MIN_BLANK_WIDTH = 50 # 最小的句子间的随机距离
 MAX_BLANK_WIDTH = 100 # 最长的句子间距离
 
@@ -88,26 +90,27 @@ INTERFER_WORD_LINE_WIGHT = 1
 # POSSIBILITY_SINGLE = 0   # 单字的比例
 
 # 各种可能性的概率
-# POSSIBILITY_BLANK = 0.5     # 有空格的概率
-# POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
-# POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
-# POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
-# POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
-# POSSIBILITY_PURE_NUM = 0.2  # 需要产生的纯数字
-# POSSIBILITY_PURE_ENG = 0.1  # 需要产生的英语
-# POSSIBILITY_DATE = 0.1      # 需要产生的纯日期
-# POSSIBILITY_SINGLE = 0.01   # 单字的比例
-
-# 做数字迁移训练用的，主要训练数字和英文
 POSSIBILITY_BLANK = 0.5     # 有空格的概率
 POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
 POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
-POSSIBILITY_PURE_NUM = 0.6  # 需要产生的纯数字
-POSSIBILITY_PURE_ENG = 0.8  # 需要产生的英语
-POSSIBILITY_DATE = 0.2      # 需要产生的纯日期
+POSSIBILITY_PURE_NUM = 0.2  # 需要产生的纯数字
+POSSIBILITY_PURE_ENG = 0.1  # 需要产生的英语
+POSSIBILITY_DATE = 0.1      # 需要产生的纯日期
 POSSIBILITY_SINGLE = 0.01   # 单字的比例
+POSSIBILITY_SPECIAL = 0.1   # 特殊字符
+
+# 做数字迁移训练用的，主要训练数字和英文
+# POSSIBILITY_BLANK = 0.5     # 有空格的概率
+# POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
+# POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
+# POSSIBILITY_AFFINE  = 0.3   # 需要被做仿射的文字
+# POSSIBILITY_PURE_NUM = 0.6  # 需要产生的纯数字
+# POSSIBILITY_PURE_ENG = 0.8  # 需要产生的英语
+# POSSIBILITY_DATE = 0.2      # 需要产生的纯日期
+# POSSIBILITY_SINGLE = 0.01   # 单字的比例
 
 MAX_GENERATE_NUM = 1000000000
 
@@ -149,19 +152,19 @@ def randome_intefer_line(img,possible,line_num,weight):
 
     del draw
 
-# 画干扰点
-def randome_intefer_point(img,possible,num):
-
-    if not _random_accept(possible): return
-
-    w,h = img.size
-    draw = ImageDraw.Draw(img)
-
-    point_num = random.randint(0, num)
-    for i in range(point_num):
-        x,y = _get_random_point(w,h)
-        draw.point([x,y], _get_random_color())
-    del draw
+# # 画干扰点
+# def randome_intefer_point(img,possible,num):
+#
+#     if not _random_accept(possible): return
+#
+#     w,h = img.size
+#     draw = ImageDraw.Draw(img)
+#
+#     point_num = random.randint(0, num)
+#     for i in range(point_num):
+#         x,y = _get_random_point(w,h)
+#         draw.point([x,y], _get_random_color())
+#     del draw
 
 # 专门用来产生数字，可能有负数，两边随机加上空格
 def _generate_num():
@@ -178,40 +181,45 @@ def _generator_english(charactors):
 
     s = ""
     length = random.randint(MIN_LENGTH, MAX_LENGTH)
+
+
     # if POSSIBILITY_PURE_ENG
     # E:english N:num C:Chinese
     options = ["E","EN","EC","ENC"]
+
+
     opt = np.random.choice(options, p=[0.5,0.2,0.2,0.1])
-    if opt=="E":
+
+
+    def sample(charset,length):
+        s=""
         for i in range(length):
-            j = random.randint(0, len(alphabeta) - 1)
-            s += alphabeta[j]
+            j = random.randint(0, len(charset) - 1)
+            s += charset[j]
         return s
 
-    s_e = alphabeta[random.randint(0, len(alphabeta) - 1)]
-    s_n = num[random.randint(0, len(num) - 1)]
-    s_c = charactors[random.randint(0, len(charactors) - 1)]
-    en =  [s_e, s_n]
-    ec =  [s_e, s_c]
-    enc = [s_e, s_n, s_c]
+    english = sample(alphabeta,length)
+    if opt=="E":
+        return english
+
+    snum = sample(num,length)
+    chinese = sample(charactors,length)
 
     if opt=="EN":
-        for i in range(length):
-            _s = random.choice(en)
-            s += _s
-        return s
+        all = list(english + snum)
+        np.random.shuffle(all)
+        return "".join(all[:length])
 
     if opt=="EC":
-        for i in range(length):
-            _s = random.choice(ec)
-            s += _s
-        return s
+        all = list(english + chinese)
+        np.random.shuffle(all)
+        return "".join(all[:length])
 
     if opt=="ENC":
-        for i in range(length):
-            _s = random.choice(enc)
-            s += _s
-        return s
+        all = list(english + snum + chinese)
+        np.random.shuffle(all)
+        return "".join(all[:length])
+
     raise ValueError("无法识别的Option：%s",opt)
 
 # 专门用来产生日期，各种格式的
@@ -289,6 +297,7 @@ def _get_random_text(charset):
         return s,len(s)
 
     chars = _generate_words(charset)
+    chars = enhance_special_charactors(chars) #看看有无必要插入一些特殊需要增强的字符
     s = _generate_blanks_at_random_pos(chars)
     return s,len(s)
 
@@ -329,32 +338,6 @@ def create_backgroud_image(bground_list):
 
     # return image, width, height
     return random_image_size(bground_choice)
-
-def _add_noise(img):
-    # img = (scipy.misc.imread(filename)).astype(float)
-    noise_mask = np.random.poisson(img)
-    noisy_img = img + noise_mask
-    return noisy_img
-
-# 模糊函数
-def random_blur(image,font_size):
-    # 随机选取模糊参数
-    radius = random.uniform(GAUSS_RADIUS_MIN,GAUSS_RADIUS_MAX)
-    filter_ = random.choice(
-                            [
-                             # ImageFilter.SMOOTH, 太模糊
-                             # ImageFilter.DETAIL, 太模糊
-                             ImageFilter.GaussianBlur(radius=radius),
-                             # ImageFilter.EDGE_ENHANCE,      #边缘增强滤波,这个效果不好，暂时注释掉，边缘扣掉的太多
-                             ImageFilter.SHARPEN
-                             ]) #为深度边缘增强滤波
-
-
-    if DEBUG: print("模糊函数：%s" % str(filter_))
-
-
-    image = image.filter(filter_)
-    return image
 
 # 随机裁剪图片的各个部分
 def random_image_size(image):
@@ -500,7 +483,7 @@ def generate_all(bground_list, image_name,label_name,charset):
 
     # 在整张图上产生干扰点和线
     randome_intefer_line(image,POSSIBILITY_INTEFER,INTERFER_LINE_NUM,INTERFER_LINE_WIGHT)
-    randome_intefer_point(image,POSSIBILITY_INTEFER,INTERFER_POINT_NUM)
+    # randome_intefer_point(image,POSSIBILITY_INTEFER,INTERFER_POINT_NUM)
 
     # 上面先空出一行来
     y = random.randint(MIN_LINE_HEIGHT, MAX_LINE_HEIGHT)
@@ -633,9 +616,8 @@ def create_one_sentence_image(charset):
 
     words_image,points = random_affine(words_image)
     words_image,points = random_rotate(words_image,points)
-    words_image = random_blur(words_image,font_size)
-    randome_intefer_line(words_image, POSSIBILITY_WORD_INTEFER,INTERFER_WORD_LINE_NUM,INTERFER_WORD_LINE_WIGHT)           # 给单个文字做做干扰
-    randome_intefer_point(words_image,POSSIBILITY_WORD_INTEFER,INTERFER_WORD_POINT_NUM)
+    randome_intefer_line(words_image, POSSIBILITY_WORD_INTEFER,INTERFER_WORD_LINE_NUM,INTERFER_WORD_LINE_WIGHT) # 给单个文字做做干扰
+    # randome_intefer_point(words_image,POSSIBILITY_WORD_INTEFER,INTERFER_WORD_POINT_NUM)
     ############### PIPELINE ###########################
 
     return words_image,width,height,random_word,points#<----points不一定在是width/height组成的矩形里面了，做仿射和旋转了嘛
@@ -651,7 +633,6 @@ def process_one_sentence(x, y, background_image, image_width,charset):
 
     background_image.paste(words_image, (x,y), words_image)
 
-    logger.debug("产生了一个句子[%s],坐标(%r)", random_word, points)
     # x1, y1, x2, y2, x3, y3, x4, y4
     label = [
         int(x + points[0][0]), int(y + points[0][1]),
@@ -662,6 +643,19 @@ def process_one_sentence(x, y, background_image, image_width,charset):
     logger.debug("粘贴到背景上的坐标：(%r)", label)
     return x + width ,label
 
+# 对一些特殊字符做多一些样本
+def enhance_special_charactors(s):
+
+    if not _random_accept(POSSIBILITY_SPECIAL): return s
+
+    logger.debug("原字符：%s",s)
+    specials = "|,.。-+/＊()"
+    num = random.randint(1,MAX_SPECIAL_NUM)
+    for i in range(num):
+        c = random.choice(specials)
+        s = s[:4] + c + s[4:]
+    logger.debug("插入特殊字符后：%s", s)
+    return s
 
 def init_logger():
     logger.basicConfig(

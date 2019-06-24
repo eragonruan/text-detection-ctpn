@@ -274,24 +274,22 @@ def post_detect(bbox_small, boxes_big, image_name, original_img, scores):
     # 如果关注小框就把小框画上去
     if FLAGS.draw:
         if FLAGS.split:
+            draw_image = original_img.copy()
             # 把预测小框画上去
-            draw(original_img, bbox_small, GREEN)
+            draw(draw_image, bbox_small, GREEN)
             logger.debug("将预测出来的小框画上去了")
 
             split_box_labels = get_gt_label_by_image_name(image_name, split_path)
             if split_box_labels:
-                draw(original_img, split_box_labels, BLUE)
+                draw(draw_image, split_box_labels, BLUE)
                 logger.debug("将样本的小框画上去了")
 
         # 来！把预测的大框画到图上，输出到draw目录下去，便于可视化观察
-        draw(original_img, boxes_big, color=RED, thick=1)
+        draw(draw_image, boxes_big, color=RED, thick=1)
         logger.debug("将大框画上去了")
 
         out_image_path = os.path.join(pred_draw_path, os.path.basename(image_name))
-        cv2.imwrite(out_image_path, original_img)
-
-        # _image['image'] = original_img
-        draw_image = original_img
+        cv2.imwrite(out_image_path, draw_image)
 
         logger.debug("绘制预测和GT到图像完毕：%s", out_image_path)
     # 是否保存预测结果（包括大框和小框）=> data/pred目录
