@@ -40,9 +40,9 @@ ROOT="data_generator"   # 定义运行时候的数据目录，原因是imgen.sh�
 DATA_DIR="data"
 MAX_LENGTH=20   # 可能的最大长度（字符数）
 MIN_LENGTH=1    # 可能的最小长度（字符数）
-MAX_FONT_SIZE = 20 # 最大的字体
-MIN_FONT_SIZE = 16 # 最小的字体号
-MAX_LINE_HEIGHT= 100   # 最大的高度（像素）
+MAX_FONT_SIZE = 28      # 最大的字体
+MIN_FONT_SIZE = 18      # 最小的字体号
+MAX_LINE_HEIGHT= 100    # 最大的高度（像素）
 MIN_LINE_HEIGHT= MIN_FONT_SIZE + 12   # 最小的高度（像素）
 
 
@@ -90,7 +90,7 @@ INTERFER_WORD_LINE_WIGHT = 1
 # POSSIBILITY_SINGLE = 0   # 单字的比例
 
 # 各种可能性的概率
-POSSIBILITY_BLANK = 0.5     # 有空格的概率
+POSSIBILITY_BLANK = 0.8     # 有空格的概率
 POSSIBILITY_ROTOATE = 0.4   # 文字的旋转
 POSSIBILITY_INTEFER = 0.2   # 需要被干扰的图片，包括干扰线和点
 POSSIBILITY_WORD_INTEFER = 0.1 # 需要被干扰的图片，包括干扰线和点
@@ -99,7 +99,7 @@ POSSIBILITY_PURE_NUM = 0.2  # 需要产生的纯数字
 POSSIBILITY_PURE_ENG = 0.1  # 需要产生的英语
 POSSIBILITY_DATE = 0.1      # 需要产生的纯日期
 POSSIBILITY_SINGLE = 0.01   # 单字的比例
-POSSIBILITY_SPECIAL = 0.1   # 特殊字符
+POSSIBILITY_SPECIAL = 0.2   # 特殊字符
 
 # 做数字迁移训练用的，主要训练数字和英文
 # POSSIBILITY_BLANK = 0.5     # 有空格的概率
@@ -253,7 +253,7 @@ def _generate_words(charset):
     for i in range(length):
         j = random.randint(0, len(charset) - 1)
         s += charset[j]
-    if DEBUG: print("随机生成的字符串[%s]，%d" %(s,length))
+    # if DEBUG: print("随机生成的字符串[%s]，%d" %(s,length))
     return s
 
 # 只在头尾加入空格
@@ -273,7 +273,7 @@ def _generate_blanks_at_random_pos(chars):
         rand_pos = random.randint(0,max_pos)
         chars = chars[:rand_pos] + " " + chars[rand_pos:]
     # print("%s:%d" % (chars, len(chars)))
-    return chars
+    return _generate_blanks_only_head_tail(chars)
 
 # 从文字库中随机选择n个字符
 def _get_random_text(charset):
@@ -548,7 +548,6 @@ def generate_row(i,y, background_image,image_width,charset):
 def caculate_text_shape(text,font):
 
     #获得文字的offset位置
-    print(text)
     offsetx, offsety = font.getoffset(text)
     #获得文件的大小,font.getsize计算的比较准
     width, height=font.getsize(text)
@@ -648,13 +647,14 @@ def enhance_special_charactors(s):
 
     if not _random_accept(POSSIBILITY_SPECIAL): return s
 
-    logger.debug("原字符：%s",s)
+    # logger.debug("原字符：%s",s)
     specials = "|,.。-+/＊()"
     num = random.randint(1,MAX_SPECIAL_NUM)
     for i in range(num):
         c = random.choice(specials)
-        s = s[:4] + c + s[4:]
-    logger.debug("插入特殊字符后：%s", s)
+        pos = random.randint(0,len(s))
+        s = s[:pos] + c + s[pos:]
+    # logger.debug("插入特殊字符后：%s", s)
     return s
 
 def init_logger():
