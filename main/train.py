@@ -240,7 +240,7 @@ def is_need_early_stop(early_stop,f1_value,saver,sess,step,learning_rate,train_s
 
     if decision == EarlyStop.BEST:
         logger.info("新F1值[%f]大于过去最好的F1值，早停计数器重置，并保存模型", f1_value)
-        save_model(saver, sess, step, train_start_time)
+        save_model(saver, sess, step, train_start_time,f1_value)
         return False
 
     if decision == EarlyStop.STOP:
@@ -255,9 +255,9 @@ def is_need_early_stop(early_stop,f1_value,saver,sess,step,learning_rate,train_s
     logger.error("无法识别的EarlyStop结果：%r",decision)
     return True
 
-def save_model(saver, sess, step, train_start_time):
+def save_model(saver, sess, step, train_start_time,f1_value):
     # 每次训练的模型不要覆盖，前缀是训练启动时间
-    filename = ('ctpn-{:s}-{:d}'.format(train_start_time, step + 1) + '.ckpt')
+    filename = ('ctpn-{:s}-{:d}-{:.2f}'.format(train_start_time, step + 1,f1_value) + '.ckpt')
     filename = os.path.join(FLAGS.model, filename)
     saver.save(sess, filename)
     logger.info("在第%d步，保存了模型文件(checkout point)：%s", step, filename)

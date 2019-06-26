@@ -120,6 +120,8 @@ def save(path, file_name,data,scores=None):
 # 注意：image是RGB格式的
 def draw(image,boxes,color,thick=1):
 
+    if len(boxes)==0: return
+
     # 先将RGB格式转成BGR，也就是OpenCV要求的格式
     # image = image[:,:,::-1]
     if boxes.shape[1]==4: #矩形
@@ -143,34 +145,36 @@ def draw(image,boxes,color,thick=1):
     logger.error("画图失败，无效的Shape:%r",boxes.shape)
 
 # 定义图，并且还原模型，创建session
-def initialize():
-    g = tf.Graph()
-    with g.as_default():
-        global input_image,input_im_info,bbox_pred, cls_pred, cls_prob
+def initialize(sess=None):
 
-        input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
-        input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
-        bbox_pred, cls_pred, cls_prob = model.model(input_image)
+    if not sess:
+        sess = tf.Session(graph=g, config=tf.ConfigProto(allow_soft_placement=True))
 
-        global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-        variable_averages = tf.train.ExponentialMovingAverage(0.997, global_step)
-        saver = tf.train.Saver(variable_averages.variables_to_restore())
+    global input_image,input_im_info,bbox_pred, cls_pred, cls_prob
 
-        sess = tf.Session(graph=g,config=tf.ConfigProto(allow_soft_placement=True))
-        # ckpt_state = tf.train.get_checkpoint_state(FLAGS.ctpn_model_dir)
-        # logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.ctpn_model_dir, ckpt_state)
-        # model_path = os.path.join(FLAGS.ctpn_model_dir, os.path.basename(ckpt_state.model_checkpoint_path))
-        # logger.info('从%s加载模型', format(model_path))
-        # saver.restore(sess, model_path)
+    input_image = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_image')
+    input_im_info = tf.placeholder(tf.float32, shape=[None, 3], name='input_im_info')
+    bbox_pred, cls_pred, cls_prob = model.model(input_image)
 
-        if FLAGS.ctpn_model_file:
-            ctpn_model_file_path = os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file)
-            logger.debug("恢复给定名字的CTPN模型：%s", ctpn_model_file_path)
-            saver.restore(sess,ctpn_model_file_path)
-        else:
-            ckpt = tf.train.latest_checkpoint(FLAGS.ctpn_model_dir)
-            logger.debug("最新CTPN模型目录中最新模型文件:%s", ckpt)  # 有点担心learning rate也被恢复
-            saver.restore(sess, ckpt)
+    global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+    variable_averages = tf.train.ExponentialMovingAverage(0.997, global_step)
+    saver = tf.train.Saver(variable_averages.variables_to_restore())
+
+
+    # ckpt_state = tf.train.get_checkpoint_state(FLAGS.ctpn_model_dir)
+    # logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.ctpn_model_dir, ckpt_state)
+    # model_path = os.path.join(FLAGS.ctpn_model_dir, os.path.basename(ckpt_state.model_checkpoint_path))
+    # logger.info('从%s加载模型', format(model_path))
+    # saver.restore(sess, model_path)
+
+    if FLAGS.ctpn_model_file:
+        ctpn_model_file_path = os.path.join(FLAGS.ctpn_model_dir,FLAGS.ctpn_model_file)
+        logger.debug("恢复给定名字的CTPN模型：%s", ctpn_model_file_path)
+        saver.restore(sess,ctpn_model_file_path)
+    else:
+        ckpt = tf.train.latest_checkpoint(FLAGS.ctpn_model_dir)
+        logger.debug("最新CTPN模型目录中最新模型文件:%s", ckpt)  # 有点担心learning rate也被恢复
+        saver.restore(sess, ckpt)
 
 
     return sess
