@@ -144,7 +144,7 @@ def draw(image,boxes,color,thick=1):
     logger.error("画图失败，无效的Shape:%r",boxes.shape)
 
 # 定义图，并且还原模型，创建session
-def initialize():
+def initialize(config):
     g = tf.Graph()
     with g.as_default():
         global input_image,input_im_info,bbox_pred, cls_pred, cls_prob
@@ -157,7 +157,7 @@ def initialize():
         variable_averages = tf.train.ExponentialMovingAverage(0.997, global_step)
         saver = tf.train.Saver(variable_averages.variables_to_restore())
 
-        sess = tf.Session(graph=g,config=tf.ConfigProto(allow_soft_placement=True))
+        sess = tf.Session(graph=g,config=config)
         # ckpt_state = tf.train.get_checkpoint_state(FLAGS.ctpn_model_dir)
         # logger.debug("从路径[%s]查找到最新的checkpoint文件[%s]", FLAGS.ctpn_model_dir, ckpt_state)
         # model_path = os.path.join(FLAGS.ctpn_model_dir, os.path.basename(ckpt_state.model_checkpoint_path))
