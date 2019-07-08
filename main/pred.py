@@ -174,7 +174,7 @@ def initialize(config):
             saver.restore(sess, ckpt)
 
 
-    return sess
+    return sess,g
 
 
 def main():
@@ -202,7 +202,7 @@ def main():
 # image_list    : numpy数组，注意，这个格式是RGB的，如果需要使用，需要转一下[:,:,::-1]
 #                 为何这么设计呢？是为了兼容Web的服务，那边传过来的是RGB顺序的。
 # image_names   : 文件名字
-def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls_pred, cls_prob):
+def pred(sess,image_list,image_names,graph=None):#,input_image,input_im_info,bbox_pred, cls_pred, cls_prob):
 
     logger.info("开始探测图片的文字区域")
     global input_image,input_im_info, bbox_pred, cls_pred, cls_prob
@@ -231,14 +231,14 @@ def pred(sess,image_list,image_names):#,input_image,input_im_info,bbox_pred, cls
 
         logger.info("探测图片[%s]的文字区域开始",image_name)
         start = time.time()
-
-        boxes_big, scores, bbox_small = predict_by_network(
-            sess,
-            bbox_pred,
-            cls_prob,
-            input_im_info,
-            input_image,
-            resized_img)
+        with graph.as_default():
+            boxes_big, scores, bbox_small = predict_by_network(
+                sess,
+                bbox_pred,
+                cls_prob,
+                input_im_info,
+                input_image,
+                resized_img)
 
         # scale 放大 unresize back回去
         boxes_big = np.array(image_utils.resize_labels(boxes_big[:, :8], 1 / scale))
