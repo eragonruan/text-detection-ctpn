@@ -172,6 +172,7 @@ def initialize(config):
             ckpt = tf.train.latest_checkpoint(FLAGS.ctpn_model_dir)
             logger.debug("最新CTPN模型目录中最新模型文件:%s", ckpt)  # 有点担心learning rate也被恢复
             saver.restore(sess, ckpt)
+        g.finalize()
 
 
     return sess,g

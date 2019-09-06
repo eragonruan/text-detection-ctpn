@@ -4,14 +4,14 @@ Date=$(date +%Y%m%d%H%M)
 
 if [ "$1" = "stop" ]; then
     echo "停止训练"
-    ps aux|grep python|grep name=ctpn|awk '{print $2}'|xargs kill -9
+    ps aux|grep python|grep name=ctpn_train|awk '{print $2}'|xargs kill -9
     exit
 fi
 
 if [ "$1" = "console" ]; then
     echo "调试模式:只训练一次"
     python -m main.train \
-        --name=ctpn \
+        --name=ctpn_train \
         --pretrained_model_path=data/vgg_16.ckpt \
         --max_steps=2 \
         --decay_steps=1 \
@@ -34,7 +34,7 @@ fi
 
 echo "生产模式,使用GPU#$1"
 nohup python -m main.train \
-    --name=ctpn \
+    --name=ctpn_train \
     --pretrained_model_path=data/vgg_16.ckpt \
     --max_steps=100000 \
     --decay_steps=100000000 \

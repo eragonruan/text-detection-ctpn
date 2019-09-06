@@ -1,4 +1,5 @@
 #!/bin/sh
+# 这个脚本用来把图片切割成CTPN训练所需要的bbox，即小框（CTPN算法是预测所有的16像素的小框的）
 
 BASEDIR=$(dirname "$0")
 . $BASEDIR/env.sh

@@ -697,7 +697,7 @@ if __name__ == '__main__':
     if not os.path.exists(data_images_dir): os.makedirs(data_images_dir)
     if not os.path.exists(data_labels_dir): os.makedirs(data_labels_dir)
 
-    charset = _get_charset("../crnn/charset6k.txt")
+    charset = _get_charset("../crnn/charset.3770.txt")
 
     # 预先加载所有的纸张背景
     all_bg_images = load_all_backgroud_images(os.path.join(ROOT,'background/'))
