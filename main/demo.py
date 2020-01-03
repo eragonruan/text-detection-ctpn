@@ -111,7 +111,13 @@ def main(argv=None):
 
                 with open(os.path.join(FLAGS.output_path, os.path.splitext(os.path.basename(im_fn))[0]) + ".txt",
                           "w") as f:
+                    # save the boxes in an order from left to right, from top to bottom
+                    boxes=sorted(boxes,key=(lambda x:x[0]))
+                    boxes=sorted(boxes,key=(lambda x:x[1]))
                     for i, box in enumerate(boxes):
+                        # save boxes with the original image size
+                        box[::2] = box[::2] / rw
+                        box[1::2] = box[1::2] / rh
                         line = ",".join(str(box[k]) for k in range(8))
                         line += "," + str(scores[i]) + "\r\n"
                         f.writelines(line)
