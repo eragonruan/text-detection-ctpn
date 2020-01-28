@@ -3,6 +3,6 @@ opencv-python==3.4.0.12
 Shapely==1.6.4.post1
 matplotlib==1.5.3
 numpy==1.14.2
-tensorflow-gpu==1.4.0
+tensorflow-gpu==1.15.2
 Cython==0.24.1
 ipython==5.1.0
