@@ -39,7 +39,7 @@ Scene text detection based on CTPN (connectionist text proposal network). It is 
 ### Linux
 
 1.  Install Python3 64-bit: `sudo apt install python3 python3-pip`
-2.  To make sure installation the succeeded, run `python --version`
+2.  To make sure the installation succeeded, run `python --version`
 3.  From the terminal, go into the root directory of the project: `cd <ROOT>`
 4.  To install dependencies:
     -   automatically, run the shell script: `./infra/prepare.sh`, ***or***
