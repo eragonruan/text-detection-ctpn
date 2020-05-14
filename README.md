@@ -105,9 +105,12 @@ If for any reason you would like not to run the `prepare.*` scripts, or if you e
 
 **NOTICE:** all the photos used below are collected from the internet. If it affects you, please contact me to delete them.
 
-<img src="/data/res/006.jpg" width=320 height=480 /><img src="/data/res/008.jpg" width=320 height=480 />
-
-<img src="/data/res/009.jpg" width=320 height=480 /><img src="/data/res/010.png" width=320 height=320 />
+<div>
+<img src="/data/res_examples/006.jpg" width=320 height=480 /><img src="/data/res_examples/008.jpg" width=320 height=480 />
+</div>
+<div>
+<img src="/data/res_examples/009.jpg" width=320 height=480 /><img src="/data/res_examples/010.png" width=320 height=320 />
+</div>
 
 ***
 
@@ -116,8 +119,11 @@ If for any reason you would like not to run the `prepare.*` scripts, or if you e
 -   Oriented text connector has been implemented; it's working, but still needs further improvements
 -   Left figure is the result for DETECT_MODE H, right figure is for DETECT_MODE O
 
-<img src="/data/res/007.jpg" width=320 height=240 /><img src="/data/res_oriented/007.jpg" width=320 height=240 />
-
-<img src="/data/res/008.jpg" width=320 height=480 /><img src="/data/res_oriented/008.jpg" width=320 height=480 />
+<div>
+<img src="/data/res_examples/007.jpg" width=320 height=240 /><img src="/data/res_oriented/007.jpg" width=320 height=240 />
+</div>
+<div>
+<img src="/data/res_examples/008.jpg" width=320 height=480 /><img src="/data/res_oriented/008.jpg" width=320 height=480 />
+</div>
 
 ***
