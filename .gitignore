@@ -1,4 +1,10 @@
 data/dataset/
+data/res/
+infra/checkpoints*
+utils/bbox/__pycache__/
+utils/bbox/.fuse_hidden*
+utils/bbox/*.c
+utils/bbox/*.pyd
 __pycache__/
 cache/
 pretrain/
@@ -8,8 +14,7 @@ logs_*/
 output/
 build/
 dist/
-checkpoints/
-checkpoints_*/
+checkpoints*
 .idea/
 *.py[cod]
 *.c[cod]
