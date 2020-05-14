@@ -1,6 +1,6 @@
 # coding:utf-8
 import numpy as np
-from utils.bbox.nms import nms
+from utils.bbox.cython_nms import nms
 
 from .text_connect_cfg import Config as TextLineCfg
 from .text_proposal_connector import TextProposalConnector
