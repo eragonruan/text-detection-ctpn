@@ -1,19 +1,18 @@
 import tensorflow as tf
-
-slim = tf.contrib.slim
+import tf_slim as slim
 
 
 def vgg_arg_scope(weight_decay=0.0005):
     with slim.arg_scope([slim.conv2d, slim.fully_connected],
                         activation_fn=tf.nn.relu,
-                        weights_regularizer=slim.l2_regularizer(weight_decay),
-                        biases_initializer=tf.zeros_initializer()):
+                        weights_regularizer=tf.keras.regularizers.l2(0.5 * (weight_decay)),
+                        biases_initializer=tf.compat.v1.zeros_initializer()):
         with slim.arg_scope([slim.conv2d], padding='SAME') as arg_sc:
             return arg_sc
 
 
 def vgg_16(inputs, scope='vgg_16'):
-    with tf.variable_scope(scope, 'vgg_16', [inputs]) as sc:
+    with tf.compat.v1.variable_scope(scope, 'vgg_16', [inputs]) as sc:
         with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.max_pool2d]):
             net = slim.repeat(inputs, 2, slim.conv2d, 64, [3, 3], scope='conv1')
             net = slim.max_pool2d(net, [2, 2], scope='pool1')
