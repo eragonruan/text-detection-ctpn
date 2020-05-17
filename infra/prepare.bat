@@ -16,22 +16,6 @@ copy /y *.pyd ..\..
 cd ..\..
 rmdir /s /q build
 
-:: Install training backend.
-:: It currently does not support Tensorflow 2.
-:: Note that the latest Tensorflow packages differ across conda and pip.
-where conda 2>nul
-if !errorlevel! neq 0 (
-    where pip 2>nul
-    if !errorlevel! neq 0 (
-        echo Error, no utility found to install the packages
-        exit /b 1
-    ) else (
-        call pip install tensorflow==1.14
-    )
-) else (
-    call conda install -y tensorflow=1.15
-)
-
 :: Download trained model
 cd !root_dir!\infra
 if not exist checkpoints_mlt.zip (

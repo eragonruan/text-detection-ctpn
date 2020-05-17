@@ -31,17 +31,23 @@ Scene text detection based on CTPN (connectionist text proposal network). It is 
 2.  Open a terminal where you have access to Python
     -   this might not be `cmd`, depending if you chose to add `python` to `%PATH%` during installation
     -   to make sure the installation succeeded, run: `python --version`
-3.  From the terminal, go into the root directory of the project: `cd <ROOT>`
-4.  To install dependencies:
+3.  Install Tensorflow 2.x, if you don't have it already
+    -   `conda install tensorflow`, ***or***
+    -   `pip install tensorflow`
+4.  From the terminal, go into the root directory of the project: `cd <ROOT>`
+5.  To install dependencies:
     -   automatically, run the shell script: `.\infra\prepare.bat`, ***or***
     -   manually, follow the instructions in the next section
 
 ### Linux
 
-1.  Install Python3 64-bit: `sudo apt install python3 python3-pip`
+1.  Install Python3 64-bit
+    -   from your distro's repository: `sudo apt install python3 python3-pip`
 2.  To make sure the installation succeeded, run `python --version`
-3.  From the terminal, go into the root directory of the project: `cd <ROOT>`
-4.  To install dependencies:
+3.  Install Tensorflow 2.x, if you don't have it already
+    -   `pip3 install tensorflow`
+4.  From the terminal, go into the root directory of the project: `cd <ROOT>`
+5.  To install dependencies:
     -   automatically, run the shell script: `./infra/prepare.sh`, ***or***
     -   manually, follow the instructions in the next section
 
@@ -51,9 +57,8 @@ If for any reason you would like not to run the `prepare.*` scripts, or if you e
 
 1.  Install Cython
 2.  Go into `<ROOT>/utils/bbox/` and build `nms` and `bbox`, which need Cython
-3.  Install the latest Tensorflow 1.x
-4.  Download the trained model from [Google Drive](https://drive.google.com/file/d/1HcZuB_MHqsKhKEKpfF1pEU85CYy4OlWO/view?usp=sharing) or [Baidu Yun](https://pan.baidu.com/s/1BNHt_9fiqRPGmEXPaxaFXw)
-5.  Unzip the archive into `<ROOT>`; more precisely, put `checkpoints_mlt/` in `text-detection-ctpn/`
+3.  Download the trained model from [Google Drive](https://drive.google.com/file/d/1HcZuB_MHqsKhKEKpfF1pEU85CYy4OlWO/view?usp=sharing) or [Baidu Yun](https://pan.baidu.com/s/1BNHt_9fiqRPGmEXPaxaFXw)
+4.  Unzip the archive into `<ROOT>`; more precisely, put `checkpoints_mlt/` in `text-detection-ctpn/`
 
 ***
 

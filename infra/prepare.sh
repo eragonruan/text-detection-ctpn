@@ -16,9 +16,6 @@ cp *.so ../..
 cd ../..
 rm -rf build
 
-# Install training backend
-pip3 install tensorflow==1.14
-
 # Download trained model
 cd $root_dir/infra
 if [ ! -f checkpoints_mlt.zip ]; then
