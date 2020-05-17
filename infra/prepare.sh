@@ -8,6 +8,9 @@ root_dir=$(dirname "$self_path")/..
 python3 --version || exit 1
 pip3 install --upgrade Cython || exit 1
 
+# Install other necessary packages
+pip3 install --upgrade tf_slim || exit 1
+
 # Build Cython dependencies
 cd $root_dir/utils/bbox
 python3 setup.py build

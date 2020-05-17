@@ -24,14 +24,14 @@ Scene text detection based on CTPN (connectionist text proposal network). It is 
 
 ### Windows
 
-1.  Install Python3 64-bit
+1.  Install Python3 64-bit:
     -   from the [official site](https://www.python.org/downloads/), ***or***
     -   with Anaconda, from the [official site](https://www.anaconda.com/products/individual#Downloads), ***or***
     -   with Anaconda, [via Chocolatey](https://chocolatey.org/packages/anaconda3): `choco install anaconda3`
-2.  Open a terminal where you have access to Python
+2.  Open a terminal where you have access to Python:
     -   this might not be `cmd`, depending if you chose to add `python` to `%PATH%` during installation
     -   to make sure the installation succeeded, run: `python --version`
-3.  Install Tensorflow 2.x, if you don't have it already
+3.  Install Tensorflow 2.x, if you don't have it already:
     -   `conda install tensorflow`, ***or***
     -   `pip install tensorflow`
 4.  From the terminal, go into the root directory of the project: `cd <ROOT>`
@@ -41,10 +41,10 @@ Scene text detection based on CTPN (connectionist text proposal network). It is 
 
 ### Linux
 
-1.  Install Python3 64-bit
+1.  Install Python3 64-bit:
     -   from your distro's repository: `sudo apt install python3 python3-pip`
-2.  To make sure the installation succeeded, run `python --version`
-3.  Install Tensorflow 2.x, if you don't have it already
+2.  To make sure the installation succeeded, run: `python --version`
+3.  Install Tensorflow 2.x, if you don't have it already:
     -   `pip3 install tensorflow`
 4.  From the terminal, go into the root directory of the project: `cd <ROOT>`
 5.  To install dependencies:
@@ -55,10 +55,11 @@ Scene text detection based on CTPN (connectionist text proposal network). It is 
 
 If for any reason you would like not to run the `prepare.*` scripts, or if you encounter any issues, these are the steps you need to take; use the scripts as your guide:
 
-1.  Install Cython
+1.  Install `Cython`
 2.  Go into `<ROOT>/utils/bbox/` and build `nms` and `bbox`, which need Cython
-3.  Download the trained model from [Google Drive](https://drive.google.com/file/d/1HcZuB_MHqsKhKEKpfF1pEU85CYy4OlWO/view?usp=sharing) or [Baidu Yun](https://pan.baidu.com/s/1BNHt_9fiqRPGmEXPaxaFXw)
-4.  Unzip the archive into `<ROOT>`; more precisely, put `checkpoints_mlt/` in `text-detection-ctpn/`
+3.  Install `tf_slim`
+4.  Download the trained model from [Google Drive](https://drive.google.com/file/d/1HcZuB_MHqsKhKEKpfF1pEU85CYy4OlWO/view?usp=sharing) or [Baidu Yun](https://pan.baidu.com/s/1BNHt_9fiqRPGmEXPaxaFXw)
+5.  Unzip the archive into `<ROOT>`; more precisely, put `checkpoints_mlt/` in `text-detection-ctpn/`
 
 ***
 

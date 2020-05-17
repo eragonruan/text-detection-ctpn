@@ -8,6 +8,9 @@ set root_dir=%~dp0\..
 call python --version || exit /b 1
 call pip install --upgrade Cython || exit /b 1
 
+:: Install other necessary packages
+call pip install --upgrade tf_slim || exit /b 1
+
 :: Build Cython dependencies
 cd !root_dir!\utils\bbox
 python setup.py build
