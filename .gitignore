@@ -1,4 +1,15 @@
-data/dataset/
+.DS_Store
+flush.log
+backup/
+model/
+data/
+data_generator/font
+data_generator/data_generator.zip
+data_generator/background
+data_generator/info.txt
+test/
+data/train/
+log.txt
 __pycache__/
 cache/
 pretrain/

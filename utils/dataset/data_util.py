@@ -1,8 +1,10 @@
 import multiprocessing
 import threading
 import time
-
+import logging
 import numpy as np
+
+logger = logging.getLogger("generator queue")
 
 try:
     import queue
@@ -24,12 +26,16 @@ class GeneratorEnqueuer():
         self.random_seed = random_seed
 
     def start(self, workers=1, max_queue_size=10):
-        def data_generator_task():
+        def data_generator_task(name):
             while not self._stop_event.is_set():
                 try:
                     if self._use_multiprocessing or self.queue.qsize() < max_queue_size:
                         generator_output = next(self._generator)
+                        # logger.debug("调用next()，%s 拿到了一张图片，放入GeneratorEnqueuer的queue,size=[%d]",
+                        #              name,self.queue.qsize())
+
                         self.queue.put(generator_output)
+
                     else:
                         time.sleep(self.wait_time)
                 except Exception:
@@ -44,12 +50,13 @@ class GeneratorEnqueuer():
                 self.queue = queue.Queue()
                 self._stop_event = threading.Event()
 
-            for _ in range(workers):
+            for i in range(workers):
                 if self._use_multiprocessing:
                     # Reset random seed else all children processes
                     # share the same seed
                     np.random.seed(self.random_seed)
-                    thread = multiprocessing.Process(target=data_generator_task)
+                    thread = multiprocessing.Process(target=data_generator_task,
+                                                     args=("进程_"+str(i),))
                     thread.daemon = True
                     if self.random_seed is not None:
                         self.random_seed += 1
