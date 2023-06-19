@@ -36,8 +36,8 @@ chmod +x make.sh
 ./make.sh
 ```
 ## prepare data
-- First, download the pre-trained model of VGG net and put it in data/pretrain/VGG_imagenet.npy. you can download it from [google drive](https://drive.google.com/open?id=0B_WmJoEtfQhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). 
-- Second, prepare the training data as referred in paper, or you can download the data I prepared from [google drive](https://drive.google.com/open?id=0B_WmJoEtfGhDRl82b1dJTjB2ZGc) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). Or you can prepare your own data according to the following steps. 
+- First, download the pre-trained model of VGG net and put it in data/pretrain/VGG_imagenet.npy. you can download it from [google drive](https://drive.google.com/drive/folders/0B_WmJoEtfQhDRl82b1dJTjB2ZGc?resourcekey=0-OjW5DtLUbX5xUob7fwRvEw&usp=sharing) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). 
+- Second, prepare the training data as referred in paper, or you can download the data I prepared from [google drive](https://drive.google.com/drive/folders/0B_WmJoEtfQhDRl82b1dJTjB2ZGc?resourcekey=0-OjW5DtLUbX5xUob7fwRvEw&usp=sharing) or [baidu yun](https://pan.baidu.com/s/1kUNTl1l). Or you can prepare your own data according to the following steps. 
 - Modify the path and gt_path in prepare_training_data/split_label.py according to your dataset. And run
 ```shell
 cd lib/prepare_training_data
