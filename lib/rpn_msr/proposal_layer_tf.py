@@ -43,6 +43,11 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
 
     """
     # cfg_key=cfg_key.decode('ascii')
+    try:
+        cfg_key=cfg_key.decode('ascii')
+    except AttributeError:
+        pass
+
     _anchors = generate_anchors(scales=np.array(anchor_scales))#生成基本的9个anchor
     _num_anchors = _anchors.shape[0]#9个anchor
 
@@ -51,10 +56,10 @@ def proposal_layer(rpn_cls_prob_reshape, rpn_bbox_pred, im_info, cfg_key, _feat_
     assert rpn_cls_prob_reshape.shape[0] == 1, \
         'Only single item batches are supported'
 
-    pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N#12000,在做nms之前，最多保留的候选box数目
-    post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N#2000，做完nms之后，最多保留的box的数目
-    nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH#nms用参数，阈值是0.7
-    min_size      = cfg[cfg_key].RPN_MIN_SIZE#候选box的最小尺寸，目前是16，高宽均要大于16
+    pre_nms_topN  = cfg[cfg_key].RPN_PRE_NMS_TOP_N      #12000,在做nms之前，最多保留的候选box数目
+    post_nms_topN = cfg[cfg_key].RPN_POST_NMS_TOP_N     #2000，做完nms之后，最多保留的box的数目
+    nms_thresh    = cfg[cfg_key].RPN_NMS_THRESH         #nms用参数，阈值是0.7
+    min_size      = cfg[cfg_key].RPN_MIN_SIZE           #候选box的最小尺寸，目前是16，高宽均要大于16
     #TODO 后期需要修改这个最小尺寸，改为8？
 
     height, width = rpn_cls_prob_reshape.shape[1:3]#feature-map的高宽
